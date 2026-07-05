@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Charter · Mathesis</title>
+<meta name="description" content="What certification means in Mathesis, and what it does not mean.">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="topbar">
+  <div class="topbar-inner">
+    <a class="wordmark" href="index.html">Noumenal Research <span>&middot; Mathesis</span></a>
+    <div class="topbar-right">
+      <nav class="topnav" aria-label="Sections">
+        <a href="results.html" class="">Results</a>
+<a href="claims.html" class="">Claims</a>
+<a href="dictionary.html" class="">Dictionary</a>
+<a href="charter.html" class="active">Charter</a>
+<a href="about.html" class="">About</a>
+      </nav>
+      <button class="verify-chip" id="verifyBtn" type="button"
+              aria-haspopup="dialog" aria-expanded="false" aria-controls="verifyPanel">
+        <span class="vdot v-pending"></span><span class="vlabel">Verify</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<div id="verifyPanel" role="dialog" aria-modal="true" aria-label="Machine verification" hidden>
+  <div class="vcard">
+    <button class="vclose" type="button" aria-label="Close">&times;</button>
+    <h3>Machine verification</h3>
+    <div class="vbody"></div>
+  </div>
+</div>
+
+<main id="top">
+
+<section class="hero shell">
+  <p class="kicker">Noumenal Research &middot; Mathesis</p>
+  <h1 class="measure">Charter</h1>
+</section>
+
+<section class="shell detail-section">
+  <div class="callout">
+    <p>Not peer review.</p>
+    <p>Not an empirical generalization about the world.</p>
+    <p>Certification is relative to the definitions used.</p>
+  </div>
+</section>
+
+<section class="shell detail-section">
+  <h3>What certification means here</h3>
+  <p>An accession in the Results bank has been checked by a proof kernel against a fixed,
+     pinned set of definitions and a pinned toolchain. That check establishes that the stated
+     proof follows from the stated axioms under the stated definitions. It does not establish
+     that the definitions are the right ones, that the statement matters, or that the result
+     generalizes past the formal system it was proved in. Those are separate questions, answered
+     by separate, overlay work (interrogation, replication, application), not by the gate.</p>
+</section>
+
+<section class="shell detail-section">
+  <h3>Trust base</h3>
+  <p>Every result in this bank is checked by the Lean 4 proof kernel. The kernel trusts three
+     whitelisted axioms:</p>
+  <p class="mono-note">
+    <code class="chip chip-axiom">propext</code>
+    <code class="chip chip-axiom">Classical.choice</code>
+    <code class="chip chip-axiom">Quot.sound</code>
+  </p>
+  <p>against a pinned build of Mathlib. Any result whose proof needs an axiom outside this
+     whitelist must declare it explicitly as a <strong>trust-boundary extension</strong>, and
+     that extension is rendered on the accession's page. As of this snapshot, no accession in
+     the bank declares a trust-boundary extension.</p>
+</section>
+
+<section class="shell detail-section">
+  <h3>Definition interrogation</h3>
+  <p>A definition's status of <strong>"kernel-checked; interrogation pending"</strong> means the
+     definition type-checks and is internally consistent under the kernel. It does not mean the
+     definition has been reviewed for whether it captures what its name or gloss claims it
+     captures. That review, when it happens, is a lazy overlay annotation on the definition, not
+     a precondition for it appearing in the bank and not a gate a result must pass.</p>
+</section>
+
+<section class="shell detail-section">
+  <h3>What this bank does not do</h3>
+  <p>It does not rank accessions. It does not compute a single quality score. Where scale and
+     depth of checking both matter, the site shows them as two separate counts, never combined.
+     It does not run any model over the manifests to summarize, grade, or rewrite them; every
+     word rendered from a manifest is either the author's own prose (the gloss) or emitted
+     verbatim by the gate (tier, axioms, verdict).</p>
+</section>
+
+</main>
+
+<footer>
+  <div class="shell footer-inner">
+    <span>Noumenal Research &middot; Mathesis is an evidence bank, not a journal.</span>
+    <span><a href="charter.html">Charter</a> &middot; <a href="about.html">About</a></span>
+  </div>
+</footer>
+
+<script src="verify.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

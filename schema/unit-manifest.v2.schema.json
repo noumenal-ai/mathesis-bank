@@ -1,0 +1,461 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "mathesis-unit-manifest-v2",
+  "title": "Mathesis deposit manifest (v2 — Claims/Results/Dictionary)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "handle",
+    "title",
+    "deposit_class",
+    "provenance",
+    "status",
+    "statement",
+    "pin",
+    "created"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 2
+    },
+    "handle": {
+      "type": "string",
+      "pattern": "^MTH\\.(C|R|D)-[0-9]{4}-[0-9]{4,6}$",
+      "description": "Accession. MTH.C=Claims, MTH.R=Results, MTH.D=Dictionary. Staged prefixes; final naming owned by Dhruv."
+    },
+    "doi": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "External DOI once minted (Zenodo). null until then."
+    },
+    "title": {
+      "type": "string"
+    },
+    "deposit_class": {
+      "enum": [
+        "definition",
+        "claim",
+        "demonstration"
+      ],
+      "description": "definition->Dictionary(MTH.D); claim->Claims(MTH.C); demonstration->Results(MTH.R)"
+    },
+    "polarity": {
+      "enum": [
+        "universal",
+        "existential",
+        null
+      ],
+      "description": "Claims/demonstrations only (OBJECT.md P1). null for definitions."
+    },
+    "provenance": {
+      "enum": [
+        "selfSeeded",
+        "external"
+      ],
+      "description": "selfSeeded=in-house trusted author (isolation optional); external=full adversary (isolation REQUIRED)"
+    },
+    "exercisability": {
+      "enum": [
+        "exercisable",
+        "obligated",
+        null
+      ],
+      "description": "Definitions only. exercisable=computable/runnable; obligated=noncomputable, needs obligation suite + interrogation. null otherwise."
+    },
+    "tier": {
+      "enum": [
+        "T0",
+        "T1",
+        "T2",
+        null
+      ],
+      "description": "Demonstrations only; GATE-EMITTED, never hand-written. null for claims/definitions."
+    },
+    "status": {
+      "enum": [
+        "posed",
+        "well-posed",
+        "proposed",
+        "interrogated",
+        "admitted",
+        "contested",
+        "still-green",
+        "ported-to-HEAD",
+        "superseded"
+      ],
+      "description": "claims: posed|well-posed; definitions: proposed|interrogated|admitted|contested; demonstrations: still-green|ported-to-HEAD|superseded"
+    },
+    "superseded_by": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "handle of the superseding deposit, if status=superseded"
+    },
+    "discharges": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Demonstrations only: the MTH.C claim this result discharges. REQUIRED non-null for demonstrations (no result without its claim)."
+    },
+    "discharged_by": {
+      "type": [
+        "array",
+        "null"
+      ],
+      "items": {
+        "type": "string"
+      },
+      "description": "Claims only: MTH.R handles that discharge this claim. [] while open."
+    },
+    "predicted": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "additionalProperties": true,
+      "description": "Claims only: predicted-verifiability metadata (AlphaFold layer). Author/engine-vouched."
+    },
+    "statement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "decl_names",
+        "module",
+        "pretty"
+      ],
+      "properties": {
+        "decl_names": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1
+        },
+        "module": {
+          "type": "string",
+          "description": "Lean module of record, e.g. TLT_Proofs.Bridge.Certificate.ConfigDesignLaw"
+        },
+        "pretty": {
+          "type": "string",
+          "description": "pretty-printed type, display only — the frozen export text is authoritative"
+        }
+      }
+    },
+    "frozen_export": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "sha256",
+        "bytes",
+        "constants"
+      ],
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "relative path to frozen.export (the immutable R; source.lean is audit-only)"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "bytes": {
+          "type": "integer"
+        },
+        "constants": {
+          "type": "integer"
+        }
+      }
+    },
+    "axiom_manifest": {
+      "type": [
+        "array",
+        "null"
+      ],
+      "items": {
+        "type": "string"
+      },
+      "description": "GATE-EMITTED axiom closure per headline decl. Whitelist: propext, Classical.choice, Quot.sound. Anything else must appear in trust_boundary_extensions."
+    },
+    "trust_boundary_extensions": {
+      "type": [
+        "array",
+        "null"
+      ],
+      "items": {
+        "type": "string"
+      },
+      "description": "declared, enumerated extra axioms/FFI boundaries (rendered publicly). Empty for whitelist-only deposits."
+    },
+    "witness": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "decls"
+      ],
+      "properties": {
+        "kind": {
+          "enum": [
+            "executed-value-theorem",
+            "executable-harness"
+          ]
+        },
+        "decls": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "transcript_sha256": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "harness": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "path to harness source if kind=executable-harness"
+        }
+      }
+    },
+    "verdict": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "additionalProperties": false,
+      "required": [
+        "result",
+        "gate_version"
+      ],
+      "properties": {
+        "result": {
+          "enum": [
+            "ADMITTED",
+            "REJECTED",
+            "BLOCKED"
+          ]
+        },
+        "gate_version": {
+          "type": "string"
+        },
+        "shadow_kernels": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "additionalProperties": {
+            "enum": [
+              "accepted",
+              "rejected",
+              "skipped-absent"
+            ]
+          }
+        },
+        "log_path": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "description": "GATE-EMITTED. A minted Results accession MUST have result=ADMITTED."
+    },
+    "pin": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "toolchain"
+      ],
+      "properties": {
+        "toolchain": {
+          "type": "string",
+          "description": "e.g. leanprover/lean4:v4.29.0"
+        },
+        "mathlib_rev": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "lib_revs": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "gate_pins": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "lean4export/Lean4Checker revs of the gate that adjudicated"
+        }
+      }
+    },
+    "dependency_closure": {
+      "type": [
+        "array",
+        "null"
+      ],
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "handle"
+        ],
+        "properties": {
+          "handle": {
+            "type": "string"
+          },
+          "tier": {
+            "enum": [
+              "T0",
+              "T1",
+              "T2",
+              null
+            ]
+          }
+        }
+      },
+      "description": "per-node tier (OBJECT.md P4: tier does NOT compose; downstream = weakest leg)"
+    },
+    "suite": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "instances": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string"
+          }
+        },
+        "non_instances": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string"
+          }
+        },
+        "separations": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string"
+          }
+        },
+        "obligations": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Definitions only: witness suite (exercisable) or obligation suite (obligated)"
+    },
+    "vouching": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "statement": {
+          "enum": [
+            "kernel",
+            "sandbox",
+            "author"
+          ]
+        },
+        "proof": {
+          "enum": [
+            "kernel",
+            "sandbox",
+            "author",
+            null
+          ]
+        },
+        "witness": {
+          "enum": [
+            "kernel",
+            "sandbox",
+            "author",
+            null
+          ]
+        },
+        "gloss": {
+          "const": "author"
+        }
+      },
+      "description": "who vouches per component; gloss is ALWAYS author (faithfulness is overlay work)"
+    },
+    "import_path": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "headline": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "library": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "theorem_type": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "created": {
+      "type": "string"
+    },
+    "bibtex": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  }
+}

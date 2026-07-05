@@ -1,0 +1,77 @@
+{
+  "axiom_manifest": [
+    "propext"
+  ],
+  "bibtex": null,
+  "created": "2026-07-03",
+  "dependency_closure": [
+    {
+      "handle": "MTH.D-2026-1045",
+      "tier": null
+    },
+    {
+      "handle": "MTH.D-2026-1062",
+      "tier": null
+    }
+  ],
+  "deposit_class": "demonstration",
+  "discharged_by": null,
+  "discharges": "MTH.C-2026-1136",
+  "doi": null,
+  "exercisability": null,
+  "frozen_export": {
+    "bytes": 336793337,
+    "constants": 247,
+    "path": "_shared/exports/040a6e477554a6bf9edf8d11f837130a80849c430a79c2737a4e83e2aef651f0.export",
+    "sha256": "040a6e477554a6bf9edf8d11f837130a80849c430a79c2737a4e83e2aef651f0"
+  },
+  "gloss": "# MTH.R-2026-1136 — result `WMSpec.enrichedGuard_nonvacuous` [T0]\n\n`theorem` in `WMSpec.MaskIndexedInvariance`; polarity existential. Discharges MTH.C-2026-1136. Kernel-verified (whole-theory replay); axioms ['propext'].\n\n```\nWMSpec.enrichedGuard_nonvacuous : ¬WMSpec.ObjectiveInvariant (WMSpec.enrichedObjective (fun x x_1 x_2 => 0) fun x => if x = true then 1 else 0) not\n```\n",
+  "handle": "MTH.R-2026-1136",
+  "headline": null,
+  "import_path": "WMSpec.MaskIndexedInvariance",
+  "library": "WMSpec",
+  "pin": {
+    "gate_pins": {
+      "Lean4Checker": "b7398199245524275543dec6113229c9bb4902e5",
+      "lean4export": "ca36c44858e2d7ba40996203d2f08a69113d1211"
+    },
+    "lib_revs": {
+      "WMSpec": "design-lab@world-models (untracked corpus, single-Mathlib)"
+    },
+    "mathlib_rev": "fabf563a7c95a166b8d7b6efca11c8b4dc9d911f",
+    "toolchain": "leanprover/lean4:v4.31.0"
+  },
+  "polarity": "existential",
+  "predicted": null,
+  "provenance": "selfSeeded",
+  "schema_version": 2,
+  "statement": {
+    "decl_names": [
+      "WMSpec.enrichedGuard_nonvacuous"
+    ],
+    "module": "WMSpec.MaskIndexedInvariance",
+    "pretty": "¬WMSpec.ObjectiveInvariant (WMSpec.enrichedObjective (fun x x_1 x_2 => 0) fun x => if x = true then 1 else 0) not"
+  },
+  "status": "still-green",
+  "suite": null,
+  "superseded_by": null,
+  "theorem_type": "theorem",
+  "tier": "T0",
+  "title": "WMSpec.enrichedGuard_nonvacuous",
+  "trust_boundary_extensions": [],
+  "verdict": {
+    "gate_version": "mathesis-v4.31 whole-theory replay (realreplay-selftest)",
+    "log_path": "backend/SMOKETEST_WMSPEC.md",
+    "result": "ADMITTED",
+    "shadow_kernels": {
+      "nanoda": "skipped-absent"
+    }
+  },
+  "vouching": {
+    "gloss": "author",
+    "proof": "kernel",
+    "statement": "kernel",
+    "witness": null
+  },
+  "witness": null
+}

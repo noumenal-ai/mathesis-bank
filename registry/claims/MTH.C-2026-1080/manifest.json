@@ -1,0 +1,60 @@
+{
+  "schema_version": 2,
+  "handle": "MTH.C-2026-1080",
+  "doi": null,
+  "title": "WMSpec.hsicGuard_transport",
+  "deposit_class": "claim",
+  "polarity": "universal",
+  "provenance": "selfSeeded",
+  "exercisability": null,
+  "tier": null,
+  "status": "well-posed",
+  "superseded_by": null,
+  "discharges": null,
+  "discharged_by": [
+    "MTH.R-2026-1080"
+  ],
+  "predicted": null,
+  "statement": {
+    "decl_names": [
+      "WMSpec.hsicGuard_transport"
+    ],
+    "module": "WMSpec.GuardFamilies",
+    "pretty": "∀ {Xt : Type u_1} [inst : MeasurableSpace Xt] {Yt : Type u_2} [inst_1 : MeasurableSpace Yt] {H : Type u_3}\n  [inst_2 : NormedAddCommGroup H] [inst_3 : InnerProductSpace ℝ H] [inst_4 : CompleteSpace H]\n  [inst_5 : RKHS ℝ H (Xt × Yt) ℝ],\n  IsCharacteristic →\n    ∀ (g : MeasureTheory.Measure (Xt × Yt) → MeasureTheory.Measure (Xt × Yt)),\n      (∀ (P : MeasureTheory.Measure (Xt × Yt)), hsicDef (g P) = hsicDef P) →\n        ∀ (P : MeasureTheory.Measure (Xt × Yt)),\n          g P = (MeasureTheory.Measure.map Prod.fst (g P)).prod (MeasureTheory.Measure.map Prod.snd (g P)) ↔\n            P = (MeasureTheory.Measure.map Prod.fst P).prod (MeasureTheory.Measure.map Prod.snd P)"
+  },
+  "frozen_export": {
+    "path": "_shared/exports/040a6e477554a6bf9edf8d11f837130a80849c430a79c2737a4e83e2aef651f0.export",
+    "sha256": "040a6e477554a6bf9edf8d11f837130a80849c430a79c2737a4e83e2aef651f0",
+    "bytes": 336793337,
+    "constants": 247
+  },
+  "axiom_manifest": null,
+  "trust_boundary_extensions": [],
+  "witness": null,
+  "verdict": null,
+  "pin": {
+    "toolchain": "leanprover/lean4:v4.31.0",
+    "mathlib_rev": "fabf563a7c95a166b8d7b6efca11c8b4dc9d911f",
+    "lib_revs": {
+      "WMSpec": "design-lab@world-models (untracked corpus, single-Mathlib)"
+    },
+    "gate_pins": {
+      "lean4export": "ca36c44858e2d7ba40996203d2f08a69113d1211",
+      "Lean4Checker": "b7398199245524275543dec6113229c9bb4902e5"
+    }
+  },
+  "dependency_closure": null,
+  "suite": null,
+  "vouching": {
+    "statement": "kernel",
+    "proof": null,
+    "witness": null,
+    "gloss": "author"
+  },
+  "import_path": "WMSpec.GuardFamilies",
+  "headline": null,
+  "library": "WMSpec",
+  "theorem_type": "theorem",
+  "created": "2026-07-03",
+  "bibtex": null
+}

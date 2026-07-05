@@ -1,0 +1,11 @@
+{
+  "toolchain": "leanprover/lean4:v4.31.0",
+  "mathlib_rev": "fabf563a7c95a166b8d7b6efca11c8b4dc9d911f",
+  "lib_revs": {
+    "WMSpec": "design-lab@world-models (untracked corpus, single-Mathlib)"
+  },
+  "gate_pins": {
+    "lean4export": "ca36c44858e2d7ba40996203d2f08a69113d1211",
+    "Lean4Checker": "b7398199245524275543dec6113229c9bb4902e5"
+  }
+}

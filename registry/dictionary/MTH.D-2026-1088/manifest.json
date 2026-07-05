@@ -1,0 +1,62 @@
+{
+  "schema_version": 2,
+  "handle": "MTH.D-2026-1088",
+  "doi": null,
+  "title": "WMSpec.StochasticWitness.wellTest",
+  "deposit_class": "definition",
+  "polarity": null,
+  "provenance": "selfSeeded",
+  "exercisability": "obligated",
+  "tier": null,
+  "status": "proposed",
+  "superseded_by": null,
+  "discharges": null,
+  "discharged_by": null,
+  "predicted": null,
+  "statement": {
+    "decl_names": [
+      "WMSpec.StochasticWitness.wellTest"
+    ],
+    "module": "WMSpec.StochasticWitness",
+    "pretty": "Quotient (WMSpec.bisimilarity WMSpec.StochasticWitness.𝒯 WMSpec.StochasticWitness.diffusion) → Bool"
+  },
+  "frozen_export": {
+    "path": "_shared/exports/6f334bc4a8aeabfd005bed459a5d876dcb20c52893f7a7d84c16922f438d5012.export",
+    "sha256": "6f334bc4a8aeabfd005bed459a5d876dcb20c52893f7a7d84c16922f438d5012",
+    "bytes": 73935312,
+    "constants": 12
+  },
+  "axiom_manifest": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+  ],
+  "trust_boundary_extensions": [],
+  "witness": null,
+  "verdict": null,
+  "pin": {
+    "toolchain": "leanprover/lean4:v4.31.0",
+    "mathlib_rev": "fabf563a7c95a166b8d7b6efca11c8b4dc9d911f",
+    "lib_revs": {
+      "WMSpec": "design-lab@world-models (untracked corpus, single-Mathlib)"
+    },
+    "gate_pins": {
+      "lean4export": "ca36c44858e2d7ba40996203d2f08a69113d1211",
+      "Lean4Checker": "b7398199245524275543dec6113229c9bb4902e5"
+    }
+  },
+  "dependency_closure": null,
+  "suite": null,
+  "vouching": {
+    "statement": "kernel",
+    "proof": null,
+    "witness": null,
+    "gloss": "author"
+  },
+  "import_path": "WMSpec.StochasticWitness",
+  "headline": null,
+  "library": "WMSpec",
+  "theorem_type": "def",
+  "created": "2026-07-03",
+  "bibtex": null
+}

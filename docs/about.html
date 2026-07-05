@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>About · Mathesis</title>
+<meta name="description" content="What Mathesis is and how to read a result.">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="topbar">
+  <div class="topbar-inner">
+    <a class="wordmark" href="index.html">Noumenal Research <span>&middot; Mathesis</span></a>
+    <div class="topbar-right">
+      <nav class="topnav" aria-label="Sections">
+        <a href="results.html" class="">Results</a>
+<a href="claims.html" class="">Claims</a>
+<a href="dictionary.html" class="">Dictionary</a>
+<a href="charter.html" class="">Charter</a>
+<a href="about.html" class="active">About</a>
+      </nav>
+      <button class="verify-chip" id="verifyBtn" type="button"
+              aria-haspopup="dialog" aria-expanded="false" aria-controls="verifyPanel">
+        <span class="vdot v-pending"></span><span class="vlabel">Verify</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<div id="verifyPanel" role="dialog" aria-modal="true" aria-label="Machine verification" hidden>
+  <div class="vcard">
+    <button class="vclose" type="button" aria-label="Close">&times;</button>
+    <h3>Machine verification</h3>
+    <div class="vbody"></div>
+  </div>
+</div>
+
+<main id="top">
+
+<section class="hero shell">
+  <p class="kicker">Noumenal Research &middot; Mathesis</p>
+  <h1 class="measure">About</h1>
+  <p class="lede">Mathesis is an evidence bank for machine-checked machine-learning theory,
+     built on the model of GenBank or the Protein Data Bank rather than a journal: it holds
+     verified units and lets overlays (commentary, applications, later journals) build on top,
+     instead of gating publication behind a single editorial judgment.</p>
+</section>
+
+<section class="shell detail-section">
+  <h3>Three legs of a result</h3>
+  <div class="obligations">
+    <div class="ob">
+      <span class="tag">Leg 1</span>
+      <h3>Proof</h3>
+      <p>A machine-checked derivation of the stated theorem from the stated definitions and
+         axioms. Checked by the Lean 4 kernel, not by a reviewer's read-through.</p>
+    </div>
+    <div class="ob">
+      <span class="tag">Leg 2</span>
+      <h3>Witness</h3>
+      <p>Where the claim is existential, a concrete instance that the kernel has checked
+         actually satisfies the statement, an executed value or an executable harness rather
+         than an existence argument alone.</p>
+    </div>
+    <div class="ob">
+      <span class="tag">Leg 3</span>
+      <h3>Axiom manifest</h3>
+      <p>The full, explicit list of axioms the proof rests on, emitted by the gate and rendered
+         verbatim. Anything outside the three-axiom whitelist is called out as a named
+         trust-boundary extension, never hidden.</p>
+    </div>
+  </div>
+</section>
+
+<section class="shell detail-section">
+  <h3>How to read a tier</h3>
+  <p>Tier is gate-emitted, not author-claimed. <strong>T0</strong> is a single kernel-checked
+     proof (for an existential statement, the witness itself already is the full evidence).
+     Higher tiers mean broader or exhaustive coverage was checked, not that the underlying claim
+     is more true. Tier does not compose across a dependency closure: a result's own tier says
+     nothing about the tier of what it depends on, so each dependency is shown with its own
+     tier on the accession page.</p>
+</section>
+
+<section class="shell detail-section">
+  <h3>What a deposit is</h3>
+  <p>An accession (<code>MTH.D/C/R-YYYY-NNNN</code>) is immutable once written. A correction to
+     an existing accession never edits it in place; it mints a new accession and records the
+     supersession link. The registry is the ledger.</p>
+</section>
+
+</main>
+
+<footer>
+  <div class="shell footer-inner">
+    <span>Noumenal Research &middot; Mathesis is an evidence bank, not a journal.</span>
+    <span><a href="charter.html">Charter</a> &middot; <a href="about.html">About</a></span>
+  </div>
+</footer>
+
+<script src="verify.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

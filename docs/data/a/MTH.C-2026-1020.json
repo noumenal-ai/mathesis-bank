@@ -1,0 +1,66 @@
+{
+  "axiom_manifest": null,
+  "bibtex": null,
+  "created": "2026-07-03",
+  "dependency_closure": [
+    {
+      "handle": "MTH.R-2026-1129",
+      "tier": "T0"
+    }
+  ],
+  "deposit_class": "claim",
+  "discharged_by": [
+    "MTH.R-2026-1020"
+  ],
+  "discharges": null,
+  "doi": null,
+  "exercisability": null,
+  "frozen_export": {
+    "bytes": 336793337,
+    "constants": 247,
+    "path": "_shared/exports/040a6e477554a6bf9edf8d11f837130a80849c430a79c2737a4e83e2aef651f0.export",
+    "sha256": "040a6e477554a6bf9edf8d11f837130a80849c430a79c2737a4e83e2aef651f0"
+  },
+  "gloss": "# MTH.C-2026-1020 — claim `TLT.NonIdentifiability.not_factorThrough_of_collapse_real`\n\nStatement of record, frozen. Discharged by MTH.R-2026-1020.\n",
+  "handle": "MTH.C-2026-1020",
+  "headline": null,
+  "import_path": "WMSpec.NonIdentifiability.Apparatus",
+  "library": "WMSpec",
+  "pin": {
+    "gate_pins": {
+      "Lean4Checker": "b7398199245524275543dec6113229c9bb4902e5",
+      "lean4export": "ca36c44858e2d7ba40996203d2f08a69113d1211"
+    },
+    "lib_revs": {
+      "WMSpec": "design-lab@world-models (untracked corpus, single-Mathlib)"
+    },
+    "mathlib_rev": "fabf563a7c95a166b8d7b6efca11c8b4dc9d911f",
+    "toolchain": "leanprover/lean4:v4.31.0"
+  },
+  "polarity": "existential",
+  "predicted": null,
+  "provenance": "selfSeeded",
+  "schema_version": 2,
+  "statement": {
+    "decl_names": [
+      "TLT.NonIdentifiability.not_factorThrough_of_collapse_real"
+    ],
+    "module": "WMSpec.NonIdentifiability.Apparatus",
+    "pretty": "∀ {S : Type u_1} {Z : Type u_2} (E : S → Z) (T : S → ℝ) {s₁ s₂ : S},\n  E s₁ = E s₂ → T s₁ ≠ T s₂ → ¬∃ g, ∀ (s : S), T s = g (E s)"
+  },
+  "status": "well-posed",
+  "suite": null,
+  "superseded_by": null,
+  "theorem_type": "theorem",
+  "tier": null,
+  "title": "TLT.NonIdentifiability.not_factorThrough_of_collapse_real",
+  "trust_boundary_extensions": [],
+  "verdict": null,
+  "vouching": {
+    "gloss": "author",
+    "proof": null,
+    "statement": "kernel",
+    "witness": null
+  },
+  "witness": null
+}

@@ -1,0 +1,86 @@
+{
+  "axiom_manifest": null,
+  "bibtex": null,
+  "created": "2026-07-03",
+  "dependency_closure": [
+    {
+      "handle": "MTH.D-2026-1044",
+      "tier": null
+    },
+    {
+      "handle": "MTH.D-2026-1035",
+      "tier": null
+    },
+    {
+      "handle": "MTH.D-2026-1015",
+      "tier": null
+    },
+    {
+      "handle": "MTH.R-2026-1088",
+      "tier": "T0"
+    },
+    {
+      "handle": "MTH.R-2026-1050",
+      "tier": "T0"
+    },
+    {
+      "handle": "MTH.R-2026-1110",
+      "tier": "T0"
+    }
+  ],
+  "deposit_class": "claim",
+  "discharged_by": [
+    "MTH.R-2026-1042"
+  ],
+  "discharges": null,
+  "doi": null,
+  "exercisability": null,
+  "frozen_export": {
+    "bytes": 336793337,
+    "constants": 247,
+    "path": "_shared/exports/040a6e477554a6bf9edf8d11f837130a80849c430a79c2737a4e83e2aef651f0.export",
+    "sha256": "040a6e477554a6bf9edf8d11f837130a80849c430a79c2737a4e83e2aef651f0"
+  },
+  "gloss": "# MTH.C-2026-1042 — claim `TLT.NonIdentifiability.JEPA.jepa_boundary_witness_predict`\n\nStatement of record, frozen. Discharged by MTH.R-2026-1042.\n",
+  "handle": "MTH.C-2026-1042",
+  "headline": null,
+  "import_path": "WMSpec.NonIdentifiability.JepaBoundary",
+  "library": "WMSpec",
+  "pin": {
+    "gate_pins": {
+      "Lean4Checker": "b7398199245524275543dec6113229c9bb4902e5",
+      "lean4export": "ca36c44858e2d7ba40996203d2f08a69113d1211"
+    },
+    "lib_revs": {
+      "WMSpec": "design-lab@world-models (untracked corpus, single-Mathlib)"
+    },
+    "mathlib_rev": "fabf563a7c95a166b8d7b6efca11c8b4dc9d911f",
+    "toolchain": "leanprover/lean4:v4.31.0"
+  },
+  "polarity": "existential",
+  "predicted": null,
+  "provenance": "selfSeeded",
+  "schema_version": 2,
+  "statement": {
+    "decl_names": [
+      "TLT.NonIdentifiability.JEPA.jepa_boundary_witness_predict"
+    ],
+    "module": "WMSpec.NonIdentifiability.JepaBoundary",
+    "pretty": "¬∃ dec,\n    ∀ (x : Fin 2),\n      TLT.NonIdentifiability.JEPA.witnessT x =\n        dec (TLT.NonIdentifiability.JEPA.witnessPredict (TLT.NonIdentifiability.JEPA.witnessE x) 0)"
+  },
+  "status": "well-posed",
+  "suite": null,
+  "superseded_by": null,
+  "theorem_type": "theorem",
+  "tier": null,
+  "title": "TLT.NonIdentifiability.JEPA.jepa_boundary_witness_predict",
+  "trust_boundary_extensions": [],
+  "verdict": null,
+  "vouching": {
+    "gloss": "author",
+    "proof": null,
+    "statement": "kernel",
+    "witness": null
+  },
+  "witness": null
+}

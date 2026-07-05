@@ -1,0 +1,69 @@
+{
+  "schema_version": 2,
+  "doi": null,
+  "title": "WMSpec.StochasticWitness.bisimMetric_pos",
+  "polarity": "existential",
+  "provenance": "selfSeeded",
+  "exercisability": null,
+  "superseded_by": null,
+  "predicted": null,
+  "statement": {
+    "decl_names": [
+      "WMSpec.StochasticWitness.bisimMetric_pos"
+    ],
+    "module": "WMSpec.StochasticWitness",
+    "pretty": "0 <\n    WMSpec.bisimMetric WMSpec.StochasticWitness.𝒯 WMSpec.StochasticWitness.diffusion WMSpec.StochasticWitness.cCenter\n      WMSpec.StochasticWitness.cWell"
+  },
+  "frozen_export": {
+    "path": "_shared/exports/6f334bc4a8aeabfd005bed459a5d876dcb20c52893f7a7d84c16922f438d5012.export",
+    "sha256": "6f334bc4a8aeabfd005bed459a5d876dcb20c52893f7a7d84c16922f438d5012",
+    "bytes": 73935312,
+    "constants": 12
+  },
+  "trust_boundary_extensions": [],
+  "witness": null,
+  "pin": {
+    "toolchain": "leanprover/lean4:v4.31.0",
+    "mathlib_rev": "fabf563a7c95a166b8d7b6efca11c8b4dc9d911f",
+    "lib_revs": {
+      "WMSpec": "design-lab@world-models (untracked corpus, single-Mathlib)"
+    },
+    "gate_pins": {
+      "lean4export": "ca36c44858e2d7ba40996203d2f08a69113d1211",
+      "Lean4Checker": "b7398199245524275543dec6113229c9bb4902e5"
+    }
+  },
+  "dependency_closure": null,
+  "suite": null,
+  "import_path": "WMSpec.StochasticWitness",
+  "headline": null,
+  "library": "WMSpec",
+  "theorem_type": "theorem",
+  "created": "2026-07-03",
+  "bibtex": null,
+  "handle": "MTH.R-2026-1171",
+  "deposit_class": "demonstration",
+  "tier": "T0",
+  "status": "still-green",
+  "discharges": "MTH.C-2026-1171",
+  "discharged_by": null,
+  "axiom_manifest": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+  ],
+  "verdict": {
+    "result": "ADMITTED",
+    "gate_version": "mathesis-v4.31 stochastic-delta replay (realreplay-selftest)",
+    "shadow_kernels": {
+      "nanoda": "skipped-absent"
+    },
+    "log_path": "backend/SMOKETEST_WMSPEC.md"
+  },
+  "vouching": {
+    "statement": "kernel",
+    "proof": "kernel",
+    "witness": null,
+    "gloss": "author"
+  }
+}

@@ -1,0 +1,70 @@
+{
+  "axiom_manifest": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+  ],
+  "bibtex": null,
+  "created": "2026-07-03",
+  "dependency_closure": null,
+  "deposit_class": "demonstration",
+  "discharged_by": null,
+  "discharges": "MTH.C-2026-1168",
+  "doi": null,
+  "exercisability": null,
+  "frozen_export": {
+    "bytes": 73935312,
+    "constants": 12,
+    "path": "_shared/exports/6f334bc4a8aeabfd005bed459a5d876dcb20c52893f7a7d84c16922f438d5012.export",
+    "sha256": "6f334bc4a8aeabfd005bed459a5d876dcb20c52893f7a7d84c16922f438d5012"
+  },
+  "gloss": "# MTH.R-2026-1168 — result `WMSpec.StochasticWitness.bisimilarity_eq_kerWell` [T0]\n\n`theorem` in `WMSpec.StochasticWitness`; polarity universal. Discharges MTH.C-2026-1168. Kernel-verified (stochastic-delta replay); axioms ['propext', 'Classical.choice', 'Quot.sound'].\n\n```\nWMSpec.StochasticWitness.bisimilarity_eq_kerWell : WMSpec.bisimilarity WMSpec.StochasticWitness.𝒯 WMSpec.StochasticWitness.diffusion =\n    Setoid.ker WMSpec.StochasticWitness.wellEnergy\n```\n",
+  "handle": "MTH.R-2026-1168",
+  "headline": null,
+  "import_path": "WMSpec.StochasticWitness",
+  "library": "WMSpec",
+  "pin": {
+    "gate_pins": {
+      "Lean4Checker": "b7398199245524275543dec6113229c9bb4902e5",
+      "lean4export": "ca36c44858e2d7ba40996203d2f08a69113d1211"
+    },
+    "lib_revs": {
+      "WMSpec": "design-lab@world-models (untracked corpus, single-Mathlib)"
+    },
+    "mathlib_rev": "fabf563a7c95a166b8d7b6efca11c8b4dc9d911f",
+    "toolchain": "leanprover/lean4:v4.31.0"
+  },
+  "polarity": "universal",
+  "predicted": null,
+  "provenance": "selfSeeded",
+  "schema_version": 2,
+  "statement": {
+    "decl_names": [
+      "WMSpec.StochasticWitness.bisimilarity_eq_kerWell"
+    ],
+    "module": "WMSpec.StochasticWitness",
+    "pretty": "WMSpec.bisimilarity WMSpec.StochasticWitness.𝒯 WMSpec.StochasticWitness.diffusion =\n    Setoid.ker WMSpec.StochasticWitness.wellEnergy"
+  },
+  "status": "still-green",
+  "suite": null,
+  "superseded_by": null,
+  "theorem_type": "theorem",
+  "tier": "T0",
+  "title": "WMSpec.StochasticWitness.bisimilarity_eq_kerWell",
+  "trust_boundary_extensions": [],
+  "verdict": {
+    "gate_version": "mathesis-v4.31 stochastic-delta replay (realreplay-selftest)",
+    "log_path": "backend/SMOKETEST_WMSPEC.md",
+    "result": "ADMITTED",
+    "shadow_kernels": {
+      "nanoda": "skipped-absent"
+    }
+  },
+  "vouching": {
+    "gloss": "author",
+    "proof": "kernel",
+    "statement": "kernel",
+    "witness": null
+  },
+  "witness": null
+}

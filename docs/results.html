@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Results · Mathesis</title>
+<meta name="description" content="Browse the Results bank: 171 accessions.">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="topbar">
+  <div class="topbar-inner">
+    <a class="wordmark" href="index.html">Noumenal Research <span>&middot; Mathesis</span></a>
+    <div class="topbar-right">
+      <nav class="topnav" aria-label="Sections">
+        <a href="results.html" class="active">Results</a>
+<a href="claims.html" class="">Claims</a>
+<a href="dictionary.html" class="">Dictionary</a>
+<a href="charter.html" class="">Charter</a>
+<a href="about.html" class="">About</a>
+      </nav>
+      <button class="verify-chip" id="verifyBtn" type="button"
+              aria-haspopup="dialog" aria-expanded="false" aria-controls="verifyPanel">
+        <span class="vdot v-pending"></span><span class="vlabel">Verify</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<div id="verifyPanel" role="dialog" aria-modal="true" aria-label="Machine verification" hidden>
+  <div class="vcard">
+    <button class="vclose" type="button" aria-label="Close">&times;</button>
+    <h3>Machine verification</h3>
+    <div class="vbody"></div>
+  </div>
+</div>
+
+<main id="top">
+
+<section class="hero shell">
+  <p class="kicker">Noumenal Research &middot; Mathesis</p>
+  <h1 class="measure">Results</h1>
+  <p class="lede">Every result is a kernel-checked demonstration that discharges a claim. Filter by tier, module, or polarity, or search by handle, title, or module below.</p>
+  
+        <div class="factline">
+          <div class="fact"><strong>171</strong><span>total results</span></div>
+          <div class="fact"><strong>158</strong><span>T0 results (scale)</span></div>
+          <div class="fact"><strong>0</strong><span>T2 results (quality)</span></div>
+        </div>
+</section>
+
+<section class="shell browse-section">
+  <div class="controls" id="controls" data-bank="results">
+    <input type="search" id="searchBox" placeholder="Search handle, title, module..." aria-label="Search">
+    <select id="filterTier" aria-label="Filter by tier">
+      <option value="">All tiers</option>
+      <option value="T0">T0</option>
+      <option value="T1">T1</option>
+      <option value="T2">T2</option>
+      <option value="none">Not tiered</option>
+    </select>
+    <select id="filterPolarity" aria-label="Filter by polarity">
+      <option value="">All polarities</option>
+      <option value="universal">Universal</option>
+      <option value="existential">Existential</option>
+    </select>
+    <select id="filterModule" aria-label="Filter by module">
+      <option value="">All modules</option>
+    </select>
+    <span class="result-count" id="resultCount"></span>
+  </div>
+  <div class="accession-list" id="accessionList" aria-live="polite">
+    <p class="empty-note">Loading&hellip;</p>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="shell footer-inner">
+    <span>Noumenal Research &middot; Mathesis is an evidence bank, not a journal.</span>
+    <span><a href="charter.html">Charter</a> &middot; <a href="about.html">About</a></span>
+  </div>
+</footer>
+
+<script src="verify.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

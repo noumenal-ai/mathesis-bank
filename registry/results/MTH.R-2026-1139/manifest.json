@@ -1,0 +1,70 @@
+{
+  "schema_version": 2,
+  "handle": "MTH.R-2026-1139",
+  "doi": null,
+  "title": "WMSpec.ObjectiveInvariant.comp",
+  "deposit_class": "demonstration",
+  "polarity": "universal",
+  "provenance": "selfSeeded",
+  "exercisability": null,
+  "tier": "T0",
+  "status": "still-green",
+  "superseded_by": null,
+  "discharges": "MTH.C-2026-1139",
+  "discharged_by": null,
+  "predicted": null,
+  "statement": {
+    "decl_names": [
+      "WMSpec.ObjectiveInvariant.comp"
+    ],
+    "module": "WMSpec.ObjectiveInvariance",
+    "pretty": "∀ {Θ : Type u_1} {X : Type u_2} {M : Type u_3} {V : Type u_4} {L : Θ → X → M → V} {g h : X → X},\n  WMSpec.ObjectiveInvariant L g → WMSpec.ObjectiveInvariant L h → WMSpec.ObjectiveInvariant L (g ∘ h)"
+  },
+  "frozen_export": {
+    "path": "_shared/exports/040a6e477554a6bf9edf8d11f837130a80849c430a79c2737a4e83e2aef651f0.export",
+    "sha256": "040a6e477554a6bf9edf8d11f837130a80849c430a79c2737a4e83e2aef651f0",
+    "bytes": 336793337,
+    "constants": 247
+  },
+  "axiom_manifest": [],
+  "trust_boundary_extensions": [],
+  "witness": null,
+  "verdict": {
+    "result": "ADMITTED",
+    "gate_version": "mathesis-v4.31 whole-theory replay (realreplay-selftest)",
+    "shadow_kernels": {
+      "nanoda": "skipped-absent"
+    },
+    "log_path": "backend/SMOKETEST_WMSPEC.md"
+  },
+  "pin": {
+    "toolchain": "leanprover/lean4:v4.31.0",
+    "mathlib_rev": "fabf563a7c95a166b8d7b6efca11c8b4dc9d911f",
+    "lib_revs": {
+      "WMSpec": "design-lab@world-models (untracked corpus, single-Mathlib)"
+    },
+    "gate_pins": {
+      "lean4export": "ca36c44858e2d7ba40996203d2f08a69113d1211",
+      "Lean4Checker": "b7398199245524275543dec6113229c9bb4902e5"
+    }
+  },
+  "dependency_closure": [
+    {
+      "handle": "MTH.D-2026-1062",
+      "tier": null
+    }
+  ],
+  "suite": null,
+  "vouching": {
+    "statement": "kernel",
+    "proof": "kernel",
+    "witness": null,
+    "gloss": "author"
+  },
+  "import_path": "WMSpec.ObjectiveInvariance",
+  "headline": null,
+  "library": "WMSpec",
+  "theorem_type": "theorem",
+  "created": "2026-07-03",
+  "bibtex": null
+}

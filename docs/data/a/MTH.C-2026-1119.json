@@ -1,0 +1,78 @@
+{
+  "axiom_manifest": null,
+  "bibtex": null,
+  "created": "2026-07-03",
+  "dependency_closure": [
+    {
+      "handle": "MTH.D-2026-1065",
+      "tier": null
+    },
+    {
+      "handle": "MTH.D-2026-1062",
+      "tier": null
+    },
+    {
+      "handle": "MTH.R-2026-1107",
+      "tier": "T0"
+    },
+    {
+      "handle": "MTH.D-2026-1053",
+      "tier": null
+    }
+  ],
+  "deposit_class": "claim",
+  "discharged_by": [
+    "MTH.R-2026-1119"
+  ],
+  "discharges": null,
+  "doi": null,
+  "exercisability": null,
+  "frozen_export": {
+    "bytes": 336793337,
+    "constants": 247,
+    "path": "_shared/exports/040a6e477554a6bf9edf8d11f837130a80849c430a79c2737a4e83e2aef651f0.export",
+    "sha256": "040a6e477554a6bf9edf8d11f837130a80849c430a79c2737a4e83e2aef651f0"
+  },
+  "gloss": "# MTH.C-2026-1119 — claim `WMSpec.mixed_invariance_characterization`\n\nStatement of record, frozen. Discharged by MTH.R-2026-1119.\n",
+  "handle": "MTH.C-2026-1119",
+  "headline": null,
+  "import_path": "WMSpec.MixedFamilies",
+  "library": "WMSpec",
+  "pin": {
+    "gate_pins": {
+      "Lean4Checker": "b7398199245524275543dec6113229c9bb4902e5",
+      "lean4export": "ca36c44858e2d7ba40996203d2f08a69113d1211"
+    },
+    "lib_revs": {
+      "WMSpec": "design-lab@world-models (untracked corpus, single-Mathlib)"
+    },
+    "mathlib_rev": "fabf563a7c95a166b8d7b6efca11c8b4dc9d911f",
+    "toolchain": "leanprover/lean4:v4.31.0"
+  },
+  "polarity": "universal",
+  "predicted": null,
+  "provenance": "selfSeeded",
+  "schema_version": 2,
+  "statement": {
+    "decl_names": [
+      "WMSpec.mixed_invariance_characterization"
+    ],
+    "module": "WMSpec.MixedFamilies",
+    "pretty": "∀ {Θ : Type u_1} {Xd : Type u_2} {Yl : Type u_3} {ι : Type u_4} {k r : ℕ} {Lpred : Θ → Xd → List ι → ℕ}\n  {Gd : Fin k → Xd → ℝ} {Gl : Fin r → Yl → ℝ} {lam : Fin k → ℝ} {mu : Fin r → ℝ} {g : Xd → Xd} {h : Yl → Yl}\n  [Nonempty Yl],\n  (∀ (θ : Θ) (x : Xd) (I₁ I₂ : List ι), Lpred θ x (I₁ ++ I₂) = Lpred θ x I₁ + Lpred θ x I₂) →\n    (∀ (j : Fin k), 0 < lam j) →\n      (∀ (i : Fin r), 0 < mu i) →\n        (∀ (j : Fin k) (x : Xd), Gd j x ≤ Gd j (g x)) →\n          (∀ (i : Fin r) (y : Yl), Gl i y ≤ Gl i (h y)) →\n            ∀ (θ₀ : Θ) (x₀ : Xd),\n              WMSpec.ObjectiveInvariant (WMSpec.mixedObjective Lpred Gd Gl lam mu) (WMSpec.jointAction g h) ↔\n                WMSpec.ObjectiveInvariant Lpred g ∧\n                  (∀ (j : Fin k) (x : Xd), Gd j (g x) = Gd j x) ∧ ∀ (i : Fin r) (y : Yl), Gl i (h y) = Gl i y"
+  },
+  "status": "well-posed",
+  "suite": null,
+  "superseded_by": null,
+  "theorem_type": "theorem",
+  "tier": null,
+  "title": "WMSpec.mixed_invariance_characterization",
+  "trust_boundary_extensions": [],
+  "verdict": null,
+  "vouching": {
+    "gloss": "author",
+    "proof": null,
+    "statement": "kernel",
+    "witness": null
+  },
+  "witness": null
+}

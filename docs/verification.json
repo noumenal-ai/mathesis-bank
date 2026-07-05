@@ -1,0 +1,27 @@
+{
+  "schema": 1,
+  "generatedBy": "local",
+  "repo": "",
+  "workflow": "verify.yml",
+  "commit": "local",
+  "timestamp": "2026-07-05T06:17:36Z",
+  "runUrl": "",
+  "status": "pass",
+  "checks": [
+    { "id": "schema", "label": "Every manifest validates against schema v2", "status": "pass", "detail": "430 / 430 manifests schema-valid" },
+    { "id": "replay", "label": "Recorded whole-theory replay is ADMITTED", "status": "pass", "detail": "171 / 171 results carry verdict ADMITTED" },
+    { "id": "axioms", "label": "Axiom closure", "status": "pass", "detail": "171 / 171 results depend only on propext, Classical.choice, Quot.sound" },
+    { "id": "crosslinks", "label": "Claim <-> result cross-links resolve", "status": "pass", "detail": "0 broken cross-link(s)" }
+  ],
+  "counts": {
+    "schema_valid": 430,
+    "schema_total": 430,
+    "definitions": 88,
+    "claims": 171,
+    "results": 171,
+    "total_accessions": 430,
+    "broken_crosslinks": 0
+  },
+  "axiom_closure": ["propext", "Classical.choice", "Quot.sound"],
+  "toolchain": "leanprover/lean4:v4.31.0"
+}

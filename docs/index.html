@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mathesis · Noumenal Research</title>
+<meta name="description" content="An evidence bank for machine-checked machine-learning theory.">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="topbar">
+  <div class="topbar-inner">
+    <a class="wordmark" href="index.html">Noumenal Research <span>&middot; Mathesis</span></a>
+    <div class="topbar-right">
+      <nav class="topnav" aria-label="Sections">
+        <a href="results.html" class="">Results</a>
+<a href="claims.html" class="">Claims</a>
+<a href="dictionary.html" class="">Dictionary</a>
+<a href="charter.html" class="">Charter</a>
+<a href="about.html" class="">About</a>
+      </nav>
+      <button class="verify-chip" id="verifyBtn" type="button"
+              aria-haspopup="dialog" aria-expanded="false" aria-controls="verifyPanel">
+        <span class="vdot v-pending"></span><span class="vlabel">Verify</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<div id="verifyPanel" role="dialog" aria-modal="true" aria-label="Machine verification" hidden>
+  <div class="vcard">
+    <button class="vclose" type="button" aria-label="Close">&times;</button>
+    <h3>Machine verification</h3>
+    <div class="vbody"></div>
+  </div>
+</div>
+
+<main id="top">
+
+<section class="hero shell">
+  <p class="kicker">Noumenal Research &middot; Mathesis</p>
+  <h1 class="measure">An evidence bank for machine-checked theory.</h1>
+  <p class="lede">
+    Mathesis holds three banks: <strong>definitions</strong> (the Dictionary),
+    <strong>claims</strong> (statements of record), and <strong>results</strong>
+    (kernel-checked demonstrations that discharge claims). Nothing here is ranked.
+    Every result carries its own proof, its own witness, and its own axiom manifest,
+    rendered exactly as the kernel and the author left them.
+  </p>
+  <div class="actions">
+    <a class="btn primary" href="results.html">Browse results</a>
+    <a class="btn" href="charter.html">Read the charter</a>
+  </div>
+  <div class="factline">
+    <div class="fact"><strong>171</strong><span>total results</span></div>
+    <div class="fact"><strong>158</strong><span>T0 results (scale)</span></div>
+    <div class="fact"><strong>0</strong><span>T2 results (quality)</span></div>
+    <div class="fact"><strong>430</strong><span>total accessions</span></div>
+  </div>
+</section>
+
+<section class="shell section-head-block">
+  <div class="section-head">
+    <h2>Three banks, one ledger</h2>
+    <p>Each accession is immutable once written. Corrections mint a new accession; they never
+       edit the old one.</p>
+  </div>
+  <div class="obligations">
+    <div class="ob">
+      <span class="tag">Dictionary</span>
+      <h3>Definitions</h3>
+      <p>The vocabulary the claims and results are stated in. Kernel-checked for internal
+         consistency; interrogation of fit against intent is a separate, ongoing overlay.</p>
+      <a href="dictionary.html">Browse the Dictionary &rarr;</a>
+    </div>
+    <div class="ob">
+      <span class="tag">Claims</span>
+      <h3>Claims</h3>
+      <p>A statement of record, frozen before any proof is attempted. A claim is open until
+         some result discharges it.</p>
+      <a href="claims.html">Browse Claims &rarr;</a>
+    </div>
+    <div class="ob">
+      <span class="tag">Results</span>
+      <h3>Results</h3>
+      <p>A kernel-checked demonstration: a proof, a witness where applicable, and an axiom
+         manifest, all rendered verbatim from the gate.</p>
+      <a href="results.html">Browse Results &rarr;</a>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="shell footer-inner">
+    <span>Noumenal Research &middot; Mathesis is an evidence bank, not a journal.</span>
+    <span><a href="charter.html">Charter</a> &middot; <a href="about.html">About</a></span>
+  </div>
+</footer>
+
+<script src="verify.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

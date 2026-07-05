@@ -1,0 +1,63 @@
+{
+  "axiom_manifest": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+  ],
+  "bibtex": null,
+  "created": "2026-07-03",
+  "dependency_closure": null,
+  "deposit_class": "definition",
+  "discharged_by": null,
+  "discharges": null,
+  "doi": null,
+  "exercisability": "exercisable",
+  "frozen_export": {
+    "bytes": 73935312,
+    "constants": 12,
+    "path": "_shared/exports/6f334bc4a8aeabfd005bed459a5d876dcb20c52893f7a7d84c16922f438d5012.export",
+    "sha256": "6f334bc4a8aeabfd005bed459a5d876dcb20c52893f7a7d84c16922f438d5012"
+  },
+  "gloss": "# MTH.D-2026-1081 — definition `WMSpec.StochasticWitness.wellEnergy`\n\n`def` in `WMSpec.StochasticWitness`; exercisable. Author-provided; Dictionary interrogation pending.\n\n```\nWMSpec.StochasticWitness.wellEnergy : Fin 3 → ℝ\n```\n",
+  "handle": "MTH.D-2026-1081",
+  "headline": null,
+  "import_path": "WMSpec.StochasticWitness",
+  "library": "WMSpec",
+  "pin": {
+    "gate_pins": {
+      "Lean4Checker": "b7398199245524275543dec6113229c9bb4902e5",
+      "lean4export": "ca36c44858e2d7ba40996203d2f08a69113d1211"
+    },
+    "lib_revs": {
+      "WMSpec": "design-lab@world-models (untracked corpus, single-Mathlib)"
+    },
+    "mathlib_rev": "fabf563a7c95a166b8d7b6efca11c8b4dc9d911f",
+    "toolchain": "leanprover/lean4:v4.31.0"
+  },
+  "polarity": null,
+  "predicted": null,
+  "provenance": "selfSeeded",
+  "schema_version": 2,
+  "statement": {
+    "decl_names": [
+      "WMSpec.StochasticWitness.wellEnergy"
+    ],
+    "module": "WMSpec.StochasticWitness",
+    "pretty": "Fin 3 → ℝ"
+  },
+  "status": "proposed",
+  "suite": null,
+  "superseded_by": null,
+  "theorem_type": "def",
+  "tier": null,
+  "title": "WMSpec.StochasticWitness.wellEnergy",
+  "trust_boundary_extensions": [],
+  "verdict": null,
+  "vouching": {
+    "gloss": "author",
+    "proof": null,
+    "statement": "kernel",
+    "witness": null
+  },
+  "witness": null
+}
