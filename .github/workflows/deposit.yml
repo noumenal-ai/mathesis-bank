@@ -108,7 +108,12 @@ jobs:
         run: |
           L4E_PKG="$GITHUB_WORKSPACE/backend-gate/.lake/packages/lean4export"
           test -d "$L4E_PKG" || { echo "FATAL: lean4export package not resolved at $L4E_PKG"; exit 1; }
-          ( cd "$L4E_PKG" && lake build ) || { echo "FATAL: lean4export build failed"; exit 1; }
+          # Build lean4export with the SAME pinned toolchain the deposit build +
+          # gate exe use — `elan run <tc>` overrides any toolchain lean4export's
+          # own package pins, so its binary reads v4.31.0 oleans (else the export
+          # step hits "incompatible header" reading the freshly-built Submission.olean).
+          TC="$(tr -d '[:space:]' < "$GITHUB_WORKSPACE/backend-gate/lean-toolchain")"
+          ( cd "$L4E_PKG" && elan run "$TC" lake build ) || { echo "FATAL: lean4export build failed"; exit 1; }
           L4E="$(find "$L4E_PKG/.lake" -type f -name lean4export -perm -u+x 2>/dev/null | head -n1)"
           test -x "$L4E" || { echo "FATAL: lean4export exe not found after build"; find "$L4E_PKG" -name 'lean4export*' -type f || true; exit 1; }
           echo "MATHESIS_LEAN4EXPORT=$L4E" >> "$GITHUB_ENV"
