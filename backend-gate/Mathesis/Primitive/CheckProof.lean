@@ -158,17 +158,22 @@ where
 
 end Axioms
 
-/-- **Axiom closure.** Every axiom transitively reached from any target's proof value must lie in
-`permitted`. -/
+/-- **Axiom closure.** Every axiom transitively reached from any target's FULL dependency graph
+(its type, its value, and its structural children) must lie in `permitted`.
+
+Kind-agnostic (finding F4): the target may be a `thmInfo` (audits the proof), a `defnInfo`/
+`opaqueInfo` (audits the body — so a poisoned `def` whose body reaches `sorryAx` is caught, not
+only theorems), or even an `axiomInfo` (audited against `permitted` directly). Seeding the worklist
+with the target itself makes `Axioms.loop` close over `runForUsedConsts`, which visits type + name +
+value + children — this also audits a theorem's TYPE-side constants (matching `#print axioms`
+closure), which the previous proof-value-only seeding missed. -/
 def checkAxioms (candidate : ExportedEnv) (targets permitted : Array Name) :
     Except String Unit := do
   let mut worklist := #[]
   for target in targets do
-    let some candConst := candidate.constMap[target]?
-      | throw s!"target absent from candidate: '{target}'"
-    let .thmInfo tv := candConst
-      | throw s!"target is not a theorem: '{target}'"
-    worklist := worklist ++ tv.value.getUsedConstants
+    if !candidate.constMap.contains target then
+      throw s!"target absent from candidate: '{target}'"
+    worklist := worklist.push target
   Axioms.loop.run { candidate, permitted := Std.HashSet.ofArray permitted }
     |>.run' { worklist, checked := {} }
 

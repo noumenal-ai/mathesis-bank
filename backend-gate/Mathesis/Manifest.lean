@@ -52,9 +52,13 @@ partial def buildConstMap (env : Environment) (work : Array Name)
       | some ci => buildConstMap env (rest ++ usedConstsOf ci) (cm.insert n ci) (seen.insert n)
       | none => buildConstMap env rest cm (seen.insert n)
 
-/-- **Freeze `R` in-process.** Extract the reference `ExportedEnv` closing over `stmtDecls` in a
-*trusted* environment `env` (the bank's build over admitted definitions). The result is the frozen
-reference; it must be persisted with the accession and never re-derived from a deposit. -/
+/-- **TEST-ONLY. Do NOT use to freeze `R` for ingestion (finding F7).** This in-process extractor
+closes over `stmtDecls` using the `getUsedConstants` worklist, which UNDER-CLOSES the kernel
+dependency graph: on a real statement it produces ~11 constants where the true `lean4export` closure
+is ~384, and the resulting env FAILS `replayLean` (`unknown constant 'sorryAx'`-style). It is kept
+only for in-process fixture tests where the env is never replayed. The ingestion/freeze path MUST
+use `freezeExportText` (the real `lean4export` binary), whose output is complete and replay-accepts;
+callers should assert `replayLean` accepts the frozen `R` before banking it. -/
 def referenceExport (env : Environment) (stmtDecls : Array Name) : ExportedEnv :=
   { constMap := buildConstMap env stmtDecls {} {}, constOrder := stmtDecls }
 

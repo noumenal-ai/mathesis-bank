@@ -99,43 +99,97 @@ where
 
 end CollectAxioms
 
-/-- Every axiom transitively reached from `target`'s proof value, in the candidate environment.
-Purely informative — never gates. Returns `none` (with a note) rather than blocking the report if
-the traversal itself fails (e.g. a dangling constant reference), since the pass/fail decision
-comes from `checkAxioms` regardless. -/
+/-- Every axiom transitively reached from `target`'s FULL dependency graph (type + value +
+children), in the candidate environment. Kind-agnostic (finding F4): works for `defnInfo`/
+`opaqueInfo` bodies as well as `thmInfo` proofs, matching the generalized `checkAxioms`. Purely
+informative — never gates. Returns `none` (with a note) rather than blocking the report if the
+traversal itself fails (e.g. a dangling constant reference), since the pass/fail decision comes from
+`checkAxioms` regardless. -/
 def collectAxioms (candidate : ExportedEnv) (target : Name) : Array Name × Option String :=
   match candidate.constMap[target]? with
   | none => (#[], some s!"target absent from candidate: '{target}'")
-  | some (.thmInfo tv) =>
-    let worklist := tv.value.getUsedConstants
+  | some _ =>
     let run := CollectAxioms.loop.run { candidate }
-      |>.run { worklist, checked := {}, reached := {} }
+      |>.run { worklist := #[target], checked := {}, reached := {} }
     match run with
     | .ok ((), st) => (st.reached.toArray, none)
     | .error e => (#[], some e)
-  | some _ => (#[], some s!"target is not a theorem: '{target}'")
+
+/-! ### Kind + triviality (finding F1/C2/C3 — bind the claim to the type)
+
+The axiom audit proves a target is kernel-clean; it says NOTHING about whether the target's
+statement is meaningful. A `theorem T : True := trivial` or a `def Robust := fun _ => True` passes
+every mechanical leg honestly while the manifest claims it is a landmark result / a real predicate.
+These checks emit a syntactic degeneracy flag (never a gate — a trivial theorem is still VALID) so
+the CI can route it to human review instead of publishing it verbatim as "verified". Conservative by
+design: only SYNTACTIC vacuity is flagged, so a real-but-simple `2 + 2 = 4` is never caught. -/
+
+def kindString : ConstantInfo → String
+  | .axiomInfo _ => "axiom"
+  | .thmInfo _ => "theorem"
+  | .defnInfo _ => "definition"
+  | .opaqueInfo _ => "opaque"
+  | .quotInfo _ => "quot"
+  | .inductInfo _ => "inductive"
+  | .ctorInfo _ => "constructor"
+  | .recInfo _ => "recursor"
+
+partial def stripForalls : Expr → Expr
+  | .forallE _ _ b _ => stripForalls b
+  | e => e
+
+partial def stripLambdas : Expr → Expr
+  | .lam _ _ b _ => stripLambdas b
+  | e => e
+
+/-- A `Prop` conclusion that is syntactically degenerate: literally `True`, or a reflexive
+`a = a` / `a ↔ a` / `HEq a a` (both sides the SAME `Expr`). -/
+def degenerateProp (concl : Expr) : Option String :=
+  if concl.isConstOf ``True then some "conclusion is `True`"
+  else match concl.getAppFnArgs with
+    | (``Eq, #[_, a, b]) => if a == b then some "conclusion is a reflexive equality `a = a`" else none
+    | (``Iff, #[a, b]) => if a == b then some "conclusion is a reflexive `a ↔ a`" else none
+    | (``HEq, #[_, a, _, b]) => if a == b then some "conclusion is a reflexive `HEq a a`" else none
+    | _ => none
+
+/-- Syntactic triviality of a target: for a theorem, a degenerate conclusion (after stripping the
+`∀`-binders); for a definition, a body that is constantly `True` (a vacuous predicate). -/
+def trivialityOf (info : ConstantInfo) : Option String :=
+  match info with
+  | .thmInfo tv => degenerateProp (stripForalls tv.type)
+  | .defnInfo dv =>
+      if (stripLambdas dv.value).isConstOf ``True then
+        some "definition body is constantly `True` (vacuous predicate)"
+      else none
+  | _ => none
 
 /-! ### Per-target audit -/
 
-/-- One target's audit result: the gate decision (`checkAxioms`, unchanged from Primitive 1) plus
-the informative axiom traversal (`collectAxioms`, this file). -/
+/-- One target's audit result: the gate decision (`checkAxioms`), the informative axiom traversal
+(`collectAxioms`), the constant's `kind`, and a syntactic `triviality` flag. -/
 structure TargetAudit where
   decl : Name
+  kind : String
   pass : Bool
   illegalAxiom : Option String
   axiomsReached : Array Name
+  triviality : Option String
 
-/-- Run both the gate decision and the informative traversal for one target against `candidate`,
-using the hard-coded `permittedAxioms`. `pass`/`illegalAxiom` are decided SOLELY by `checkAxioms`
-(Primitive 1, unmodified); `collectAxioms`'s own traversal note (if its independent walk fails) is
-never consulted for the gate decision — only `axiomsReached` comes from it. -/
+/-- Run the gate decision + informative traversal + kind/triviality for one target against
+`candidate`, using the hard-coded `permittedAxioms`. `pass`/`illegalAxiom` are decided SOLELY by
+`checkAxioms`; `triviality` is emitted for the CI to route to review but NEVER affects `pass` (a
+trivial theorem is valid, just mis-claimed). -/
 def auditTarget (candidate : ExportedEnv) (decl : Name) : TargetAudit :=
+  let info? := candidate.constMap[decl]?
   let (pass, illegalAxiom) :=
     match checkAxioms candidate #[decl] permittedAxioms with
     | .ok () => (true, none)
     | .error e => (false, some e)
   let (reached, _note) := collectAxioms candidate decl
-  { decl, pass, illegalAxiom, axiomsReached := reached }
+  { decl,
+    kind := match info? with | some i => kindString i | none => "absent",
+    pass, illegalAxiom, axiomsReached := reached,
+    triviality := info?.bind trivialityOf }
 
 /-- Extract the illegal-axiom name from a `checkAxioms` error string, if the failure was in fact an
 "illegal axiom reached" error (as opposed to some other failure like an absent constant). The error
@@ -155,12 +209,14 @@ def extractIllegalAxiom (msg : String) : Option String :=
 def targetAuditToJson (t : TargetAudit) : Json :=
   Json.mkObj [
     ("decl", Json.str t.decl.toString),
+    ("kind", Json.str t.kind),
     ("axiom_audit", Json.str (if t.pass then "pass" else "fail")),
     ("illegal_axiom",
       match t.illegalAxiom.bind extractIllegalAxiom with
       | some ax => Json.str ax
       | none => Json.null),
-    ("axioms_reached", Json.arr (t.axiomsReached.map (Json.str ·.toString)))
+    ("axioms_reached", Json.arr (t.axiomsReached.map (Json.str ·.toString))),
+    ("triviality", match t.triviality with | some r => Json.str r | none => Json.null)
   ]
 
 /-! ### Argv parsing -/
