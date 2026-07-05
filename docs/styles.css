@@ -316,6 +316,21 @@ footer { padding: 2.2rem 0; border-bottom: none; }
 .deposit-steps { max-width: var(--measure); padding-left: 1.2rem; }
 .deposit-steps > li { margin-bottom: 0.9rem; line-height: 1.55; }
 .deposit-steps pre { margin-top: 0.5rem; }
+.deposit-form { display: flex; flex-direction: column; gap: 1rem; max-width: var(--measure); margin-top: 1rem; }
+.deposit-form label { display: flex; flex-direction: column; gap: 0.3rem; font-size: 0.9rem; color: var(--ink-soft); font-weight: 600; }
+.deposit-form .req { font-weight: 400; font-style: italic; color: var(--accent-dark); font-size: 0.78rem; }
+.deposit-form .opt { font-weight: 400; font-style: italic; color: var(--ink-faint); font-size: 0.78rem; }
+.deposit-form input, .deposit-form select, .deposit-form textarea {
+  font: inherit; font-size: 0.92rem; color: var(--ink); background: var(--panel);
+  border: 1px solid var(--line); border-radius: 6px; padding: 0.5rem 0.6rem; width: 100%; box-sizing: border-box;
+}
+.deposit-form textarea { font-family: var(--mono); font-size: 0.84rem; line-height: 1.5; resize: vertical; }
+.deposit-form input:focus, .deposit-form select:focus, .deposit-form textarea:focus {
+  outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.deposit-actions { display: flex; gap: 0.6rem; flex-wrap: wrap; }
+.deposit-preview { max-width: var(--measure); margin-top: 1.2rem; }
+.deposit-preview pre { max-height: 22rem; overflow: auto; }
 
 .statement-pretty {
   background: var(--code-bg); color: var(--code-ink); border-radius: 8px;
