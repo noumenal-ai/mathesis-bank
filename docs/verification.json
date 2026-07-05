@@ -3,15 +3,17 @@
   "generatedBy": "ci",
   "repo": "noumenal-ai/mathesis-bank",
   "workflow": "verify.yml",
-  "commit": "bdd0249bfdb62353def09276a55fa3c91921d5bd",
-  "timestamp": "2026-07-05T09:29:22Z",
-  "runUrl": "https://github.com/noumenal-ai/mathesis-bank/actions/runs/28736269194",
+  "commit": "f341422344b3fbc09cd445451279d6a5fe6b56ad",
+  "timestamp": "2026-07-05T16:03:51Z",
+  "runUrl": "https://github.com/noumenal-ai/mathesis-bank/actions/runs/28746617922",
   "status": "pass",
   "checks": [
     { "id": "schema", "label": "Every manifest validates against schema v2", "status": "pass", "detail": "430 / 430 manifests schema-valid" },
     { "id": "replay", "label": "Recorded whole-theory replay is ADMITTED", "status": "pass", "detail": "171 / 171 results carry verdict ADMITTED" },
     { "id": "axioms", "label": "Axiom closure", "status": "pass", "detail": "171 / 171 results depend only on propext, Classical.choice, Quot.sound" },
-    { "id": "crosslinks", "label": "Claim <-> result cross-links resolve", "status": "pass", "detail": "0 broken cross-link(s)" }
+    { "id": "crosslinks", "label": "Claim <-> result cross-links resolve", "status": "pass", "detail": "0 broken cross-link(s)" },
+    { "id": "rederivation", "label": "Independent kernel re-derivation against frozen export agrees", "status": "pass", "detail": "rederive_status=ran, 0 mismatch(es)" },
+    { "id": "human_review", "label": "No results pending human review (trust_boundary_extensions)", "status": "pass", "detail": "0 result(s) flagged" }
   ],
   "counts": {
     "schema_valid": 430,
@@ -20,7 +22,9 @@
     "claims": 171,
     "results": 171,
     "total_accessions": 430,
-    "broken_crosslinks": 0
+    "broken_crosslinks": 0,
+    "rederive_mismatch": 0,
+    "needs_human_review": 0
   },
   "axiom_closure": ["propext", "Classical.choice", "Quot.sound"],
   "toolchain": "leanprover/lean4:v4.31.0"
