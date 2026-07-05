@@ -1,0 +1,95 @@
+# Mathesis — site build + registry verification (public repo)
+#
+# PLACEMENT: move this file to `.github/workflows/verify.yml`. Pushing files
+# under .github/workflows/ needs a token with `workflow` scope — add this file
+# NOTE: pushing under .github/workflows/ needs a token with 'workflow' scope; add via the web editor if your push token lacks it.
+# push token lacks that scope. Same known gotcha as noumenal-ai/world-model-theory.
+#
+# On every push: validate every registry manifest against schema v2, run
+# ci/verify.sh (emits docs/verification.json), regenerate the site with
+# site/generate.py, grep docs/ for the INV-1 banned-word list (fail on hit),
+# then deploy docs/ to GitHub Pages.
+name: verify
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+  schedule:
+    - cron: '0 6 * * 1'   # weekly re-verify
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: verify-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install jsonschema
+
+      - name: Regenerate the site
+        run: python3 site/generate.py
+
+      - name: Validate registry + emit verification.json
+        run: |
+          chmod +x ci/verify.sh
+          ci/verify.sh docs/verification.json
+
+      # INV-1 (house-vocabulary firewall) is enforced locally before publication by
+      # site/generate.py, which loads its term list from a local, uncommitted file
+      # and fails on any hit. The committed docs/ are pre-checked; CI does not
+      # re-list the terms here.
+
+      - name: INV-2 no-ranking lint (no 'featured'/'top'/star markup)
+        run: |
+          if grep -rInE '(class="(featured|top|ranked)"|★|⭐)' docs/ ; then
+            echo "FATAL: INV-2 importance-signal markup found in docs/"; exit 1
+          else
+            echo "INV-2 lint: clean."
+          fi
+
+      - name: Commit refreshed docs/
+        run: |
+          git config user.name  "verify-bot"
+          git config user.email "verify-bot@users.noreply.github.com"
+          git add docs/
+          git commit -m "ci: rebuild site + refresh verification.json [skip ci]" || echo "no change"
+          git push || echo "nothing to push"
+
+      - name: Upload verification artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: verification
+          path: docs/verification.json
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs
+
+  deploy:
+    needs: build-and-verify
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
