@@ -236,6 +236,7 @@ def page_shell(title, description, active, body, depth=0):
         ("results", "Results"),
         ("claims", "Claims"),
         ("dictionary", "Dictionary"),
+        ("deposit", "Deposit"),
         ("charter", "Charter"),
         ("about", "About"),
     ]
@@ -654,6 +655,7 @@ def render_home(records):
   </p>
   <div class="actions">
     <a class="btn primary" href="results.html">Browse results</a>
+    <a class="btn" href="deposit.html">Deposit</a>
     <a class="btn" href="charter.html">Read the charter</a>
   </div>
   <div class="factline">
@@ -697,6 +699,85 @@ def render_home(records):
 """
     title = "Mathesis · Noumenal Research"
     return page_shell(title, "An evidence bank for machine-checked machine-learning theory.", "home", body, depth=0)
+
+
+def render_deposit():
+    body = """
+<section class="hero shell">
+  <p class="kicker">Noumenal Research &middot; Mathesis</p>
+  <h1 class="measure">Deposit</h1>
+  <p class="measure">The bank accepts deposits the way arXiv accepts papers and GenBank accepts
+  sequences: you submit, an automated gate checks it, and it enters the public record. Here the gate
+  is a proof kernel, and it re-derives every deposit from scratch &mdash; it never takes the deposit's
+  word for what it proves.</p>
+</section>
+
+<section class="shell detail-section">
+  <div class="callout">
+    <p>A deposit is a pull request.</p>
+    <p>The gate re-derives it in CI. No human judges the mathematics.</p>
+    <p>A maintainer merge signs off only the plain-language description.</p>
+  </div>
+</section>
+
+<section class="shell detail-section">
+  <h3>What you can deposit</h3>
+  <ul>
+    <li><strong>A result</strong> &mdash; a statement together with a machine-checked proof.</li>
+    <li><strong>A definition</strong> &mdash; a formal notion others can build on (the Dictionary).</li>
+    <li><strong>A claim</strong> &mdash; a statement of record, open for a result to discharge.</li>
+  </ul>
+</section>
+
+<section class="shell detail-section">
+  <h3>How to deposit</h3>
+  <ol class="deposit-steps">
+    <li>Add a folder to the repository with three files:
+      <pre class="statement-pretty"><code>deposits/&lt;your-slug&gt;/
+  submission.lean   the Lean source the gate builds and re-derives
+  deposit.toml      declaration names, toolchain pin, the claim it discharges (if any)
+  gloss.md          your plain-language description (author-provided, not machine-checked)</code></pre>
+    </li>
+    <li>Open a pull request.</li>
+    <li>The gate runs automatically and posts its verdict. Fix and push until it is green.</li>
+    <li>A maintainer confirms the description reads faithfully to the formal statement and merges.
+        The deposit is assigned an accession number and enters the public record.</li>
+  </ol>
+</section>
+
+<section class="shell detail-section">
+  <h3>What the gate checks</h3>
+  <p>Every check below is re-run from the deposit's frozen proof export. None is read from what the
+     manifest claims about itself.</p>
+  <ul>
+    <li><strong>Kernel replay</strong> &mdash; the proof is accepted by the Lean 4 kernel.</li>
+    <li><strong>Axiom closure</strong> &mdash; it depends only on
+      <code class="chip chip-axiom">propext</code> <code class="chip chip-axiom">Classical.choice</code>
+      <code class="chip chip-axiom">Quot.sound</code>. Anything more must be declared, and is flagged
+      for review rather than admitted silently.</li>
+    <li><strong>Definition audit</strong> &mdash; a definition's body is held to the same axiom
+      whitelist, so a definition cannot smuggle in an assumption.</li>
+    <li><strong>Statement identity</strong> &mdash; a result that discharges a claim must prove that
+      exact claim, closed over every definition it names.</li>
+    <li><strong>Non-triviality</strong> &mdash; a statement that is syntactically trivial, or a
+      definition that is vacuously true, is routed to human review rather than published as a result.</li>
+  </ul>
+  <p>What the gate does <em>not</em> check: that the plain-language description matches the formal
+     statement. That is author-provided and confirmed only by the maintainer's sign-off. See the
+     <a href="charter.html">Charter</a>.</p>
+</section>
+
+<section class="shell detail-section">
+  <h3>Status</h3>
+  <p>The founding volume was deposited by the maintainers, and the gate above runs live on every
+     change to the bank. Deposits from outside the maintainer team are being enabled after a final
+     security review of the untrusted-build path; until then, open an issue on the repository to
+     propose one.</p>
+  <p class="mono-note"><a href="https://github.com/noumenal-ai/mathesis-bank">github.com/noumenal-ai/mathesis-bank</a></p>
+</section>
+"""
+    title = "Deposit · Mathesis"
+    return page_shell(title, "How to deposit into the Mathesis bank: open a pull request, the proof kernel re-derives it.", "deposit", body, depth=0)
 
 
 def render_charter():
@@ -916,8 +997,9 @@ def main():
     for bank_key in BANKS:
         (DOCS / f"{bank_key}.html").write_text(render_bank_index(bank_key, records))
 
-    # home / charter / about
+    # home / deposit / charter / about
     (DOCS / "index.html").write_text(render_home(records))
+    (DOCS / "deposit.html").write_text(render_deposit())
     (DOCS / "charter.html").write_text(render_charter())
     (DOCS / "about.html").write_text(render_about())
 
