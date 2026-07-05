@@ -42,7 +42,11 @@ on:
       - 'deposits/**'
   # Dry-run: manually gate every committed deposit dir (no PR needed). Lets the
   # full pipeline be exercised on a branch without opening external deposits.
+  # (workflow_dispatch only becomes available once this file is on the default
+  # branch, so the branch dry-run uses the push trigger below.)
   workflow_dispatch: {}
+  push:
+    branches: ['feature/external-deposit-ci']
 
 # Job-default permissions: read-only. The untrusted build runs under this.
 permissions:
@@ -113,8 +117,8 @@ jobs:
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
           EVENT: ${{ github.event_name }}
         run: |
-          if [ "$EVENT" = "workflow_dispatch" ]; then
-            # dry-run: gate every committed deposit dir.
+          if [ "$EVENT" != "pull_request" ]; then
+            # dry-run (workflow_dispatch or branch push): gate every committed deposit dir.
             slugs="$(ls -d deposits/*/ 2>/dev/null | sed 's#deposits/##; s#/##' | sort -u)"
           else
             git fetch --no-tags --depth=1 origin "$BASE_SHA" || true
