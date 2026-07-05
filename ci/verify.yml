@@ -55,12 +55,17 @@ jobs:
       # ── Re-derivation gate (finding F6 fix) ──────────────────────────────
       # Build mathesis-adjudicate from the vendored gate source. Lean-core only
       # (no Mathlib require anywhere in the closure — verified), so this is a
-      # small, cached build, NOT a Mathlib compile.
+      # small, ~2 min build, NOT a Mathlib compile.
+      #
+      # use-github-cache is DISABLED deliberately: a cached .lake from an earlier
+      # commit restored a STALE exe (lake saw it up-to-date and skipped the
+      # rebuild), so a source change to the gate silently ran the OLD binary and
+      # every definition mismatched. A clean build each run is cheap and correct.
       - name: Build re-derivation gate (mathesis-adjudicate)
         uses: leanprover/lean-action@v1
         with:
           lake-package-directory: backend-gate
-          use-github-cache: true
+          use-github-cache: false
           test: false
           lint: false
 

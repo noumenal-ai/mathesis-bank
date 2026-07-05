@@ -364,6 +364,11 @@ def main():
     for tf in triviality_flagged:
         needs_human_review.append({"handle": tf["handle"], "decl": tf.get("decl"), "triviality": tf["reason"]})
 
+    # Diagnostic: surface the first few re-derivation mismatches on stderr so a CI
+    # failure is debuggable straight from the run log (verify.sh passes stderr through).
+    if rederive_mismatch:
+        print("rederive_mismatch (first 5):", json.dumps(rederive_mismatch[:5]), file=sys.stderr)
+
     axiom_dirty_handles = [d["handle"] for d in axiom_dirty]
     ok = (
         schema_valid == schema_total
