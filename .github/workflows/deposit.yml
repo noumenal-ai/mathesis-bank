@@ -40,6 +40,9 @@ on:
   pull_request:
     paths:
       - 'deposits/**'
+  # Dry-run: manually gate every committed deposit dir (no PR needed). Lets the
+  # full pipeline be exercised on a branch without opening external deposits.
+  workflow_dispatch: {}
 
 # Job-default permissions: read-only. The untrusted build runs under this.
 permissions:
@@ -108,15 +111,21 @@ jobs:
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          EVENT: ${{ github.event_name }}
         run: |
-          git fetch --no-tags --depth=1 origin "$BASE_SHA" || true
-          # slugs of deposits touched by this PR (added/modified files under deposits/<slug>/).
-          slugs="$(git diff --name-only "$BASE_SHA" "$HEAD_SHA" -- 'deposits/**' \
-            | sed -n 's#^deposits/\([^/]*\)/.*#\1#p' | sort -u)"
+          if [ "$EVENT" = "workflow_dispatch" ]; then
+            # dry-run: gate every committed deposit dir.
+            slugs="$(ls -d deposits/*/ 2>/dev/null | sed 's#deposits/##; s#/##' | sort -u)"
+          else
+            git fetch --no-tags --depth=1 origin "$BASE_SHA" || true
+            # slugs of deposits touched by this PR (added/modified files under deposits/<slug>/).
+            slugs="$(git diff --name-only "$BASE_SHA" "$HEAD_SHA" -- 'deposits/**' \
+              | sed -n 's#^deposits/\([^/]*\)/.*#\1#p' | sort -u)"
+          fi
           echo "slugs<<EOF" >> "$GITHUB_OUTPUT"
           echo "$slugs" >> "$GITHUB_OUTPUT"
           echo "EOF" >> "$GITHUB_OUTPUT"
-          echo "changed deposits:"; echo "$slugs"
+          echo "gating deposits:"; echo "$slugs"
 
       # ── Run the gate on each changed deposit ─────────────────────────────
       - name: Gate each changed deposit
@@ -176,6 +185,7 @@ jobs:
           path: report
 
       - name: Post / update PR comment
+        if: github.event_name == 'pull_request'
         uses: actions/github-script@v7
         with:
           script: |
