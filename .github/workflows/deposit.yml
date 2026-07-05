@@ -1,0 +1,201 @@
+# Mathesis — external-deposit gate for form-raised deposit PRs.
+#
+# A deposit PR touches deposits/<slug>/submission.lean (the single-file format
+# the site form emits). This workflow runs the per-deposit gate on every
+# changed deposit and posts ONE PR comment with the combined verdict, failing
+# the job if any deposit is rejected or blocked.
+#
+# ── TRUST MODEL: this runs UNTRUSTED code, so read carefully ──────────────────
+# The deposit's submission.lean is elaborated by `lean`, and Lean elaboration
+# can run ARBITRARY IO at build time (#eval, elaboration macros, `initialize`).
+# The deposit came from a fork, so this build is UNTRUSTED. Isolation:
+#
+#   * We use the `pull_request` event (NOT pull_request_target). On a fork PR,
+#     `pull_request` gives the job a READ-ONLY GITHUB_TOKEN and NO access to
+#     repo secrets. `permissions: contents: read` pins that down further. So a
+#     malicious build cannot push, cannot read a secret (there are none in
+#     scope), cannot mutate the repo. This is the PRIMARY isolation and it is
+#     GitHub-enforced.
+#   * pull_request_target is deliberately AVOIDED: it would run with a
+#     read/write token in the BASE repo's context while checking out fork code
+#     — exactly the combination that turns an untrusted build into repo
+#     compromise. We never want that here.
+#   * ci/gate_deposit.sh additionally wraps the `lean` build in landrun
+#     (Landlock FS confinement) when available; network-egress confinement is a
+#     documented follow-on (see that script's header).
+#
+# Admission is NOT trusted from the build. The build only produces a CANDIDATE
+# export that the trusted Lean kernel (mathesis-adjudicate) RE-PLAYS from
+# scratch, plus statement-identity against a FROZEN reference the deposit never
+# rebuilds. A hostile build can misbehave in the sandbox but cannot forge an
+# admission.
+#
+# Because the token is read-only we CANNOT post a PR comment with the default
+# token's write scope — so `pull-requests: write` is granted ONLY to the
+# comment step's context via a separate job that does NOT check out or run
+# untrusted code. See the `report` job.
+name: deposit-gate
+
+on:
+  pull_request:
+    paths:
+      - 'deposits/**'
+
+# Job-default permissions: read-only. The untrusted build runs under this.
+permissions:
+  contents: read
+
+concurrency:
+  group: deposit-gate-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    outputs:
+      any_failed: ${{ steps.run.outputs.any_failed }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      # ── Build the gate exe (mirrors verify.yml exactly) ──────────────────
+      # lean-action builds backend-gate (Lean-core only, no Mathlib → ~2 min).
+      # use-github-cache is OFF for the same reason verify.yml disables it: a
+      # stale cached .lake silently runs an OLD binary.
+      - name: Build re-derivation gate (mathesis-adjudicate)
+        uses: leanprover/lean-action@v1
+        with:
+          lake-package-directory: backend-gate
+          use-github-cache: false
+          test: false
+          lint: false
+
+      - name: Build the gate executable
+        working-directory: backend-gate
+        run: lake build mathesis-adjudicate
+
+      - name: Locate the gate binary
+        run: |
+          BIN="$GITHUB_WORKSPACE/backend-gate/.lake/build/bin/mathesis-adjudicate"
+          test -x "$BIN" || { echo "FATAL: gate exe not built at $BIN"; ls -R backend-gate/.lake/build/bin || true; exit 1; }
+          echo "MATHESIS_ADJUDICATE=$BIN" >> "$GITHUB_ENV"
+
+      # The gate exe AND the deposit build both shell out to `lean` for their
+      # sysroot. lean-action pins the toolchain per-project; set a global
+      # default and export LEAN_SYSROOT so both resolve it from any cwd.
+      - name: Configure Lean toolchain (gate exe + deposit build)
+        working-directory: backend-gate
+        run: |
+          elan default "$(tr -d '[:space:]' < lean-toolchain)"
+          echo "LEAN_SYSROOT=$(lean --print-prefix)" >> "$GITHUB_ENV"
+
+      # lean4export is a gate pin. It is a require in backend-gate/lakefile.lean,
+      # so its exe is built into the same .lake tree; point the gate script at it.
+      - name: Locate lean4export
+        run: |
+          L4E="$(find "$GITHUB_WORKSPACE/backend-gate/.lake" -type f -name lean4export -perm -u+x 2>/dev/null | head -n1)"
+          if [ -z "$L4E" ]; then
+            echo "FATAL: lean4export exe not found under backend-gate/.lake"; exit 1
+          fi
+          echo "MATHESIS_LEAN4EXPORT=$L4E" >> "$GITHUB_ENV"
+
+      # ── Which deposits changed in this PR ────────────────────────────────
+      - name: Determine changed deposits
+        id: changed
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          git fetch --no-tags --depth=1 origin "$BASE_SHA" || true
+          # slugs of deposits touched by this PR (added/modified files under deposits/<slug>/).
+          slugs="$(git diff --name-only "$BASE_SHA" "$HEAD_SHA" -- 'deposits/**' \
+            | sed -n 's#^deposits/\([^/]*\)/.*#\1#p' | sort -u)"
+          echo "slugs<<EOF" >> "$GITHUB_OUTPUT"
+          echo "$slugs" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+          echo "changed deposits:"; echo "$slugs"
+
+      # ── Run the gate on each changed deposit ─────────────────────────────
+      - name: Gate each changed deposit
+        id: run
+        env:
+          # No store secret on fork PRs; if the reference blob is not committed
+          # the fetch degrades and a discharge deposit is rejected (fail-closed).
+          MATHESIS_EXPORT_STORE: gh:${{ github.repository }}@exports-v1
+          MATHESIS_EXPORTS_DIR: ${{ github.workspace }}/registry/_shared/exports
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          chmod +x ci/gate_deposit.sh ci/parse_deposit.py ci/fetch_exports.sh
+          : > deposit-report.md
+          echo "## Mathesis deposit gate" >> deposit-report.md
+          echo "" >> deposit-report.md
+          any_failed=0
+          slugs='${{ steps.changed.outputs.slugs }}'
+          if [ -z "$(printf '%s' "$slugs" | tr -d '[:space:]')" ]; then
+            echo "_No deposit directories changed._" >> deposit-report.md
+          fi
+          for slug in $slugs; do
+            [ -d "deposits/$slug" ] || continue
+            echo "── gating deposits/$slug ──"
+            if bash ci/gate_deposit.sh "deposits/$slug" >> deposit-report.md 2>&1; then
+              echo "  → pass (admit/needs-review)"
+            else
+              rc=$?
+              echo "  → FAIL (exit $rc)"
+              any_failed=1
+            fi
+            echo "" >> deposit-report.md
+          done
+          echo "any_failed=$any_failed" >> "$GITHUB_OUTPUT"
+          cat deposit-report.md
+
+      - name: Upload deposit report
+        uses: actions/upload-artifact@v4
+        with:
+          name: deposit-report
+          path: deposit-report.md
+
+  # ── Post ONE PR comment with the report. Separate job so the write scope is
+  # NEVER in the same context as the untrusted build. It only downloads the
+  # report artifact and comments — it never checks out or runs deposit code. ──
+  report:
+    needs: gate
+    if: always()
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Download deposit report
+        uses: actions/download-artifact@v4
+        with:
+          name: deposit-report
+          path: report
+
+      - name: Post / update PR comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            let body = '## Mathesis deposit gate\n\n_(report artifact missing)_';
+            try { body = fs.readFileSync('report/deposit-report.md', 'utf8'); } catch (e) {}
+            const marker = '<!-- mathesis-deposit-gate -->';
+            body = marker + '\n' + body;
+            const { owner, repo } = context.repo;
+            const issue_number = context.issue.number;
+            const { data: comments } = await github.rest.issues.listComments({ owner, repo, issue_number });
+            const existing = comments.find(c => c.body && c.body.includes(marker));
+            if (existing) {
+              await github.rest.issues.updateComment({ owner, repo, comment_id: existing.id, body });
+            } else {
+              await github.rest.issues.createComment({ owner, repo, issue_number, body });
+            }
+
+      - name: Fail the check if any deposit was rejected/blocked
+        if: needs.gate.outputs.any_failed == '1'
+        run: |
+          echo "One or more deposits were rejected or blocked."
+          exit 1
