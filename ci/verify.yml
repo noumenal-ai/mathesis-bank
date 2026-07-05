@@ -82,6 +82,17 @@ jobs:
           test -x "$BIN" || { echo "FATAL: gate exe not built at $BIN"; ls -R backend-gate/.lake/build/bin || true; exit 1; }
           echo "MATHESIS_ADJUDICATE=$BIN" >> "$GITHUB_ENV"
 
+      # The gate exe calls Lean.findSysroot at startup (shells out to `lean` via
+      # elan). lean-action pins the toolchain per-project, not globally, so the exe
+      # — invoked by the Python verifier from the repo root — otherwise hits
+      # "no default toolchain configured". Set a global default AND export
+      # LEAN_SYSROOT (findSysroot honors it) so the exe resolves it either way.
+      - name: Configure Lean toolchain for the gate exe
+        working-directory: backend-gate
+        run: |
+          elan default "$(tr -d '[:space:]' < lean-toolchain)"
+          echo "LEAN_SYSROOT=$(lean --print-prefix)" >> "$GITHUB_ENV"
+
       # ── Frozen export blobs (content-addressed, not in git) ──────────────
       - name: Fetch frozen exports (sha256-verified)
         env:
