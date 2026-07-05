@@ -3,9 +3,9 @@
   "generatedBy": "ci",
   "repo": "noumenal-ai/mathesis-bank",
   "workflow": "verify.yml",
-  "commit": "ade68fc266ea2ea3900f8faf3e0c448da894b5a2",
-  "timestamp": "2026-07-05T18:51:44Z",
-  "runUrl": "https://github.com/noumenal-ai/mathesis-bank/actions/runs/28751196499",
+  "commit": "fef57fe2f6e7ecf88920254fd3c38c824f20a2ac",
+  "timestamp": "2026-07-05T19:17:55Z",
+  "runUrl": "https://github.com/noumenal-ai/mathesis-bank/actions/runs/28751905147",
   "status": "pass",
   "checks": [
     { "id": "schema", "label": "Every manifest validates against schema v2", "status": "pass", "detail": "430 / 430 manifests schema-valid" },
