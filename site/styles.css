@@ -300,6 +300,19 @@ footer { padding: 2.2rem 0; border-bottom: none; }
 .mono-note { font-size: 0.86rem; color: var(--ink-faint); }
 .empty-note { font-size: 0.86rem; color: var(--ink-faint); font-style: italic; }
 .warn-note { font-size: 0.86rem; color: #7a5a10; }
+.binding-note {
+  font-size: 0.86rem;
+  color: var(--ink-soft);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--accent);
+  border-radius: 6px;
+  padding: 0.6rem 0.8rem;
+  margin: 0.9rem 0 0;
+  max-width: var(--measure);
+  line-height: 1.5;
+}
+.binding-note strong { color: var(--ink); font-weight: 600; }
 
 .statement-pretty {
   background: var(--code-bg); color: var(--code-ink); border-radius: 8px;

@@ -373,6 +373,25 @@ def link_or_plain(handle, records, depth, label=None):
     return f'<code>{esc(label)}</code>'
 
 
+def binding_note(manifest):
+    """The claim-binding disclaimer (finding F1): make explicit, at the top of every
+    page, what the machine checked (the formal statement + axioms) versus what is
+    author-provided (the plain-language title and gloss). "Verified" here never means
+    "the English claim is true"; it means the Lean statement shown is kernel-valid and
+    axiom-clean."""
+    dc = manifest.get("deposit_class")
+    if dc == "demonstration":
+        return ('<p class="binding-note"><strong>Machine-checked:</strong> the formal statement below and '
+                'its axiom closure (kernel replay, whitelist audit). <strong>Author-described:</strong> the '
+                'title and gloss &mdash; the machine does not check that the prose matches the formal statement.</p>')
+    if dc == "definition":
+        return ('<p class="binding-note"><strong>Machine-checked:</strong> the definition is kernel-valid and '
+                'axiom-clean. <strong>Author-described:</strong> whether this is the intended notion &mdash; a '
+                'definition can be well-formed yet not mean what its name suggests.</p>')
+    return ('<p class="binding-note">A claim is a statement of record. Nothing here is machine-checked until a '
+            'result discharges it against this exact statement.</p>')
+
+
 def render_accession_detail(handle, rec, records):
     m = rec["manifest"]
     gloss_html = md_to_minimal_html(rec["gloss"])
@@ -462,6 +481,7 @@ def render_accession_detail(handle, rec, records):
   <h1 class="measure">{esc(m['title'])}</h1>
   <p class="handle-line"><code>{esc(handle)}</code></p>
   <div class="badge-row">{"".join(header_badges)}</div>
+  {binding_note(m)}
 </section>
 
 <section class="shell detail-section">
