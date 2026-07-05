@@ -44,12 +44,23 @@ open Lean Export
 /-! ### Constant traversal (generalized `Comparator.runForUsedConsts`) -/
 
 /-- Run `f` on every constant referenced by `info`: the constants in its type, its own name, the
-constants in its value, and the structural children of inductives/constructors/recursors. -/
-def runForUsedConsts {m : Type → Type} [Monad m] (info : ConstantInfo) (f : Name → m Unit) :
-    m Unit := do
+constants in its value, and the structural children of inductives/constructors/recursors.
+
+`deep` controls whether a value that `ConstantInfo.value?` hides by default is walked:
+`value?` defaults to `allowOpaque := false`, which returns `none` for a `.thmInfo` (a theorem's
+PROOF) and for `.opaqueInfo`. So:
+* `deep := false` — statement identity. Walks types and DEFINITION bodies (a smuggled `def` body is
+  still caught) but NOT a theorem's proof (two different proofs of the same statement are the same
+  statement).
+* `deep := true` — axiom closure. Walks the proof/opaque body too. This is MANDATORY for the axiom
+  audit: a `sorry` or any illegal axiom reached only through a theorem's proof is otherwise invisible
+  (the earlier F4 generalization routed the axiom audit through this traversal with the shallow
+  default and thereby silently stopped auditing theorem proofs — a proof-side soundness hole). -/
+def runForUsedConsts {m : Type → Type} [Monad m] (info : ConstantInfo) (deep : Bool)
+    (f : Name → m Unit) : m Unit := do
   info.type.getUsedConstants.forM f
   f info.name
-  if let some val := info.value? then
+  if let some val := info.value? (allowOpaque := deep) then
     val.getUsedConstants.forM f
   match info with
   | .axiomInfo .. | .quotInfo .. | .defnInfo .. | .thmInfo .. | .opaqueInfo .. => pure ()
@@ -91,7 +102,8 @@ partial def loop : M Unit := do
       | throw s!"constant absent from candidate: '{target}'"
     if refConst != candConst then
       throw s!"constant diverges between reference and candidate: '{target}'"
-    runForUsedConsts candConst fun n => do
+    -- shallow: statement identity is about types + definition bodies, never proof terms.
+    runForUsedConsts candConst (deep := false) fun n => do
       if !(← get).checked.contains n then
         modify fun s => { s with worklist := s.worklist.push n }
     modify fun s => { s with checked := s.checked.insert target }
@@ -143,7 +155,8 @@ partial def loop : M Unit := do
   else
     let some info := (← read).candidate.constMap[target]?
       | throw s!"constant absent from candidate: '{target}'"
-    runForUsedConsts info validateConst
+    -- deep: the axiom audit MUST walk theorem proofs + opaque bodies (or a proof-side sorry hides).
+    runForUsedConsts info (deep := true) validateConst
     modify fun s => { s with checked := s.checked.insert target }
     loop
 where

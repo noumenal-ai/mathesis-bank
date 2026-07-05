@@ -36,7 +36,7 @@ open Lean Export
 
 /-- Every constant referenced by `ci`, collected into an array (reuses the gate's traversal). -/
 def usedConstsOf (ci : ConstantInfo) : Array Name :=
-  (Mathesis.CheckProof.runForUsedConsts (m := StateM (Array Name)) ci
+  (Mathesis.CheckProof.runForUsedConsts (m := StateM (Array Name)) ci (deep := false)
     (fun n => modify (·.push n))).run #[] |>.2
 
 /-- Worklist closure building a constant map from a trusted environment. -/

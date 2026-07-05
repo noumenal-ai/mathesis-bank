@@ -29,17 +29,23 @@ a self-describing deposit must never be able to expand what it is allowed to ass
 
 ## CLI contract
 
-    mathesis-adjudicate <export-path> -- <decl1> <decl2> ...
+    mathesis-adjudicate [--reference <R.export>] <candidate.export> -- <decl1> <decl2> ...
 
-* `<export-path>` — a `lean4export` text artifact (the frozen/durable form `Manifest.loadFrozenText`
-  reads).
+* `--reference <R.export>` — OPTIONAL. When present, `<R.export>` is the bank-owned frozen
+  reference environment and the STATEMENT-IDENTITY leg runs: each target in the candidate must prove
+  *the same statement* as in R (the UK-i definition-smuggling defense — a candidate that silently
+  redefines a constant its statement depends on is caught here even though its own axioms/replay are
+  clean). When absent, behavior is exactly self-seeded (replay + axiom audit + triviality only), the
+  form the deployed `verify.yml` depends on.
+* `<candidate.export>` — a `lean4export` text artifact (the frozen/durable form
+  `Manifest.loadFrozenText` reads); the deposit under audit.
 * `--` — mandatory separator (mirrors `Manifest.freezeExportText`'s own argv convention).
 * `<declN>` — target theorem names to adjudicate, in the *root* namespace as they appear in the
   export (e.g. `WMSpec.fiber_saturated`).
 
 Emits one JSON object to stdout (schema in `main`'s doc) and exits 0 IFF the kernel replay is
-accepted AND every target's axiom audit passes; 1 otherwise. Exit code is the actual gate — CI
-should key on it, not on parsing the JSON.
+accepted AND every target's axiom audit passes AND (when a reference is given) the statement-identity
+leg passes; 1 otherwise. Exit code is the actual gate — CI should key on it, not on parsing the JSON.
 -/
 
 open Lean Export Mathesis Mathesis.CheckProof Mathesis.Manifest
@@ -85,7 +91,8 @@ partial def loop : M Unit := do
   else
     let some info := (← read).candidate.constMap[target]?
       | throw s!"constant absent from candidate: '{target}'"
-    runForUsedConsts info visit
+    -- deep: mirror the axiom-audit closure so `axioms_reached` reflects proof-side axioms too.
+    runForUsedConsts info (deep := true) visit
     modify fun s => { s with checked := s.checked.insert target }
     loop
 where
@@ -221,19 +228,30 @@ def targetAuditToJson (t : TargetAudit) : Json :=
 
 /-! ### Argv parsing -/
 
-/-- Split `<export-path> -- <decl1> <decl2> ...` into the export path and the target decl strings.
-Requires the literal `--` separator (mirrors `Manifest.freezeExportText`'s own convention). -/
-def parseArgs (args : List String) : Except String (String × List String) :=
+/-- Split `[--reference <R.export>] <candidate.export> -- <decl1> <decl2> ...` into the optional
+reference path, the candidate export path, and the target decl strings. Requires the literal `--`
+separator (mirrors `Manifest.freezeExportText`'s own convention). The `--reference <R>` prefix is
+optional and, when absent, `reference?` is `none` (self-seeded mode — exactly the legacy behavior the
+deployed `verify.yml` depends on). -/
+def parseArgs (args : List String) :
+    Except String (Option String × String × List String) :=
+  let usage :=
+    "usage: mathesis-adjudicate [--reference <R.export>] <candidate.export> -- <decl1> <decl2> ..."
   match args with
-  | [] => .error "usage: mathesis-adjudicate <export-path> -- <decl1> <decl2> ..."
+  | "--reference" :: refPath :: candidate :: rest =>
+    match rest with
+    | "--" :: decls =>
+      if decls.isEmpty then .error "no target declarations given after '--'"
+      else .ok (some refPath, candidate, decls)
+    | _ => .error s!"{usage} (missing '--')"
+  | "--reference" :: _ => .error s!"{usage} (--reference needs <R.export> and a candidate)"
   | path :: rest =>
     match rest with
     | "--" :: decls =>
-      if decls.isEmpty then
-        .error "no target declarations given after '--'"
-      else
-        .ok (path, decls)
-    | _ => .error "usage: mathesis-adjudicate <export-path> -- <decl1> <decl2> ... (missing '--')"
+      if decls.isEmpty then .error "no target declarations given after '--'"
+      else .ok (none, path, decls)
+    | _ => .error s!"{usage} (missing '--')"
+  | [] => .error usage
 
 end MathesisAdjudicate
 
@@ -253,33 +271,57 @@ Output schema (one line, compact JSON):
 
 ```
 {"export": <path>,
- "constants": <number of constants in the parsed export>,
+ "reference": <path|null>,
+ "constants": <number of constants in the parsed candidate export>,
  "replay": {"accepted": <bool>, "detail": <string>},
  "permitted": ["propext", "Classical.choice", "Quot.sound"],
+ "statement_identity": "pass"|"fail"|"not-applicable"|"<reason string>",
  "targets": [{"decl": <string>, "axiom_audit": "pass"|"fail",
               "illegal_axiom": <string|null>, "axioms_reached": [<string>, ...]}, ...],
  "verdict": "ADMITTED"|"REJECTED"}
 ```
--/
+
+`statement_identity` is `"not-applicable"` in self-seeded mode (no `--reference`). With a reference
+it is `"pass"` when the identity leg holds, otherwise the precise Pl-kill reason (which begins with
+one of `target absent`/`target kind differs`/`target statement differs`/`constant diverges` — the
+smuggle is surfaced as content, not just a boolean). The statement leg is a GATE only in reference
+mode: a `fail` forces `verdict` to `REJECTED` and a nonzero exit. -/
 def main (args : List String) : IO UInt32 := do
   Lean.initSearchPath (← Lean.findSysroot)
   match parseArgs args with
   | .error msg =>
     IO.eprintln msg
     return 1
-  | .ok (path, declStrs) =>
+  | .ok (reference?, path, declStrs) =>
     let targets : Array Name := (declStrs.map (·.toName)).toArray
     let text ← IO.FS.readFile path
     let candidate ← loadFrozenText text
     let (accepted, detail) ← replayLean candidate
     let audits := targets.map (auditTarget candidate)
     let allPass := audits.all (·.pass)
-    let verdictOk := accepted && allPass
+    -- Statement-identity leg (the UK-i definition-smuggling defense): runs ONLY when a reference is
+    -- supplied. When present it re-uses the proven-sound `checkProof` primitive over R-vs-candidate;
+    -- `primitive := #[]` (kernel built-ins are seeded by `checkStatement` itself in the general
+    -- form; matching the reference-pattern harness). Its `statement` leg gates admission here.
+    let (statementResult, statementJson) ←
+      match reference? with
+      | none =>
+        pure (LegResult.pass, Json.str "not-applicable")
+      | some refPath => do
+        let reference ← loadFrozenText (← IO.FS.readFile refPath)
+        let report ← checkProof reference candidate targets permittedAxioms #[]
+        match report.statement with
+        | .pass       => pure (LegResult.pass, Json.str "pass")
+        | .fail reason => pure (LegResult.fail reason, Json.str reason)
+    let statementOk := statementResult.ok
+    let verdictOk := accepted && allPass && statementOk
     let json := Json.mkObj [
       ("export", Json.str path),
+      ("reference", match reference? with | some r => Json.str r | none => Json.null),
       ("constants", Json.num candidate.constMap.size),
       ("replay", Json.mkObj [("accepted", Json.bool accepted), ("detail", Json.str detail)]),
       ("permitted", Json.arr (permittedAxiomStrings.map Json.str)),
+      ("statement_identity", statementJson),
       ("targets", Json.arr (audits.map targetAuditToJson)),
       ("verdict", Json.str (if verdictOk then "ADMITTED" else "REJECTED"))
     ]
