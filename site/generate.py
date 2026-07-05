@@ -730,19 +730,61 @@ def render_deposit():
 </section>
 
 <section class="shell detail-section">
-  <h3>How to deposit</h3>
-  <ol class="deposit-steps">
-    <li>Add a folder to the repository with three files:
-      <pre class="statement-pretty"><code>deposits/&lt;your-slug&gt;/
+  <h3>Submit a deposit</h3>
+  <p>Fill the fields below. Submitting opens GitHub with a single deposit file pre-filled; there you
+     click <strong>Propose new file</strong>, which forks the repository if you are not a maintainer
+     and opens the pull request. No account setup here, no upload of secrets &mdash; the pull request
+     is created under your own GitHub identity.</p>
+  <form id="depositForm" class="deposit-form" novalidate>
+    <label for="d-kind">Kind
+      <select id="d-kind">
+        <option value="result">Result &mdash; a statement with a machine-checked proof</option>
+        <option value="definition">Definition &mdash; a formal notion (Dictionary)</option>
+        <option value="claim">Claim &mdash; a statement of record</option>
+      </select>
+    </label>
+    <label for="d-title">Title <span class="req">required</span>
+      <input id="d-title" type="text" autocomplete="off" placeholder="A short description of what this states or proves">
+    </label>
+    <label for="d-module">Module name
+      <input id="d-module" type="text" autocomplete="off" value="Submission" placeholder="The Lean module name">
+    </label>
+    <label for="d-decls">Declaration name(s) <span class="req">required</span>
+      <input id="d-decls" type="text" autocomplete="off" placeholder="my_theorem, my_lemma (comma-separated)">
+    </label>
+    <label for="d-discharges">Discharges claim <span class="opt">optional, for results</span>
+      <input id="d-discharges" type="text" autocomplete="off" placeholder="MTH.C-YYYY-NNNN">
+    </label>
+    <label for="d-source">Lean source <span class="req">required</span>
+      <textarea id="d-source" rows="10" spellcheck="false" placeholder="theorem my_theorem : ... := by ..."></textarea>
+    </label>
+    <label for="d-gloss">Description <span class="req">required</span>
+      <textarea id="d-gloss" rows="4" placeholder="Plain-language description. Author-provided; not machine-checked."></textarea>
+    </label>
+    <p id="d-note" class="warn-note" hidden></p>
+    <div class="deposit-actions">
+      <button type="submit" class="btn primary">Prepare pull request</button>
+      <button type="button" id="d-preview-btn" class="btn">Preview file</button>
+    </div>
+  </form>
+  <div id="d-preview" class="deposit-preview" hidden>
+    <p class="mono-note">Deposit file <code id="d-path"></code></p>
+    <pre class="statement-pretty"><code id="d-preview-content"></code></pre>
+    <button type="button" id="d-copy" class="btn">Copy file content</button>
+  </div>
+  <noscript><p class="warn-note">The form needs JavaScript. Without it, deposit by hand (below).</p></noscript>
+</section>
+
+<section class="shell detail-section">
+  <h3>Or deposit by hand</h3>
+  <p>Advanced or large deposits can skip the form and open a pull request directly, adding a folder:</p>
+  <pre class="statement-pretty"><code>deposits/&lt;your-slug&gt;/
   submission.lean   the Lean source the gate builds and re-derives
   deposit.toml      declaration names, toolchain pin, the claim it discharges (if any)
   gloss.md          your plain-language description (author-provided, not machine-checked)</code></pre>
-    </li>
-    <li>Open a pull request.</li>
-    <li>The gate runs automatically and posts its verdict. Fix and push until it is green.</li>
-    <li>A maintainer confirms the description reads faithfully to the formal statement and merges.
-        The deposit is assigned an accession number and enters the public record.</li>
-  </ol>
+  <p>The gate runs on the pull request and posts its verdict; fix and push until it is green, then a
+     maintainer confirms the description and merges. The single-file form above carries the same
+     information in one file's header.</p>
 </section>
 
 <section class="shell detail-section">
@@ -775,6 +817,8 @@ def render_deposit():
      propose one.</p>
   <p class="mono-note"><a href="https://github.com/noumenal-ai/mathesis-bank">github.com/noumenal-ai/mathesis-bank</a></p>
 </section>
+
+<script src="deposit.js"></script>
 """
     title = "Deposit · Mathesis"
     return page_shell(title, "How to deposit into the Mathesis bank: open a pull request, the proof kernel re-derives it.", "deposit", body, depth=0)
@@ -1005,7 +1049,7 @@ def main():
 
     # static assets: copy styles.css, app.js, verify.js from site/ into docs/
     site_dir = Path(__file__).resolve().parent
-    for asset in ("styles.css", "app.js", "verify.js"):
+    for asset in ("styles.css", "app.js", "verify.js", "deposit.js"):
         src = site_dir / asset
         if src.is_file():
             (DOCS / asset).write_text(src.read_text())
