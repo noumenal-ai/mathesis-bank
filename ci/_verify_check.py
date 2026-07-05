@@ -94,31 +94,35 @@ def sha256_of_file(path, chunk_size=8 * 1024 * 1024):
 
 def run_rederivation(results):
     """
-    Re-derive axiom-closure/replay for every result with a frozen_export by
-    invoking the independent Lean adjudication exe directly against the
-    immutable .export blob — never trusting the manifest's own recorded
-    axiom_manifest/verdict fields.
+    Re-derive axiom-closure/replay for every DEPOSIT (result OR definition) with
+    a frozen_export by invoking the independent Lean adjudication exe directly
+    against the immutable .export blob — never trusting the manifest's own
+    recorded axiom_manifest/verdict fields. Definitions are audited too (finding
+    F4): the generalized exe audits a def's body closure, so a poisoned
+    `def foo := <reaches sorryAx>` fails here rather than bypassing the gate.
 
-    Returns (rederive_status, rederive_mismatch, verified_handles) where
-    verified_handles is the set of result handles that were actually run
-    through re-derivation and passed (used to gate axiom_clean/admitted
-    downstream, if the caller chooses to require it).
+    Returns (rederive_status, rederive_mismatch, verified_handles,
+    triviality_flagged). `triviality_flagged` lists deposits whose target is
+    syntactically trivial/vacuous (a `True` theorem, a reflexive `a = a`, a
+    `fun _ => True` definition) — kernel-valid but mis-claimed (F1/C2/C3),
+    routed to human review by the caller.
     """
     mismatch = []
     verified = set()
+    triviality_flagged = []
 
     adjudicate_bin = os.environ.get("MATHESIS_ADJUDICATE") or DEFAULT_ADJUDICATE_BIN
 
     with_export = {h: m for h, m in results.items() if m.get("frozen_export")}
 
     if not with_export:
-        return "no-exports-declared", mismatch, verified
+        return "no-exports-declared", mismatch, verified, triviality_flagged
 
     if not os.path.isfile(adjudicate_bin) or not os.access(adjudicate_bin, os.X_OK):
         # The production re-derivation exe is not built yet. Degrade
         # honestly: nothing is counted as re-derivation-verified, and the
         # output says so explicitly rather than silently reporting green.
-        return "skipped-exe-absent", mismatch, verified
+        return "skipped-exe-absent", mismatch, verified, triviality_flagged
 
     # Group by export sha256 — many results share one blob; call the exe
     # once per blob with every associated decl, not once per decl.
@@ -260,12 +264,17 @@ def run_rederivation(results):
                 if recorded_verdict == "ADMITTED" and target.get("axiom_audit") == "fail":
                     reasons.append("recorded verdict=ADMITTED but fresh per-target re-derivation rejects this decl")
 
+                # F1/C2/C3: a syntactically trivial theorem or vacuous definition is
+                # kernel-VALID but mis-claimed — flag for human review, do not fail the leg.
+                if target.get("triviality"):
+                    triviality_flagged.append({"handle": h, "decl": decl_name, "reason": target["triviality"]})
+
                 if reasons:
                     mismatch.append({"handle": h, "reason": "; ".join(reasons)})
                 else:
                     verified.add(h)
 
-    return "ran", mismatch, verified
+    return "ran", mismatch, verified, triviality_flagged
 
 
 def main():
@@ -344,8 +353,16 @@ def main():
                 broken.append(f"{h} -> {dep['handle']} (dependency)")
 
     # --- re-derivation: the core fix. Never trust the recorded fields; go
-    # back to the frozen export and re-run an independent Lean adjudication. ---
-    rederive_status, rederive_mismatch, rederive_verified = run_rederivation(results)
+    # back to the frozen export and re-run an independent Lean adjudication.
+    # Now covers DEFINITIONS too (finding F4): a poisoned def body is axiom-audited. ---
+    auditable = {**results, **definitions}
+    auditable_with_export = {h: m for h, m in auditable.items() if m.get("frozen_export")}
+    rederive_status, rederive_mismatch, rederive_verified, triviality_flagged = run_rederivation(auditable)
+
+    # F1/C2/C3: route syntactically trivial theorems / vacuous definitions to human
+    # review (kernel-valid but mis-claimed) — this makes needs_human_review fail `ok`.
+    for tf in triviality_flagged:
+        needs_human_review.append({"handle": tf["handle"], "decl": tf.get("decl"), "triviality": tf["reason"]})
 
     axiom_dirty_handles = [d["handle"] for d in axiom_dirty]
     ok = (
@@ -367,9 +384,9 @@ def main():
     if strict:
         if rederive_status != "ran":
             strict_failures.append(f"re-derivation did not run (status={rederive_status})")
-        if len(rederive_verified) != len(results):
+        if len(rederive_verified) != len(auditable_with_export):
             strict_failures.append(
-                f"only {len(rederive_verified)}/{len(results)} Results were re-derived from their frozen export"
+                f"only {len(rederive_verified)}/{len(auditable_with_export)} deposits (results+definitions) were re-derived from their frozen export"
             )
         if strict_failures:
             ok = False
@@ -390,6 +407,11 @@ def main():
         "rederive_status": rederive_status,
         "rederive_verified_count": len(rederive_verified),
         "rederive_mismatch": rederive_mismatch[:50],
+        "triviality_flagged": triviality_flagged[:50],
+        "rederive_scope": {
+            "results": len(results),
+            "definitions_audited": len([h for h, m in definitions.items() if m.get("frozen_export")]),
+        },
         "strict": strict,
         "strict_failures": strict_failures,
         "exports_dir": EXPORTS_DIR,

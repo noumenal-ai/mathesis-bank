@@ -15,7 +15,9 @@ lean_lib Mathesis where
   globs := #[Glob.andSubmodules `Mathesis]
 
 /-- The re-derivation gate the public CI runs: `mathesis-adjudicate <export> -- <decls>`,
-exit 0 iff replay accepts AND every target's axiom closure ⊆ the hard-coded whitelist. -/
+exit 0 iff replay accepts AND every target's axiom closure ⊆ the hard-coded whitelist.
+`@[default_target]` so a bare `lake build` (what lean-action runs) builds the exe, not just the lib. -/
+@[default_target]
 lean_exe «mathesis-adjudicate» where
   root := `MathesisAdjudicate
   supportInterpreter := true
