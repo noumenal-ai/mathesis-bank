@@ -64,8 +64,18 @@ jobs:
           test: false
           lint: false
 
+      # lean-action runs a bare `lake build` (default targets only). The exe is a
+      # default_target in backend-gate/lakefile.lean, but build this explicitly too so
+      # the binary is guaranteed present regardless of lean-action's build semantics.
+      - name: Build the gate executable
+        working-directory: backend-gate
+        run: lake build mathesis-adjudicate
+
       - name: Locate the gate binary
-        run: echo "MATHESIS_ADJUDICATE=$GITHUB_WORKSPACE/backend-gate/.lake/build/bin/mathesis-adjudicate" >> "$GITHUB_ENV"
+        run: |
+          BIN="$GITHUB_WORKSPACE/backend-gate/.lake/build/bin/mathesis-adjudicate"
+          test -x "$BIN" || { echo "FATAL: gate exe not built at $BIN"; ls -R backend-gate/.lake/build/bin || true; exit 1; }
+          echo "MATHESIS_ADJUDICATE=$BIN" >> "$GITHUB_ENV"
 
       # ── Frozen export blobs (content-addressed, not in git) ──────────────
       - name: Fetch frozen exports (sha256-verified)
