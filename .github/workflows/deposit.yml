@@ -101,12 +101,16 @@ jobs:
 
       # lean4export is a gate pin. It is a require in backend-gate/lakefile.lean,
       # so its exe is built into the same .lake tree; point the gate script at it.
-      - name: Locate lean4export
+      # `lake build mathesis-adjudicate` builds the Export *library* (the import)
+      # but NOT lean4export's *executable*, which the deposit gate needs to export
+      # the untrusted submission. Build it explicitly in its package dir, then locate.
+      - name: Build + locate lean4export
         run: |
-          L4E="$(find "$GITHUB_WORKSPACE/backend-gate/.lake" -type f -name lean4export -perm -u+x 2>/dev/null | head -n1)"
-          if [ -z "$L4E" ]; then
-            echo "FATAL: lean4export exe not found under backend-gate/.lake"; exit 1
-          fi
+          L4E_PKG="$GITHUB_WORKSPACE/backend-gate/.lake/packages/lean4export"
+          test -d "$L4E_PKG" || { echo "FATAL: lean4export package not resolved at $L4E_PKG"; exit 1; }
+          ( cd "$L4E_PKG" && lake build ) || { echo "FATAL: lean4export build failed"; exit 1; }
+          L4E="$(find "$L4E_PKG/.lake" -type f -name lean4export -perm -u+x 2>/dev/null | head -n1)"
+          test -x "$L4E" || { echo "FATAL: lean4export exe not found after build"; find "$L4E_PKG" -name 'lean4export*' -type f || true; exit 1; }
           echo "MATHESIS_LEAN4EXPORT=$L4E" >> "$GITHUB_ENV"
 
       # ── Which deposits changed in this PR ────────────────────────────────
