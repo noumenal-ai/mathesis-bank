@@ -1,14 +1,26 @@
-# Mathesis — site build + registry verification (public repo)
+# Mathesis — site build + STRICT re-derivation verification (public repo)
 #
-# PLACEMENT: move this file to `.github/workflows/verify.yml`. Pushing files
-# under .github/workflows/ needs a token with `workflow` scope — add this file
-# NOTE: pushing under .github/workflows/ needs a token with 'workflow' scope; add via the web editor if your push token lacks it.
-# push token lacks that scope. Same known gotcha as noumenal-ai/world-model-theory.
+# PLACEMENT: this file lives at .github/workflows/verify.yml. Pushing under
+# .github/workflows/ needs a token with `workflow` scope (known org gotcha —
+# push via the web editor or the workflow-scoped account if your token lacks it).
 #
-# On every push: validate every registry manifest against schema v2, run
-# ci/verify.sh (emits docs/verification.json), regenerate the site with
-# site/generate.py, grep docs/ for the INV-1 banned-word list (fail on hit),
-# then deploy docs/ to GitHub Pages.
+# Post-F6 hardening. The "Verify" check no longer re-reads the manifest's own
+# recorded verdict/axioms — it RE-DERIVES each result from its frozen export
+# through the Lean kernel gate `mathesis-adjudicate`, and fails CLOSED
+# (MATHESIS_STRICT=1) if the gate or a blob is missing. Flow per run:
+#   1. build the gate from vendored source in backend-gate/  (Lean-core only,
+#      NO Mathlib — ~2-3 min, GitHub-cached; from-clean build verified locally)
+#   2. fetch the frozen .export blobs by sha256 from object storage
+#      (ci/fetch_exports.sh — they exceed GitHub's 100 MB/file limit, so they
+#      are NOT in git; the fetch sha256-verifies every blob)
+#   3. regenerate the site + run ci/verify.sh under MATHESIS_STRICT=1
+#      (independent kernel re-derivation of all Results; exits nonzero on fail)
+#   4. INV-2 lint, refresh docs/, deploy Pages.
+#
+# GATE SOURCE (backend-gate/): the ~8 Lean files of the re-derivation gate,
+# vendored from the private backend so the public CI can build the verifier
+# from auditable source (see deploy/DEPLOY_P0.md for the vendoring step and the
+# prebuilt-binary alternative).
 name: verify
 
 on:
@@ -40,18 +52,47 @@ jobs:
       - name: Install dependencies
         run: pip install jsonschema
 
+      # ── Re-derivation gate (finding F6 fix) ──────────────────────────────
+      # Build mathesis-adjudicate from the vendored gate source. Lean-core only
+      # (no Mathlib require anywhere in the closure — verified), so this is a
+      # small, cached build, NOT a Mathlib compile.
+      - name: Build re-derivation gate (mathesis-adjudicate)
+        uses: leanprover/lean-action@v1
+        with:
+          lake-package-directory: backend-gate
+          use-github-cache: true
+          test: false
+          lint: false
+
+      - name: Locate the gate binary
+        run: echo "MATHESIS_ADJUDICATE=$GITHUB_WORKSPACE/backend-gate/.lake/build/bin/mathesis-adjudicate" >> "$GITHUB_ENV"
+
+      # ── Frozen export blobs (content-addressed, not in git) ──────────────
+      - name: Fetch frozen exports (sha256-verified)
+        env:
+          MATHESIS_EXPORT_STORE: gh:${{ github.repository }}@exports-v1
+          MATHESIS_EXPORTS_DIR: ${{ github.workspace }}/registry/_shared/exports
+          GH_TOKEN: ${{ github.token }}
+        run: bash ci/fetch_exports.sh
+
       - name: Regenerate the site
         run: python3 site/generate.py
 
-      - name: Validate registry + emit verification.json
+      # ── THE gate: strict independent re-derivation ───────────────────────
+      # verify.sh exits nonzero when _verify_check.py reports ok:false, which
+      # under MATHESIS_STRICT includes "the gate/blobs were absent so nothing
+      # was actually re-derived" — no silent green.
+      - name: Verify (strict re-derivation against frozen exports)
+        env:
+          MATHESIS_STRICT: '1'
+          MATHESIS_EXPORTS_DIR: ${{ github.workspace }}/registry/_shared/exports
         run: |
           chmod +x ci/verify.sh
           ci/verify.sh docs/verification.json
 
-      # INV-1 (house-vocabulary firewall) is enforced locally before publication by
-      # site/generate.py, which loads its term list from a local, uncommitted file
-      # and fails on any hit. The committed docs/ are pre-checked; CI does not
-      # re-list the terms here.
+      # INV-1 (house-vocabulary firewall) is enforced locally before publication
+      # by site/generate.py (term list from a local, uncommitted file). CI does
+      # not re-list the terms here.
 
       - name: INV-2 no-ranking lint (no 'featured'/'top'/star markup)
         run: |

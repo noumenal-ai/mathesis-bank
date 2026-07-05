@@ -2,3 +2,8 @@ __pycache__/
 *.pyc
 .DS_Store
 .firewall-terms
+
+# Lean build output (backend-gate is committed as SOURCE only; CI builds it)
+.lake/
+# frozen export blobs live in object storage, never in git (>100 MB)
+registry/_shared/exports/*.export
