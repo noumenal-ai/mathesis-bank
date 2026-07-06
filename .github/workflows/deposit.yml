@@ -55,6 +55,9 @@ concurrency:
 jobs:
   gate:
     runs-on: ubuntu-latest
+    # Bound the whole untrusted build+gate job (availability guard on top of the
+    # per-build `timeout` inside gate_deposit.sh).
+    timeout-minutes: 30
     outputs:
       any_failed: ${{ steps.run.outputs.any_failed }}
     steps:
@@ -183,6 +186,7 @@ jobs:
     needs: gate
     if: always()
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     permissions:
       contents: read
       pull-requests: write
@@ -206,7 +210,12 @@ jobs:
             const { owner, repo } = context.repo;
             const issue_number = context.issue.number;
             const { data: comments } = await github.rest.issues.listComments({ owner, repo, issue_number });
-            const existing = comments.find(c => c.body && c.body.includes(marker));
+            // Only ever update OUR OWN prior comment: require a Bot author AND the
+            // marker as the FIRST line (startsWith, not includes). Otherwise a user
+            // could plant a comment containing the marker string and hijack/suppress
+            // the gate's verdict comment.
+            const existing = comments.find(c =>
+              c.user && c.user.type === 'Bot' && c.body && c.body.startsWith(marker));
             if (existing) {
               await github.rest.issues.updateComment({ owner, repo, comment_id: existing.id, body });
             } else {

@@ -86,6 +86,14 @@ emit_and_exit() {  # <exit-code>
   exit "$1"
 }
 
+# Embed UNTRUSTED text (build/export/adjudicate/fetch logs, parser stderr) into
+# the report as a GitHub-safe INDENTED code block. A ``` fenced block can be
+# broken out of by a ``` line inside the untrusted content (fence-breakout →
+# forged markdown / fake verdict in the PR comment). A 4-space-indented block
+# has no closing delimiter to spoof: every line (backticks included) renders
+# literally. Caller wraps with a leading + trailing `md ""`.
+embed_log() { sed -e 's/\r$//' -e 's/^/    /'; }
+
 md "### Deposit \`$SLUG\`"
 md ""
 
@@ -99,9 +107,8 @@ PARSED="$("$PY" "$ROOT/ci/parse_deposit.py" "$SUBMISSION" 2>"$WORK/parse.err")"
 if [ $? -ne 0 ]; then
   md "- **reject** — header parse failed:"
   md ""
-  md '```'
-  cat "$WORK/parse.err" >> "$REPORT"
-  md '```'
+  embed_log < "$WORK/parse.err" >> "$REPORT"
+  md ""
   emit_and_exit 2
 fi
 
@@ -110,13 +117,23 @@ jget_list() { "$PY" -c "import json,sys;print(' '.join(json.load(sys.stdin).get(
 
 KIND="$(jget kind)"
 TITLE="$(jget title)"
+TITLE="${TITLE//\`/}"          # untrusted title: drop backticks so it stays inline-literal in the report
 MODULE="$(jget module)"
 PIN="$(jget pin)"
 DISCHARGES="$(jget discharges)"
-DECLS="$(jget_list decls)"
+DECLS="$(jget_list decls)"     # space-joined (display only)
+
+# Parse decls into an ARRAY so they reach lean4export / the gate exe as quoted
+# argv items — never word-split or glob-expanded. parse_deposit.py already
+# rejected any decl with whitespace/glob/shell metacharacters; this is the
+# matching safe-passing side (defense-in-depth, not the only line of defense).
+# `while read` (not `mapfile`) so this runs on bash 3.2 (macOS) as well as CI.
+DECLS_ARR=()
+while IFS= read -r __d; do [ -n "$__d" ] && DECLS_ARR+=("$__d"); done \
+  < <("$PY" -c 'import json,sys;[print(x) for x in (json.load(sys.stdin).get("decls") or [])]' <<<"$PARSED")
 
 md "- **kind**: \`$KIND\`  **title**: $TITLE  **module**: \`$MODULE\`"
-md "- **decls**: $(printf '`%s` ' $DECLS)"
+md "- **decls**: $(printf '`%s` ' "${DECLS_ARR[@]}")"
 md "- **pin**: \`$PIN\`"
 [ -n "$DISCHARGES" ] && md "- **discharges**: \`$DISCHARGES\`"
 md ""
@@ -126,8 +143,16 @@ md ""
 # statement-identity against, so we BLOCK (exit 3) rather than silently self-
 # auditing (which would let a deposit claim to discharge a claim it does not).
 REF_EXPORT=""
-TARGET_DECLS="$DECLS"      # decls handed to the gate exe
+TARGET_DECLS_ARR=("${DECLS_ARR[@]}")   # decls handed to the gate exe (claim's, under --reference)
 if [ -n "$DISCHARGES" ]; then
+  # Path-traversal belt: @discharges is interpolated into a registry path below.
+  # parse_deposit.py already constrained it to the claims-handle grammar; re-check
+  # here, fail-closed, so this script is safe even if invoked with a different
+  # parser. A handle with `/`, `..`, or off-grammar shape never reaches the path.
+  if [[ ! "$DISCHARGES" =~ ^MTH\.C-[0-9]{4}-[0-9]{4,}$ ]]; then
+    md "- **block** — \`@discharges: $DISCHARGES\` is not a valid claims handle (MTH.C-YYYY-NNNN)."
+    emit_and_exit 3
+  fi
   CLAIM_MANIFEST="$ROOT/registry/claims/$DISCHARGES/manifest.json"
   if [ ! -f "$CLAIM_MANIFEST" ]; then
     md "- **block** — \`@discharges: $DISCHARGES\` points at a nonexistent claim (no \`registry/claims/$DISCHARGES/manifest.json\`)."
@@ -137,12 +162,13 @@ if [ -n "$DISCHARGES" ]; then
   # The trusted target is the claim's OWN statement.decl_names (NOT the
   # deposit's @decls — the deposit does not get to rename the target it
   # claims to discharge). Statement-identity is checked against these.
-  CLAIM_DECLS="$("$PY" -c '
+  CLAIM_DECLS_ARR=()
+  while IFS= read -r __d; do [ -n "$__d" ] && CLAIM_DECLS_ARR+=("$__d"); done < <("$PY" -c '
 import json,sys
 m=json.load(open(sys.argv[1]))
-print(" ".join((m.get("statement") or {}).get("decl_names") or []))
-' "$CLAIM_MANIFEST")"
-  if [ -z "$CLAIM_DECLS" ]; then
+[print(x) for x in ((m.get("statement") or {}).get("decl_names") or [])]
+' "$CLAIM_MANIFEST")
+  if [ "${#CLAIM_DECLS_ARR[@]}" -eq 0 ]; then
     md "- **block** — claim \`$DISCHARGES\` has no \`statement.decl_names\` to check identity against."
     emit_and_exit 3
   fi
@@ -169,9 +195,9 @@ print((m.get("frozen_export") or {}).get("sha256") or "")
     # Targeted: fetch ONLY this reference sha (not the whole corpus).
     if ! MATHESIS_EXPORTS_DIR="$EXPORTS_DIR" bash "$ROOT/ci/fetch_exports.sh" "$REF_SHA" >>"$WORK/fetch.log" 2>&1; then
       md "- **reject** — could not fetch/verify frozen reference R for \`$DISCHARGES\`:"
-      md '```'
-      tail -n 20 "$WORK/fetch.log" >> "$REPORT"
-      md '```'
+      md ""
+      tail -n 20 "$WORK/fetch.log" | embed_log >> "$REPORT"
+      md ""
       emit_and_exit 2
     fi
   fi
@@ -179,8 +205,22 @@ print((m.get("frozen_export") or {}).get("sha256") or "")
     md "- **reject** — frozen reference R blob \`$REF_SHA.export\` absent after fetch."
     emit_and_exit 2
   fi
-  # Identity is checked on the CLAIM's decls (the trusted names).
-  TARGET_DECLS="$CLAIM_DECLS"
+  # RE-VERIFY the reference blob's sha256 HERE, unconditionally — do NOT trust it
+  # by filename. fetch_exports.sh verifies on download, but the "already present"
+  # branch above skips fetch entirely; an attacker who can seed a wrong-content
+  # file at <REF_SHA>.export would otherwise supply a forged R. Content-addressing
+  # is only a trust boundary if the content is actually hashed against the name.
+  if command -v sha256sum >/dev/null 2>&1; then
+    GOT_SHA="$(sha256sum "$REF_EXPORT" | cut -d' ' -f1)"
+  else
+    GOT_SHA="$(shasum -a 256 "$REF_EXPORT" | cut -d' ' -f1)"
+  fi
+  if [ "$GOT_SHA" != "$REF_SHA" ]; then
+    md "- **reject** — frozen reference R blob content sha256 (\`$GOT_SHA\`) ≠ expected (\`$REF_SHA\`); refusing to trust it."
+    emit_and_exit 2
+  fi
+  # Identity is checked on the CLAIM's decls (the trusted names, bank-owned).
+  TARGET_DECLS_ARR=("${CLAIM_DECLS_ARR[@]}")
 fi
 
 # ── 2. build submission.lean UNDER ISOLATION at the pinned toolchain ─────────
@@ -236,9 +276,9 @@ fi
 
 if [ "$BUILD_RC" -ne 0 ]; then
   md "- **reject** — submission.lean failed to build at \`$PIN\`:"
-  md '```'
-  tail -n 40 "$BUILD_LOG" >> "$REPORT"
-  md '```'
+  md ""
+  tail -n 40 "$BUILD_LOG" | embed_log >> "$REPORT"
+  md ""
   emit_and_exit 2
 fi
 md "- build ok."
@@ -255,17 +295,29 @@ EXPORT_LOG="$WORK/export.log"
 # Make the just-built olean importable: prepend the scratch dir to LEAN_PATH.
 export LEAN_PATH="$WORK${LEAN_PATH:+:$LEAN_PATH}"
 # The build compiled the source as the fixed module `Submission` (see above);
-# export that module's decl closure. @module is informational only.
-# shellcheck disable=SC2086
-if ! "$LEAN4EXPORT_BIN" Submission -- $DECLS >"$CAND_EXPORT" 2>"$EXPORT_LOG"; then
+# export that module's decl closure. @module is informational only. Decls are
+# passed as a QUOTED array (no word-split/glob).
+if ! "$LEAN4EXPORT_BIN" Submission -- "${DECLS_ARR[@]}" >"$CAND_EXPORT" 2>"$EXPORT_LOG"; then
   md "- **reject** — lean4export failed on module \`Submission\` (decls: $DECLS):"
-  md '```'
-  tail -n 30 "$EXPORT_LOG" >> "$REPORT"
-  md '```'
+  md ""
+  tail -n 30 "$EXPORT_LOG" | embed_log >> "$REPORT"
+  md ""
   emit_and_exit 2
 fi
 if [ ! -s "$CAND_EXPORT" ]; then
   md "- **reject** — lean4export produced an empty candidate export."
+  emit_and_exit 2
+fi
+# lean4export can PANIC yet still exit 0 (fail-open) on some inputs, leaving a
+# truncated/partial export. Two backstops make that fail-CLOSED: (1) reject now
+# if it printed a panic/error to stderr; (2) the trusted gate exe REQUIRES every
+# target decl to be present in the export ("target absent from candidate" →
+# REJECTED), so a decl dropped from a partial export is caught at adjudication.
+if grep -Eiq 'panic|internal error|stack overflow' "$EXPORT_LOG"; then
+  md "- **reject** — lean4export reported a panic/error (regardless of exit code):"
+  md ""
+  tail -n 30 "$EXPORT_LOG" | embed_log >> "$REPORT"
+  md ""
   emit_and_exit 2
 fi
 md "- exported \`$(wc -c <"$CAND_EXPORT" | tr -d ' ')\` bytes."
@@ -281,14 +333,12 @@ ADJ_ERR="$WORK/adj.err"
 
 if [ -n "$REF_EXPORT" ]; then
   md "- mode: **discharge** (\`--reference\` statement-identity vs frozen R for \`$DISCHARGES\`)."
-  # shellcheck disable=SC2086
-  "$ADJUDICATE_BIN" --reference "$REF_EXPORT" "$CAND_EXPORT" -- $TARGET_DECLS \
+  "$ADJUDICATE_BIN" --reference "$REF_EXPORT" "$CAND_EXPORT" -- "${TARGET_DECLS_ARR[@]}" \
     >"$ADJ_OUT" 2>"$ADJ_ERR"
   ADJ_RC=$?
 else
   md "- mode: **self-audit** (no \`@discharges\`; replay + axioms + triviality)."
-  # shellcheck disable=SC2086
-  "$ADJUDICATE_BIN" "$CAND_EXPORT" -- $TARGET_DECLS \
+  "$ADJUDICATE_BIN" "$CAND_EXPORT" -- "${TARGET_DECLS_ARR[@]}" \
     >"$ADJ_OUT" 2>"$ADJ_ERR"
   ADJ_RC=$?
 fi
@@ -297,9 +347,9 @@ fi
 # nonzero (REJECTED). A nonzero exit with UNPARSEABLE stdout is a real crash.
 if ! "$PY" -c 'import json,sys;json.load(open(sys.argv[1]))' "$ADJ_OUT" 2>/dev/null; then
   md "- **reject** — adjudicate exited $ADJ_RC with unparseable stdout (crash/panic):"
-  md '```'
-  tail -n 30 "$ADJ_ERR" >> "$REPORT"
-  md '```'
+  md ""
+  tail -n 30 "$ADJ_ERR" | embed_log >> "$REPORT"
+  md ""
   emit_and_exit 2
 fi
 

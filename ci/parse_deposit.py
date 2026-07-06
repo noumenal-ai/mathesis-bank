@@ -17,7 +17,8 @@
 #   * a required field is missing (@kind, @title, @decls, @pin),
 #   * @kind is not one of result|definition|claim,
 #   * @pin is not exactly leanprover/lean4:v4.31.0,
-#   * @decls is empty after splitting.
+#   * @decls is empty after splitting, or any decl is not a plausible name,
+#   * @discharges is present but is not a claims handle MTH.C-YYYY-NNNN.
 # A malformed deposit therefore never yields a parse the gate could act on.
 # ---------------------------------------------------------------------------
 import json
@@ -30,6 +31,25 @@ VALID_KINDS = ("result", "definition", "claim")
 # The @-fields the header may carry. Everything the gate keys on is here; an
 # unknown @-line is ignored (forward-compatible) rather than fatal.
 SCALAR_FIELDS = ("kind", "title", "module", "decls", "pin", "discharges")
+
+# A @decls entry is passed to the kernel gate as an argv item AND echoed into
+# the PR-comment markdown. Lean declaration names use ASCII letters/digits and
+# `_ . ' ! ?`, plus a wide range of non-ASCII (greek, subscripts, unicode
+# letters). We ALLOW exactly those and reject everything else — in particular
+# whitespace/controls, path separators, and shell/markdown metacharacters —
+# so a hostile decl cannot break out of the gate's argv or the report markdown.
+DECL_ASCII_OK = set(
+    "0123456789"
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    "abcdefghijklmnopqrstuvwxyz"
+    "_.'!?"
+)
+
+
+def decl_char_ok(c):
+    # Non-ASCII (>= 0x80) is allowed: Lean identifiers may contain unicode
+    # letters/subscripts. ASCII must be in the identifier allow-set.
+    return ord(c) >= 0x80 or c in DECL_ASCII_OK
 
 
 def die(msg):
@@ -132,13 +152,36 @@ def main(argv):
     if not decls:
         die("@decls resolved to an empty list in %s" % path)
 
+    # Reject any decl containing a forbidden byte (whitespace, control, path or
+    # shell/markdown-dangerous character) or a `..` sequence. Keeps a hostile
+    # decl from breaking out of the gate's argv or the PR-comment markdown.
+    for dn in decls:
+        if ".." in dn or not all(decl_char_ok(c) for c in dn):
+            die("illegal @decls entry %r (not a plausible Lean declaration name)" % dn)
+
+    # @discharges (when present) names a CLAIM this deposit discharges. It is
+    # interpolated by the gate into a registry path
+    # (registry/claims/<discharges>/manifest.json) to select the FROZEN
+    # reference R. Validate it to the exact claims-handle grammar
+    # MTH.C-YYYY-NNNN, fail-closed: this forecloses path traversal (`../`,
+    # absolute paths, embedded `/`) that would let a deposit point R at a file
+    # it controls and pass statement-identity against its own forged reference.
+    discharges = fields.get("discharges") or None
+    if discharges is not None and not re.fullmatch(r"MTH\.C-[0-9]{4}-[0-9]{4,}", discharges):
+        die("invalid @discharges %r (must be a claims handle MTH.C-YYYY-NNNN)" % discharges)
+
+    # Title is human-facing and flows into the PR-comment markdown. Collapse all
+    # whitespace (including newlines) to single spaces and cap length, so a
+    # title cannot forge a report line (e.g. a fake "verdict: admit").
+    title = re.sub(r"\s+", " ", fields["title"]).strip()[:200]
+
     out = {
         "kind": kind,
-        "title": fields["title"],
+        "title": title,
         "module": fields.get("module") or "Submission",
         "decls": decls,
         "pin": pin,
-        "discharges": fields.get("discharges") or None,
+        "discharges": discharges,
         "gloss": fields.get("gloss", ""),
     }
     sys.stdout.write(json.dumps(out) + "\n")
