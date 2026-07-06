@@ -166,7 +166,8 @@ print((m.get("frozen_export") or {}).get("sha256") or "")
     # Reuse the shared fetch path. It resolves shas referenced by manifests
     # from the configured store and sha256-verifies each blob after download.
     md "- fetching frozen reference R (\`$REF_SHA\`) via ci/fetch_exports.sh"
-    if ! MATHESIS_EXPORTS_DIR="$EXPORTS_DIR" bash "$ROOT/ci/fetch_exports.sh" >>"$WORK/fetch.log" 2>&1; then
+    # Targeted: fetch ONLY this reference sha (not the whole corpus).
+    if ! MATHESIS_EXPORTS_DIR="$EXPORTS_DIR" bash "$ROOT/ci/fetch_exports.sh" "$REF_SHA" >>"$WORK/fetch.log" 2>&1; then
       md "- **reject** — could not fetch/verify frozen reference R for \`$DISCHARGES\`:"
       md '```'
       tail -n 20 "$WORK/fetch.log" >> "$REPORT"
