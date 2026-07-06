@@ -40,13 +40,9 @@ on:
   pull_request:
     paths:
       - 'deposits/**'
-  # Dry-run: manually gate every committed deposit dir (no PR needed). Lets the
-  # full pipeline be exercised on a branch without opening external deposits.
-  # (workflow_dispatch only becomes available once this file is on the default
-  # branch, so the branch dry-run uses the push trigger below.)
+  # Manual re-gate of every committed deposit dir (available once this file is
+  # on the default branch).
   workflow_dispatch: {}
-  push:
-    branches: ['feature/external-deposit-ci']
 
 # Job-default permissions: read-only. The untrusted build runs under this.
 permissions:
