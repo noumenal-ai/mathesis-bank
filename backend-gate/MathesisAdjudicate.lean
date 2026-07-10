@@ -186,10 +186,11 @@ structure TargetAudit where
 `candidate`, using the hard-coded `permittedAxioms`. `pass`/`illegalAxiom` are decided SOLELY by
 `checkAxioms`; `triviality` is emitted for the CI to route to review but NEVER affects `pass` (a
 trivial theorem is valid, just mis-claimed). -/
-def auditTarget (candidate : ExportedEnv) (decl : Name) : TargetAudit :=
+def auditTarget (candidate : ExportedEnv) (permittedTypes : Std.HashMap Name ConstantInfo)
+    (decl : Name) : TargetAudit :=
   let info? := candidate.constMap[decl]?
   let (pass, illegalAxiom) :=
-    match checkAxioms candidate #[decl] permittedAxioms with
+    match checkAxioms candidate #[decl] permittedAxioms permittedTypes with
     | .ok () => (true, none)
     | .error e => (false, some e)
   let (reached, _note) := collectAxioms candidate decl
@@ -288,6 +289,19 @@ smuggle is surfaced as content, not just a boolean). The statement leg is a GATE
 mode: a `fail` forces `verdict` to `REJECTED` and a nonzero exit. -/
 def main (args : List String) : IO UInt32 := do
   Lean.initSearchPath (← Lean.findSysroot)
+  -- Bind each permitted axiom NAME to its genuine kernel TYPE, read from a TRUSTED base environment
+  -- (`Init`, from this exe's own pinned toolchain — never from the deposit). This closes the
+  -- name-only-whitelist spoof: a `prelude` deposit declaring `axiom propext : <false>` is rejected
+  -- because its type differs from genuine `propext`. FAIL CLOSED: if any permitted axiom cannot be
+  -- resolved in the base env we refuse to run rather than silently fall back to name-only.
+  let baseEnv ← Lean.importModules #[{ module := `Init }] {}
+  let mut permittedTypes : Std.HashMap Name ConstantInfo := {}
+  for n in permittedAxioms do
+    match baseEnv.find? n with
+    | some ci => permittedTypes := permittedTypes.insert n ci
+    | none =>
+      IO.eprintln s!"FATAL: permitted axiom '{n}' not found in trusted base env; refusing to run (cannot bind name→type)"
+      return 1
   match parseArgs args with
   | .error msg =>
     IO.eprintln msg
@@ -297,7 +311,7 @@ def main (args : List String) : IO UInt32 := do
     let text ← IO.FS.readFile path
     let candidate ← loadFrozenText text
     let (accepted, detail) ← replayLean candidate
-    let audits := targets.map (auditTarget candidate)
+    let audits := targets.map (auditTarget candidate permittedTypes)
     let allPass := audits.all (·.pass)
     -- Statement-identity leg (the UK-i definition-smuggling defense): runs ONLY when a reference is
     -- supplied. When present it re-uses the proven-sound `checkProof` primitive over R-vs-candidate;
@@ -310,6 +324,7 @@ def main (args : List String) : IO UInt32 := do
       | some refPath => do
         let reference ← loadFrozenText (← IO.FS.readFile refPath)
         let report ← checkProof reference candidate targets permittedAxioms #[]
+                        (permittedTypes := permittedTypes)
         match report.statement with
         | .pass       => pure (LegResult.pass, Json.str "pass")
         | .fail reason => pure (LegResult.fail reason, Json.str reason)

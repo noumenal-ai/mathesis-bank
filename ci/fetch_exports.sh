@@ -27,17 +27,25 @@ mkdir -p "$DEST"
 
 sha_of() { if command -v sha256sum >/dev/null 2>&1; then sha256sum "$1" | cut -d' ' -f1; else shasum -a 256 "$1" | cut -d' ' -f1; fi; }
 
-# Unique sha256s referenced by Results manifests.
-shas="$(python3 - "$ROOT" <<'PY'
+# sha256s to fetch: either the EXPLICIT args (targeted single-blob fetch — the
+# deposit gate uses this to pull just a discharge's reference R, not the whole
+# corpus), or, with no args, EVERY frozen_export sha referenced by ANY bank
+# manifest: results, claims (a discharge's R lives here), and dictionary.
+if [ "$#" -gt 0 ]; then
+  shas="$(printf '%s\n' "$@")"
+else
+  shas="$(python3 - "$ROOT" <<'PY'
 import json, glob, os, sys
 root = sys.argv[1]; s = set()
-for p in glob.glob(os.path.join(root, "registry", "results", "*", "manifest.json")):
-    fe = (json.load(open(p)).get("frozen_export") or {})
-    if fe.get("sha256"):
-        s.add(fe["sha256"])
+for bank in ("results", "claims", "dictionary"):
+    for p in glob.glob(os.path.join(root, "registry", bank, "*", "manifest.json")):
+        fe = (json.load(open(p)).get("frozen_export") or {})
+        if fe.get("sha256"):
+            s.add(fe["sha256"])
 print("\n".join(sorted(s)))
 PY
 )"
+fi
 
 [ -n "$shas" ] || { echo "fetch_exports: no frozen_export sha256s referenced — nothing to fetch."; exit 0; }
 

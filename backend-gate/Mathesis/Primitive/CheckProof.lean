@@ -41,6 +41,31 @@ namespace Mathesis.CheckProof
 
 open Lean Export
 
+/-- Collect the *structure type names* stored on `.proj` nodes anywhere in `e`.
+
+`Expr.getUsedConstants` collects only `.const` occurrences; a projection `.proj S i s` carries its
+structure type `S` as a bare `Name` field, NOT as an `Expr.const`, so `getUsedConstants` misses it.
+Without this, a statement whose type reaches a constant only through a projection would never enqueue
+that structure's `ConstantInfo` for comparison — letting a candidate smuggle a divergent definition
+of `S` behind a byte-identical `.proj` node (statement-identity closure gap). Folded in alongside
+`getUsedConstants` in `runForUsedConsts` so both the identity and axiom closures see projected types. -/
+partial def collectProjTypes : Expr → Array Name → Array Name
+  | .proj tn _ s, acc => collectProjTypes s (acc.push tn)
+  | .app f a,       acc => collectProjTypes a (collectProjTypes f acc)
+  | .lam _ t b _,   acc => collectProjTypes b (collectProjTypes t acc)
+  | .forallE _ t b _, acc => collectProjTypes b (collectProjTypes t acc)
+  | .letE _ t v b _, acc => collectProjTypes b (collectProjTypes v (collectProjTypes t acc))
+  | .mdata _ b,     acc => collectProjTypes b acc
+  | _,              acc => acc
+
+/-- Canonicalize a declaration's type by renaming its universe parameters to a positional sequence,
+so two types that differ ONLY in universe-parameter *names* compare equal. Used to bind a permitted
+axiom NAME to its genuine kernel TYPE (below) without being fooled by the exporter naming a universe
+parameter differently than `Init` does. -/
+def canonLevels (levelParams : List Name) (type : Expr) : Expr :=
+  let canon := (List.range levelParams.length).map fun i => Level.param (Name.mkSimple s!"_canonU{i}")
+  type.instantiateLevelParams levelParams canon
+
 /-! ### Constant traversal (generalized `Comparator.runForUsedConsts`) -/
 
 /-- Run `f` on every constant referenced by `info`: the constants in its type, its own name, the
@@ -59,9 +84,11 @@ PROOF) and for `.opaqueInfo`. So:
 def runForUsedConsts {m : Type → Type} [Monad m] (info : ConstantInfo) (deep : Bool)
     (f : Name → m Unit) : m Unit := do
   info.type.getUsedConstants.forM f
+  (collectProjTypes info.type #[]).forM f
   f info.name
   if let some val := info.value? (allowOpaque := deep) then
     val.getUsedConstants.forM f
+    (collectProjTypes val #[]).forM f
   match info with
   | .axiomInfo .. | .quotInfo .. | .defnInfo .. | .thmInfo .. | .opaqueInfo .. => pure ()
   | .inductInfo iv => iv.ctors.forM f; iv.all.forM f
@@ -139,6 +166,10 @@ namespace Axioms
 structure Ctx where
   candidate : ExportedEnv
   permitted : Std.HashSet Name
+  /-- Genuine kernel `ConstantInfo` for each permitted axiom NAME, from a trusted base environment.
+  Binds name→type so a permitted *name* declared with a non-genuine *type* (a spoof) is rejected.
+  Empty ⇒ name-only (legacy) — callers that can supply the trusted types MUST, or the spoof is open. -/
+  permittedTypes : Std.HashMap Name ConstantInfo := {}
 
 structure St where
   worklist : Array Name
@@ -166,6 +197,13 @@ where
     if let .axiomInfo ax := info then
       if !(← read).permitted.contains ax.name then
         throw s!"illegal axiom reached: '{ax.name}'"
+      -- Name-only whitelisting is spoofable: a `prelude` deposit can declare `axiom propext : <false>`
+      -- and prove it (name matches, type is bogus). Bind each permitted NAME to its genuine kernel
+      -- TYPE and reject a mismatch. (Message keeps the `illegal axiom reached: '<name>'` shape so the
+      -- report's `illegal_axiom` field still names the offending axiom.)
+      if let some genuine := (← read).permittedTypes[ax.name]? then
+        if canonLevels ax.levelParams ax.type != canonLevels genuine.levelParams genuine.type then
+          throw s!"illegal axiom reached: '{ax.name}' (permitted name declared with a non-genuine type — spoof)"
     if !(← get).checked.contains n then
       modify fun s => { s with worklist := s.worklist.push n }
 
@@ -180,14 +218,15 @@ only theorems), or even an `axiomInfo` (audited against `permitted` directly). S
 with the target itself makes `Axioms.loop` close over `runForUsedConsts`, which visits type + name +
 value + children — this also audits a theorem's TYPE-side constants (matching `#print axioms`
 closure), which the previous proof-value-only seeding missed. -/
-def checkAxioms (candidate : ExportedEnv) (targets permitted : Array Name) :
+def checkAxioms (candidate : ExportedEnv) (targets permitted : Array Name)
+    (permittedTypes : Std.HashMap Name ConstantInfo := {}) :
     Except String Unit := do
   let mut worklist := #[]
   for target in targets do
     if !candidate.constMap.contains target then
       throw s!"target absent from candidate: '{target}'"
     worklist := worklist.push target
-  Axioms.loop.run { candidate, permitted := Std.HashSet.ofArray permitted }
+  Axioms.loop.run { candidate, permitted := Std.HashSet.ofArray permitted, permittedTypes }
     |>.run' { worklist, checked := {} }
 
 /-! ### Leg 1c — kernel replay -/
@@ -221,13 +260,14 @@ axiom closure are pure; each kernel in `kernels` replays the candidate (gating d
 shadow cross-check silently). -/
 def checkProof (reference candidate : ExportedEnv)
     (targets permitted primitive : Array Name)
-    (kernels : Array KernelSpec := #[leanGatingKernel]) : IO ProofReport := do
+    (kernels : Array KernelSpec := #[leanGatingKernel])
+    (permittedTypes : Std.HashMap Name ConstantInfo := {}) : IO ProofReport := do
   let statement : LegResult :=
     match checkStatement reference candidate targets primitive with
     | .ok _ => .pass
     | .error e => .fail e
   let «axioms» : LegResult :=
-    match checkAxioms candidate targets permitted with
+    match checkAxioms candidate targets permitted permittedTypes with
     | .ok _ => .pass
     | .error e => .fail e
   let mut outcomes : Array KernelOutcome := #[]
