@@ -10,7 +10,9 @@ and emits docs/ (a static, framework-free site).
 Invariants this script must never violate:
   INV-1  Language firewall: none of the banned words may appear anywhere in docs/ output.
   INV-2  No importance signals: no rankings/featured/stars/citation counts/single score.
-         Only two separate counts are shown: T0 count (scale) and T2 count (quality).
+         Only neutral CATEGORY counts are shown (per evidence leg: proved / witnessed /
+         mechanized-empirical, and per bank) — kinds, never a rank. The evidence leg is a
+         distinction of kind layered on the shared kernel-checked floor, not a quality order.
   INV-3  Gate-emitted fields (tier, axiom_manifest, verdict) are rendered verbatim from
          the manifest. This generator never computes or edits them.
   INV-4  No LLM anywhere in this pipeline; pure byte-faithful rendering.
@@ -84,6 +86,54 @@ TIER_CAPTION = {
     ("T2", "existential"): "kernel-checked; the witness is exhaustive evidence",
     ("T2", None): "kernel-checked; exhaustive coverage",
 }
+
+# Evidence leg — the discerning-reader differentiator, layered ON TOP of the
+# kernel-checked floor (every result has the floor; the leg says WHAT KIND of
+# evidence carries it). These are KINDS, not a ranking (INV-2). DERIVED, not
+# gate-emitted: proved/witnessed come straight from the gate's `polarity` field;
+# mechanized-empirical is recognised by the author's own `Executed` namespace
+# segment on the statement's declarations (a result whose statement is about a
+# concretely executed system). The rule is disclosed on the site so a reader can
+# re-derive the label; the generator never invents a gate verdict (INV-3).
+EVIDENCE_LEG = {
+    "proved": ("Proved",
+               "a general statement, established for every case by a kernel-checked proof term"),
+    "witnessed": ("Witnessed",
+                  "an existence statement whose concrete witness is itself the kernel-checked evidence"),
+    "mechanized-empirical": ("Mechanized-empirical",
+                             "a statement about a specific executed system, whose behaviour is reflected "
+                             "exactly into the kernel and reasoned over"),
+}
+
+
+def evidence_leg(m):
+    """Derive a result's evidence leg (a key in EVIDENCE_LEG, or None for non-results).
+
+    Disclosed rule: a statement whose declarations include an `Executed` namespace
+    segment is mechanized-empirical; otherwise a universal statement is proved and an
+    existential statement is witnessed. Derived from the gate's own `polarity` field and
+    the authors' own namespacing — never a claim the manifest does not already carry."""
+    if m.get("deposit_class") != "demonstration":
+        return None
+    decls = (m.get("statement") or {}).get("decl_names") or []
+    if any("Executed" in d.split(".") for d in decls):
+        return "mechanized-empirical"
+    pol = m.get("polarity")
+    if pol == "universal":
+        return "proved"
+    if pol == "existential":
+        return "witnessed"
+    return None
+
+
+def evidence_leg_badge(m):
+    leg = evidence_leg(m)
+    if not leg:
+        return ""
+    label, caption = EVIDENCE_LEG[leg]
+    return (f'<span class="badge badge-leg badge-leg-{esc(leg)}" title="{esc(caption)}">'
+            f'{esc(label)}<span class="badge-caption">{esc(caption)}</span></span>')
+
 
 STATUS_LABEL = {
     # Dictionary (INV-7: "proposed" must never read as "admitted")
@@ -403,7 +453,8 @@ def render_accession_detail(handle, rec, records):
 
     header_badges = []
     if m["deposit_class"] == "demonstration":
-        header_badges.append(tier_badge(m.get("tier"), m.get("polarity")))
+        header_badges.append(evidence_leg_badge(m))       # the kind of evidence (primary)
+        header_badges.append(tier_badge(m.get("tier"), m.get("polarity")))  # coverage (secondary)
         header_badges.append(axiom_chip(m))
         header_badges.append(admitted_stamp(m))
     elif m["deposit_class"] == "definition":
@@ -474,7 +525,12 @@ def render_accession_detail(handle, rec, records):
         tbe_html = ""
         if tbe:
             tbe_html = f'<p class="warn-note">Trust-boundary extensions: {" ".join(f"<code>{esc(t)}</code>" for t in tbe)}</p>'
-        axiom_manifest_html = f'<section class="shell detail-section"><h3>Axiom manifest</h3><p>{chips}</p>{tbe_html}</section>'
+        axiom_manifest_html = (
+            '<section class="shell detail-section"><h3>Axiom manifest</h3>'
+            '<p class="mono-note">The assumptions this proof depends on beyond the kernel&rsquo;s base '
+            'logic. A shorter list is a stronger result; an empty list means the proof rests on nothing '
+            'but the kernel itself.</p>'
+            f'<p>{chips}</p>{tbe_html}</section>')
 
     body = f"""
 <section class="detail-hero shell">
@@ -574,13 +630,17 @@ def render_bank_index(bank_key, records):
 
     counts_html = ""
     if bank_key == "results":
-        t0 = sum(1 for h in handles if records[h]["manifest"].get("tier") == "T0")
-        t2 = sum(1 for h in handles if records[h]["manifest"].get("tier") == "T2")
+        legcount = {"proved": 0, "witnessed": 0, "mechanized-empirical": 0}
+        for h in handles:
+            leg = evidence_leg(records[h]["manifest"])
+            if leg in legcount:
+                legcount[leg] += 1
         counts_html = f"""
         <div class="factline">
           <div class="fact"><strong>{total}</strong><span>total results</span></div>
-          <div class="fact"><strong>{t0}</strong><span>T0 results (scale)</span></div>
-          <div class="fact"><strong>{t2}</strong><span>T2 results (quality)</span></div>
+          <div class="fact"><strong>{legcount['proved']}</strong><span>proved</span></div>
+          <div class="fact"><strong>{legcount['witnessed']}</strong><span>witnessed</span></div>
+          <div class="fact"><strong>{legcount['mechanized-empirical']}</strong><span>mechanized-empirical</span></div>
         </div>"""
     else:
         counts_html = f"""
@@ -636,48 +696,198 @@ def render_bank_index(bank_key, records):
     return page_shell(title, f"Browse the {bank['label']} bank: {total} accessions.", bank["slug"], body, depth=0)
 
 
+def _home_example_card(handle, records):
+    """One example card rendered from a REAL result manifest (INV-4: never hand-fabricated)."""
+    m = records[handle]["manifest"]
+    title = m.get("title") or ((m.get("statement") or {}).get("decl_names") or ["?"])[0]
+    tier = m.get("tier") or "—"
+    ax = m.get("axiom_manifest")
+    if ax is None:
+        ax_html = '<span class="empty-note">—</span>'
+    elif ax == []:
+        ax_html = '<span class="empty-note">none &mdash; axiom-free</span>'
+    else:
+        ax_html = " ".join(f'<code class="chip chip-axiom">{esc(a)}</code>' for a in ax)
+    witness = "yes" if m.get("witness") else "&mdash;"
+    disch = m.get("discharges")
+    disch_html = f'<code>{esc(disch)}</code>' if disch else '<span class="empty-note">&mdash;</span>'
+    return f"""
+    <div class="ex-card">
+      <div class="ex-row"><span class="ex-k">Result</span><span class="ex-v"><code>{esc(title)}</code></span></div>
+      <div class="ex-row"><span class="ex-k">Kind</span><span class="ex-v">{evidence_leg_badge(m)}</span></div>
+      <div class="ex-row"><span class="ex-k">Coverage</span><span class="ex-v"><code>{esc(tier)}</code></span></div>
+      <div class="ex-row"><span class="ex-k">Axioms</span><span class="ex-v">{ax_html}</span></div>
+      <div class="ex-row"><span class="ex-k">Witness</span><span class="ex-v">{witness}</span></div>
+      <div class="ex-row"><span class="ex-k">Discharges</span><span class="ex-v">{disch_html}</span></div>
+      <div class="ex-row"><span class="ex-k">Accession</span><span class="ex-v"><a href="a/{esc(handle)}.html"><code>{esc(handle)}</code></a></span></div>
+      <div class="ex-row"><span class="ex-k">Verify</span><span class="ex-v"><code>mathesis check {esc(handle)}</code></span></div>
+    </div>"""
+
+
 def render_home(records):
     result_handles = [h for h, r in records.items() if r["bank"] == "results"]
-    t0 = sum(1 for h in result_handles if records[h]["manifest"].get("tier") == "T0")
-    t2 = sum(1 for h in result_handles if records[h]["manifest"].get("tier") == "T2")
     total_results = len(result_handles)
+    total_accessions = len(records)
+
+    by_leg = {"proved": [], "witnessed": [], "mechanized-empirical": []}
+    for h in result_handles:
+        leg = evidence_leg(records[h]["manifest"])
+        if leg in by_leg:
+            by_leg[leg].append(h)
+    n_proved = len(by_leg["proved"])
+    n_witnessed = len(by_leg["witnessed"])
+    n_mech = len(by_leg["mechanized-empirical"])
+
+    def example(leg):
+        hs = sorted(by_leg[leg])
+        return hs[0] if hs else None
+
+    # Example cards: one per populated leg, rendered from real accessions.
+    cards = []
+    for leg in ("proved", "witnessed", "mechanized-empirical"):
+        h = example(leg)
+        if h:
+            cards.append(_home_example_card(h, records))
+    cards_html = "\n".join(cards)
+
+    # Links to a live example per leg, for the explainer (only if populated).
+    def eg_link(leg):
+        h = example(leg)
+        return f' <a href="a/{esc(h)}.html">See one &rarr;</a>' if h else ' <span class="empty-note">(none in this snapshot yet)</span>'
 
     body = f"""
 <section class="hero shell">
   <p class="kicker">Noumenal Research &middot; Mathesis</p>
-  <h1 class="measure">An evidence bank for machine-checked theory.</h1>
+  <h1 class="measure">A public ledger for machine-checked learning-theory claims.</h1>
   <p class="lede">
-    Mathesis holds three banks: <strong>definitions</strong> (the Dictionary),
-    <strong>claims</strong> (statements of record), and <strong>results</strong>
-    (kernel-checked demonstrations that discharge claims). Nothing here is ranked.
-    Every result carries its own proof, its own witness, and its own axiom manifest,
-    rendered exactly as the kernel and the author left them.
+    Mathesis stores definitions, claims, and verified results with their exact proofs,
+    witnesses, and axiom manifests. Every result is independently checkable. Corrections
+    create new immutable accessions instead of rewriting history.
   </p>
   <div class="actions">
     <a class="btn primary" href="results.html">Browse results</a>
+    <a class="btn" href="#verify">Verify one yourself</a>
     <a class="btn" href="deposit.html">Deposit</a>
-    <a class="btn" href="charter.html">Read the charter</a>
   </div>
   <div class="factline">
-    <div class="fact"><strong>{total_results}</strong><span>total results</span></div>
-    <div class="fact"><strong>{t0}</strong><span>T0 results (scale)</span></div>
-    <div class="fact"><strong>{t2}</strong><span>T2 results (quality)</span></div>
-    <div class="fact"><strong>430</strong><span>total accessions</span></div>
+    <div class="fact"><strong>{total_results}</strong><span>results</span></div>
+    <div class="fact"><strong>{n_proved}</strong><span>proved</span></div>
+    <div class="fact"><strong>{n_witnessed}</strong><span>witnessed</span></div>
+    <div class="fact"><strong>{n_mech}</strong><span>mechanized-empirical</span></div>
+    <div class="fact"><strong>{total_accessions}</strong><span>total accessions</span></div>
   </div>
+</section>
+
+<section class="shell qa-block">
+  <div class="qa">
+    <h3>What is this?</h3>
+    <p>A public evidence bank for machine-checked learning-theory results.</p>
+  </div>
+  <div class="qa">
+    <h3>Why should I care?</h3>
+    <p>Every claim can be traced to an exact proof, a witness where one applies, a kernel
+       check, and the list of axioms it depends on.</p>
+  </div>
+  <div class="qa">
+    <h3>What can I do here?</h3>
+    <p>Browse verified results, inspect claims, deposit new proofs, and cite immutable
+       accessions.</p>
+  </div>
+</section>
+
+<section class="shell detail-section measure">
+  <h2>What does &ldquo;verified&rdquo; mean?</h2>
+  <p>A verified result has passed the kernel. Mathesis records the exact formal statement, the
+     proof, a witness when applicable, and the axiom manifest. Verification does <strong>not</strong>
+     mean the result is important, original, elegant, or aligned with informal mathematical intent.
+     Those are separate review layers, tracked apart from the machine check.</p>
+</section>
+
+<section class="shell section-head-block">
+  <div class="section-head">
+    <h2>Three kinds of evidence</h2>
+    <p>Every result clears the same floor &mdash; the Lean&nbsp;4 kernel accepted its proof. On top of
+       that floor, results differ by the <em>kind</em> of evidence that carries them. This is a
+       distinction of kind, not a ranking.</p>
+  </div>
+  <div class="obligations">
+    <div class="ob">
+      <span class="tag">Proved</span>
+      <h3>{n_proved} results</h3>
+      <p>A general statement, established for every case by a kernel-checked proof term. Pure
+         deduction: no instance is privileged.{eg_link("proved")}</p>
+    </div>
+    <div class="ob">
+      <span class="tag">Witnessed</span>
+      <h3>{n_witnessed} results</h3>
+      <p>An existence statement whose concrete witness <em>is</em> the evidence &mdash; the kernel
+         checks that the exhibited object has the claimed property.{eg_link("witnessed")}</p>
+    </div>
+    <div class="ob">
+      <span class="tag">Mechanized-empirical</span>
+      <h3>{n_mech} results</h3>
+      <p>A statement about a specific executed system, whose behaviour is reflected exactly into
+         the kernel and reasoned over &mdash; the empirical object lives inside the proof.{eg_link("mechanized-empirical")}</p>
+    </div>
+  </div>
+  <p class="mono-note measure">How the label is derived: a result whose statement is about a concretely
+     executed system (its declarations sit under an <code>Executed</code> namespace) is shown as
+     mechanized-empirical; otherwise a universal statement is <em>proved</em> and an existential one is
+     <em>witnessed</em>. It reads the gate&rsquo;s own polarity field and the authors&rsquo; own
+     namespacing &mdash; it never invents a verdict the accession does not carry.</p>
+</section>
+
+<section class="shell section-head-block">
+  <div class="section-head">
+    <h2>Example results</h2>
+    <p>Real accessions, rendered exactly as the gate and the author left them. Each is checkable with
+       the one command below.</p>
+  </div>
+  <div class="ex-cards">
+{cards_html}
+  </div>
+</section>
+
+<section class="shell detail-section measure" id="verify">
+  <h2>Verify it yourself</h2>
+  <p>Nothing here asks for trust. Clone the bank, build the kernel gate once, and re-derive any
+     accession from its frozen proof export &mdash; the tool fetches the export (content-addressed,
+     sha256-verified) and replays it through the Lean&nbsp;4 kernel. It never reads the verdict the
+     bank records about itself.</p>
+  <pre class="statement-pretty"><code>git clone https://github.com/noumenal-ai/mathesis-bank
+cd mathesis-bank
+bin/mathesis build                     # build the kernel gate once
+bin/mathesis check MTH.R-2026-1001     # re-derive one accession
+bin/mathesis check --all               # re-derive every result</code></pre>
+  <p class="mono-note">Exit code is the verdict: <code>0</code> means an independent machine re-derived
+     the proof. This is exactly what the bank&rsquo;s own continuous integration runs on every change.</p>
+</section>
+
+<section class="shell section-head-block">
+  <div class="section-head">
+    <h2>How it works</h2>
+    <p>Each accession is immutable once written. Corrections mint a new accession; they never edit
+       the old one.</p>
+  </div>
+  <ol class="how-steps">
+    <li><strong>Define terms.</strong> Definitions enter the Dictionary.</li>
+    <li><strong>Freeze a claim.</strong> A claim can be recorded before any proof is attempted (optional).</li>
+    <li><strong>Deposit a result.</strong> A proof attempts to discharge the claim.</li>
+    <li><strong>Check and accession.</strong> The kernel re-derives the result and Mathesis mints an immutable accession.</li>
+    <li><strong>Correct by adding, not editing.</strong> Errors mint new accessions; old records stay visible.</li>
+  </ol>
 </section>
 
 <section class="shell section-head-block">
   <div class="section-head">
     <h2>Three banks, one ledger</h2>
-    <p>Each accession is immutable once written. Corrections mint a new accession; they never
-       edit the old one.</p>
   </div>
   <div class="obligations">
     <div class="ob">
       <span class="tag">Dictionary</span>
       <h3>Definitions</h3>
       <p>The vocabulary the claims and results are stated in. Kernel-checked for internal
-         consistency; interrogation of fit against intent is a separate, ongoing overlay.</p>
+         consistency; review of naming, meaning, and intent is tracked separately.</p>
       <a href="dictionary.html">Browse the Dictionary &rarr;</a>
     </div>
     <div class="ob">
@@ -698,7 +908,7 @@ def render_home(records):
 </section>
 """
     title = "Mathesis · Noumenal Research"
-    return page_shell(title, "An evidence bank for machine-checked machine-learning theory.", "home", body, depth=0)
+    return page_shell(title, "A public ledger for machine-checked learning-theory claims.", "home", body, depth=0)
 
 
 def render_deposit():
