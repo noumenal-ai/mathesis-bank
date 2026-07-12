@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MTH.R-2026-1199 · Eidometry.Thesis.causal_rung1_width · Mathesis</title>
+<meta name="description" content="Result MTH.R-2026-1199: Eidometry.Thesis.causal_rung1_width">
+<link rel="stylesheet" href="../styles.css">
+</head>
+<body>
+<div class="topbar">
+  <div class="topbar-inner">
+    <a class="wordmark" href="../index.html">Noumenal Research <span>&middot; Mathesis</span></a>
+    <div class="topbar-right">
+      <nav class="topnav" aria-label="Sections">
+        <a href="../results.html" class="active">Results</a>
+<a href="../claims.html" class="">Claims</a>
+<a href="../dictionary.html" class="">Dictionary</a>
+<a href="../ontology.html" class="">Ontology</a>
+<a href="../deposit.html" class="">Deposit</a>
+<a href="../charter.html" class="">Charter</a>
+<a href="../about.html" class="">About</a>
+      </nav>
+      <button class="verify-chip" id="verifyBtn" type="button"
+              aria-haspopup="dialog" aria-expanded="false" aria-controls="verifyPanel">
+        <span class="vdot v-pending"></span><span class="vlabel">Verify</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<div id="verifyPanel" role="dialog" aria-modal="true" aria-label="Machine verification" hidden>
+  <div class="vcard">
+    <button class="vclose" type="button" aria-label="Close">&times;</button>
+    <h3>Machine verification</h3>
+    <div class="vbody"></div>
+  </div>
+</div>
+
+<main id="top">
+
+<section class="detail-hero shell">
+  <p class="kicker"><a href="../results.html">Results</a> &middot; Result</p>
+  <h1 class="measure">Eidometry.Thesis.causal_rung1_width</h1>
+  <p class="handle-line"><code>MTH.R-2026-1199</code></p>
+  <div class="badge-row"><span class="badge badge-leg badge-leg-proved" title="a general statement, established for every case by a kernel-checked proof term">Proved<span class="badge-caption">a general statement, established for every case by a kernel-checked proof term</span></span><span class="badge badge-onto" title="Four independent testbeds — a qubit, a classical conservative system, learning through a representation, and causal models — each supply only a set of measurements and prove the forced structure equals an object defined separately, supplied nowhere in advance.">Experiments<span class="badge-caption">Four independent testbeds — a qubit, a classical conservative system, learning through a representation, and causal models — each supply only a set of measurements and prove the forced structure equals an object defined separately, supplied nowhere in advance.</span></span><span class="badge badge-none">not tiered</span><span class="badge badge-clean" title="depends only on propext, Classical.choice, Quot.sound">axiom-clean</span><span class="stamp stamp-admitted">ADMITTED</span></div>
+  <p class="binding-note"><strong>Machine-checked:</strong> the formal statement below and its axiom closure (kernel replay, whitelist audit). <strong>Author-described:</strong> the title and gloss &mdash; the machine does not check that the prose matches the formal statement.</p>
+</section>
+
+<section class="shell detail-section">
+  <h3>Statement</h3>
+  <p class="mono-note"><code class="chip chip-module">Eidometry.Thesis</code> &middot; declares <code>Eidometry.Thesis.causal_rung1_width</code></p>
+  <pre class="statement-pretty"><code>WMSpec.Transform.fiberWidth (fun M =&gt; WMSpec.Transform.IVModel.ivQuery M) {M | ∀ (z x y : Bool), WMSpec.Transform.IVModel.zxyRead M z x y = WMSpec.Transform.IVModel.zxyRead WMSpec.Transform.Mstar z x y} = ENNReal.ofReal (1 / 4)</code></pre>
+</section>
+
+<section class="shell detail-section">
+  <h3>Status</h3>
+  <p>still verified against the current pin</p>
+  <p><strong>Discharges claim</strong> <a href="../a/MTH.C-2026-1199.html"><code>MTH.C-2026-1199</code></a></p>
+  <p><strong>Cites</strong> <code>WMSpec.Transform.rung1_width</code> <span class="empty-note">— the corpus theorem this result restates and discharges by naming it.</span></p>
+</section>
+
+<section class="shell detail-section">
+  <h3>Vouching</h3>
+  <p class="empty-note">Who vouches for each component. The gloss is always author-vouched: faithfulness of prose to the formal statement is overlay work, not gated.</p>
+  <table class="vouch-table"><thead><tr><th>Component</th><th>Vouched by</th></tr></thead><tbody><tr><td>Statement</td><td><span class="badge badge-vouch badge-vouch-kernel">kernel</span></td></tr><tr><td>Proof</td><td><span class="badge badge-vouch badge-vouch-kernel">kernel</span></td></tr><tr><td>Witness</td><td class="v-na">not applicable</td></tr><tr><td>Gloss</td><td><span class="badge badge-vouch badge-vouch-author">author</span></td></tr></tbody></table>
+</section>
+
+<section class="shell detail-section"><h3>Axiom manifest</h3><p class="mono-note">The assumptions this proof depends on beyond the kernel&rsquo;s base logic. A shorter list is a stronger result; an empty list means the proof rests on nothing but the kernel itself.</p><p><code class="chip chip-axiom">Classical.choice</code> <code class="chip chip-axiom">Quot.sound</code> <code class="chip chip-axiom">propext</code></p></section>
+
+<section class="shell detail-section">
+  <h3>Dependency closure</h3>
+  <p class="empty-note">Tier does not compose: each dependency carries its own tier, shown here individually.</p>
+  <ul class="dep-list"><li><a href="../a/MTH.C-2026-1199.html"><code>MTH.C-2026-1199</code></a> <span class="badge badge-none">untiered</span></li></ul>
+</section>
+
+
+
+
+
+<section class="shell detail-section"><h3>Frozen export</h3><p class="mono-note">sha256 <code>18e64d712e252b857b15aebb222e7bbb6488eebe1032fb9b1499a0e4dd778e38</code> &middot; 129155932 bytes &middot; 26035 constants</p><p class="empty-note">Audit artifact available on request; not bundled in this static snapshot.</p></section>
+
+<section class="shell detail-section" id="cite"><h3>Cite this</h3><p class="empty-note">The accession id is permanent and always resolves to this exact statement, proof, and axiom manifest. Corrections mint a new accession; this one never changes.</p><pre class="statement-pretty"><code>Mathesis Bank, accession MTH.R-2026-1199.
+https://noumenal-ai.github.io/mathesis-bank/a/MTH.R-2026-1199.html</code></pre><p class="share-row"><a class="btn" href="https://noumenal-ai.github.io/mathesis-bank/a/MTH.R-2026-1199.html">Permalink</a> <a class="btn" href="https://github.com/noumenal-ai/mathesis-bank/tree/main/registry">Registry</a></p></section>
+
+<section class="shell detail-section">
+  <h3>Pin</h3>
+  <table class="pin-table"><tbody><tr><td>toolchain</td><td><code>leanprover/lean4:v4.31.0</code></td></tr><tr><td>mathlib rev</td><td><code>fabf563a7c95a166b8d7b6efca11c8b4dc9d911f</code></td></tr><tr><td>lib revs</td><td><code>{&quot;Eidometry&quot;: &quot;design-lab@WMTheory (Eidometry thesis; single-Mathlib)&quot;}</code></td></tr><tr><td>gate pins</td><td><code>{&quot;lean4export&quot;: &quot;ca36c44858e2d7ba40996203d2f08a69113d1211&quot;, &quot;Lean4Checker&quot;: &quot;b7398199245524275543dec6113229c9bb4902e5&quot;}</code></td></tr></tbody></table>
+</section>
+
+<section class="shell detail-section">
+  <h3>Gloss <span class="empty-note">(author-provided description)</span></h3>
+  <div class="gloss-body"><p>The interventional-query spread across all models that share the reference model&#x27;s full observational reads is exactly 1/4, proved by matching upper and lower bounds. Together with its neighbors 1/2 and 0, it fixes the ladder&#x27;s objective values as proved spreads rather than chosen numbers.</p>
+<p>**Cites** `WMSpec.Transform.rung1_width` — the corpus theorem this result restates and discharges.</p>
+<p>**Original contribution.** The raw lemma is a single width equation; the thesis-layer statement anchors it as one certified rung value that, with its neighbors, pins the entire self-modification ladder&#x27;s objective to proved geometry.</p></div>
+</section>
+
+</main>
+
+<footer>
+  <div class="shell footer-inner">
+    <span>Noumenal Research &middot; Mathesis is an evidence bank, not a journal.</span>
+    <span><a href="../charter.html">Charter</a> &middot; <a href="../about.html">About</a></span>
+  </div>
+</footer>
+
+<script src="../verify.js"></script>
+<script src="../app.js"></script>
+</body>
+</html>

@@ -1,0 +1,78 @@
+{
+  "axiom_manifest": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+  ],
+  "bibtex": null,
+  "cites": "WMSpec.Transform.ct3a_smooth",
+  "created": "2026-07-12",
+  "dependency_closure": [
+    {
+      "handle": "MTH.C-2026-1211",
+      "tier": null
+    }
+  ],
+  "deposit_class": "demonstration",
+  "discharged_by": null,
+  "discharges": "MTH.C-2026-1211",
+  "doi": null,
+  "evidence_leg": "proved",
+  "exercisability": null,
+  "frozen_export": {
+    "bytes": 129155932,
+    "constants": 26035,
+    "path": "_shared/exports/18e64d712e252b857b15aebb222e7bbb6488eebe1032fb9b1499a0e4dd778e38.export",
+    "sha256": "18e64d712e252b857b15aebb222e7bbb6488eebe1032fb9b1499a0e4dd778e38"
+  },
+  "gloss": "One of a pair of smoothness conjectures: the other form was disproved, but this one holds. It states that for any measurable state space equipped with a countable family of measurable readout functions and a measurable transition, one can construct a countable family of measurable sets that respects the behavioral equivalence (bisimilarity) of states and separates its equivalence classes — with no topological-regularity assumption on the space.\n\n**Cites** `WMSpec.Transform.ct3a_smooth` — the corpus theorem this result restates and discharges.\n\n**Original contribution.** The corpus supplies the smoothness fact; the thesis layer's contribution is the bookkeeping — pairing a discharged (true) conjecture with its disproved sibling so the record shows one conjecture pair fully adjudicated, one refuted and one confirmed.\n",
+  "handle": "MTH.R-2026-1211",
+  "headline": null,
+  "import_path": "Eidometry.Thesis",
+  "library": "Eidometry",
+  "ontology_section": "Counterfactuals",
+  "pin": {
+    "gate_pins": {
+      "Lean4Checker": "b7398199245524275543dec6113229c9bb4902e5",
+      "lean4export": "ca36c44858e2d7ba40996203d2f08a69113d1211"
+    },
+    "lib_revs": {
+      "Eidometry": "design-lab@WMTheory (Eidometry thesis; single-Mathlib)"
+    },
+    "mathlib_rev": "fabf563a7c95a166b8d7b6efca11c8b4dc9d911f",
+    "toolchain": "leanprover/lean4:v4.31.0"
+  },
+  "polarity": "universal",
+  "predicted": null,
+  "provenance": "selfSeeded",
+  "schema_version": 2,
+  "statement": {
+    "decl_names": [
+      "Eidometry.Thesis.counterfactual_ct3a_discharged"
+    ],
+    "module": "Eidometry.Thesis",
+    "pretty": "WMSpec.Transform.CT3a_smooth"
+  },
+  "status": "still-green",
+  "suite": null,
+  "superseded_by": null,
+  "theorem_type": "theorem",
+  "tier": null,
+  "title": "Eidometry.Thesis.counterfactual_ct3a_discharged",
+  "trust_boundary_extensions": [],
+  "verdict": {
+    "gate_version": "mathesis-v4.31 whole-theory replay (Eidometry.Thesis)",
+    "log_path": "WMTheory/Eidometry/Thesis.lean",
+    "result": "ADMITTED",
+    "shadow_kernels": {
+      "nanoda": "skipped-absent"
+    }
+  },
+  "vouching": {
+    "gloss": "author",
+    "proof": "kernel",
+    "statement": "kernel",
+    "witness": null
+  },
+  "witness": null
+}

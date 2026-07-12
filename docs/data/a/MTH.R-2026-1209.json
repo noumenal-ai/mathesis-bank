@@ -1,0 +1,78 @@
+{
+  "axiom_manifest": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+  ],
+  "bibtex": null,
+  "cites": "WMSpec.Transform.exists_saturate_not_measurableSet",
+  "created": "2026-07-12",
+  "dependency_closure": [
+    {
+      "handle": "MTH.C-2026-1209",
+      "tier": null
+    }
+  ],
+  "deposit_class": "demonstration",
+  "discharged_by": null,
+  "discharges": "MTH.C-2026-1209",
+  "doi": null,
+  "evidence_leg": "witnessed",
+  "exercisability": null,
+  "frozen_export": {
+    "bytes": 129155932,
+    "constants": 26035,
+    "path": "_shared/exports/18e64d712e252b857b15aebb222e7bbb6488eebe1032fb9b1499a0e4dd778e38.export",
+    "sha256": "18e64d712e252b857b15aebb222e7bbb6488eebe1032fb9b1499a0e4dd778e38"
+  },
+  "gloss": "There exist measurable read functions and a measurable set whose closure under 'reads the same' (its saturation) is not measurable — an explicit classical analytic, non-Borel counterexample. This refutes, as stated, the conjecture that every bisimilarity on a standard Borel space admits a Borel selector.\n\n**Cites** `WMSpec.Transform.exists_saturate_not_measurableSet` — the corpus theorem this result restates and discharges.\n\n**Original contribution.** The corpus lemma is a bare measure-theoretic existence fact; the thesis layer names it as the in-corpus refuter of a specific stated conjecture (the unrestricted Borel-selector claim) and files it as the disproof half of a conjecture pair, turning a lemma into a recorded refutation.\n",
+  "handle": "MTH.R-2026-1209",
+  "headline": null,
+  "import_path": "Eidometry.Thesis",
+  "library": "Eidometry",
+  "ontology_section": "Counterfactuals",
+  "pin": {
+    "gate_pins": {
+      "Lean4Checker": "b7398199245524275543dec6113229c9bb4902e5",
+      "lean4export": "ca36c44858e2d7ba40996203d2f08a69113d1211"
+    },
+    "lib_revs": {
+      "Eidometry": "design-lab@WMTheory (Eidometry thesis; single-Mathlib)"
+    },
+    "mathlib_rev": "fabf563a7c95a166b8d7b6efca11c8b4dc9d911f",
+    "toolchain": "leanprover/lean4:v4.31.0"
+  },
+  "polarity": "existential",
+  "predicted": null,
+  "provenance": "selfSeeded",
+  "schema_version": 2,
+  "statement": {
+    "decl_names": [
+      "Eidometry.Thesis.counterfactual_ct3b_refuter"
+    ],
+    "module": "Eidometry.Thesis",
+    "pretty": "∃ T B, (∀ (i : ℕ), Measurable (T i)) ∧ MeasurableSet B ∧ ¬MeasurableSet (WMSpec.Transform.saturate T id B)"
+  },
+  "status": "still-green",
+  "suite": null,
+  "superseded_by": null,
+  "theorem_type": "theorem",
+  "tier": null,
+  "title": "Eidometry.Thesis.counterfactual_ct3b_refuter",
+  "trust_boundary_extensions": [],
+  "verdict": {
+    "gate_version": "mathesis-v4.31 whole-theory replay (Eidometry.Thesis)",
+    "log_path": "WMTheory/Eidometry/Thesis.lean",
+    "result": "ADMITTED",
+    "shadow_kernels": {
+      "nanoda": "skipped-absent"
+    }
+  },
+  "vouching": {
+    "gloss": "author",
+    "proof": "kernel",
+    "statement": "kernel",
+    "witness": null
+  },
+  "witness": null
+}

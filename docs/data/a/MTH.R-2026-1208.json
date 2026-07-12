@@ -1,0 +1,78 @@
+{
+  "axiom_manifest": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+  ],
+  "bibtex": null,
+  "cites": "WMSpec.Compiler.geometry_refutes",
+  "created": "2026-07-12",
+  "dependency_closure": [
+    {
+      "handle": "MTH.C-2026-1208",
+      "tier": null
+    }
+  ],
+  "deposit_class": "demonstration",
+  "discharged_by": null,
+  "discharges": "MTH.C-2026-1208",
+  "doi": null,
+  "evidence_leg": "proved",
+  "exercisability": null,
+  "frozen_export": {
+    "bytes": 129155932,
+    "constants": 26035,
+    "path": "_shared/exports/18e64d712e252b857b15aebb222e7bbb6488eebe1032fb9b1499a0e4dd778e38.export",
+    "sha256": "18e64d712e252b857b15aebb222e7bbb6488eebe1032fb9b1499a0e4dd778e38"
+  },
+  "gloss": "If two inputs land close together in the encoder's output but the target separates them by more than the allowed Lipschitz budget, then no Lipschitz readout of the target through the encoder can exist. The audit's rejection is a theorem of the metric geometry, so a failed audit is a proof rather than a warning.\n\n**Cites** `WMSpec.Compiler.geometry_refutes` — the corpus theorem this result restates and discharges.\n\n**Original contribution.** The corpus lemma is the geometric refutation inequality; the thesis frames it as turning an executable audit's rejection into a proof that no readout exists.\n",
+  "handle": "MTH.R-2026-1208",
+  "headline": null,
+  "import_path": "Eidometry.Thesis",
+  "library": "Eidometry",
+  "ontology_section": "Executed runs",
+  "pin": {
+    "gate_pins": {
+      "Lean4Checker": "b7398199245524275543dec6113229c9bb4902e5",
+      "lean4export": "ca36c44858e2d7ba40996203d2f08a69113d1211"
+    },
+    "lib_revs": {
+      "Eidometry": "design-lab@WMTheory (Eidometry thesis; single-Mathlib)"
+    },
+    "mathlib_rev": "fabf563a7c95a166b8d7b6efca11c8b4dc9d911f",
+    "toolchain": "leanprover/lean4:v4.31.0"
+  },
+  "polarity": "universal",
+  "predicted": null,
+  "provenance": "selfSeeded",
+  "schema_version": 2,
+  "statement": {
+    "decl_names": [
+      "Eidometry.Thesis.audit_refutes"
+    ],
+    "module": "Eidometry.Thesis",
+    "pretty": "∀ {S' : Type u_1} {Z : Type u_2} [inst : PseudoMetricSpace Z] (E : S' → Z) (T : S' → ℝ) (L : NNReal) (ε «δ» : ℝ) {s₁ s₂ : S'}, dist (E s₁) (E s₂) ≤ ε → «δ» ≤ |T s₁ - T s₂| → ↑L * ε < «δ» → ¬∃ g, LipschitzWith L g ∧ ∀ (s : S'), T s = g (E s)"
+  },
+  "status": "still-green",
+  "suite": null,
+  "superseded_by": null,
+  "theorem_type": "theorem",
+  "tier": null,
+  "title": "Eidometry.Thesis.audit_refutes",
+  "trust_boundary_extensions": [],
+  "verdict": {
+    "gate_version": "mathesis-v4.31 whole-theory replay (Eidometry.Thesis)",
+    "log_path": "WMTheory/Eidometry/Thesis.lean",
+    "result": "ADMITTED",
+    "shadow_kernels": {
+      "nanoda": "skipped-absent"
+    }
+  },
+  "vouching": {
+    "gloss": "author",
+    "proof": "kernel",
+    "statement": "kernel",
+    "witness": null
+  },
+  "witness": null
+}

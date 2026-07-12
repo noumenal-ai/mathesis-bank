@@ -1,0 +1,129 @@
+#!/usr/bin/env bash
+# ---------------------------------------------------------------------------
+# mathesis — verify a banked accession by RE-DERIVING its proof through the
+# Lean 4 kernel. This is the "independently checkable" promise made concrete:
+# it does not trust any field the bank records about itself; it fetches the
+# frozen proof export (content-addressed, sha256-verified) and replays it.
+#
+#   mathesis check <ACCESSION> [<ACCESSION> ...]   verify specific accession(s)
+#   mathesis check --all                           verify every result
+#   mathesis build                                 build the kernel gate exe
+#   mathesis help
+#
+# Exit code IS the verdict: 0 = every requested accession ADMITTED, non-zero
+# otherwise. A green run means an independent machine re-derived the proof.
+#
+# Requirements: git checkout of the bank (for the manifests), the built gate
+# exe (`mathesis build` produces it), python3, and network access to the
+# export store (default: the public GitHub release) unless the blob is already
+# present under registry/_shared/exports.
+# ---------------------------------------------------------------------------
+set -euo pipefail
+
+# Repo root = nearest ancestor containing registry/ and backend-gate/.
+find_root() {
+  local d; d="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+  while [ "$d" != "/" ]; do
+    if [ -d "$d/registry" ] && [ -d "$d/backend-gate" ]; then echo "$d"; return 0; fi
+    d="$(dirname "$d")"
+  done
+  echo "FATAL: could not locate the bank root (a dir containing registry/ and backend-gate/)" >&2
+  return 1
+}
+ROOT="$(find_root)"
+PY="${PYTHON:-python3}"
+EXE="${MATHESIS_ADJUDICATE:-$ROOT/backend-gate/.lake/build/bin/mathesis-adjudicate}"
+
+# The gate exe shells out to `lean` at runtime (to resolve its sysroot and import
+# the trusted Init base env). Make sure `lean` is on PATH; if not, recover it from
+# LEAN_SYSROOT or elan, else fail with a clear instruction rather than a cryptic
+# "could not execute external process 'lean'".
+ensure_lean() {
+  command -v lean >/dev/null 2>&1 && return 0
+  if [ -n "${LEAN_SYSROOT:-}" ] && [ -x "$LEAN_SYSROOT/bin/lean" ]; then PATH="$LEAN_SYSROOT/bin:$PATH"; return 0; fi
+  if command -v elan >/dev/null 2>&1; then
+    local lb; lb="$(dirname "$(elan which lean 2>/dev/null || true)")"
+    [ -n "$lb" ] && [ -x "$lb/lean" ] && { PATH="$lb:$PATH"; return 0; }
+  fi
+  echo "FATAL: 'lean' is not on PATH. Install the Lean toolchain (https://leanprover-community.github.io/get_started.html) or set LEAN_SYSROOT." >&2
+  return 2
+}
+export MATHESIS_EXPORT_STORE="${MATHESIS_EXPORT_STORE:-gh:noumenal-ai/mathesis-bank@exports-v1}"
+export MATHESIS_EXPORTS_DIR="${MATHESIS_EXPORTS_DIR:-$ROOT/registry/_shared/exports}"
+
+usage() { sed -n '2,16p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; }
+
+manifest_for() {  # <ACCESSION> -> path or empty
+  local acc="$1" bank
+  for bank in results claims dictionary; do
+    local p="$ROOT/registry/$bank/$acc/manifest.json"
+    [ -f "$p" ] && { echo "$p"; return 0; }
+  done
+  return 1
+}
+
+cmd_build() {
+  command -v lake >/dev/null 2>&1 || { echo "FATAL: 'lake' not on PATH — install the Lean toolchain (elan) first." >&2; exit 2; }
+  echo "building the kernel gate (backend-gate) ..."
+  ( cd "$ROOT/backend-gate" && lake build mathesis-adjudicate )
+  test -x "$EXE" || { echo "FATAL: build finished but exe not at $EXE" >&2; exit 2; }
+  echo "gate exe: $EXE"
+}
+
+check_one() {  # <ACCESSION> -> 0 admitted / 1 rejected / 2 error
+  local acc="$1"
+  local mf; mf="$(manifest_for "$acc")" || { echo "  ✗ $acc — no such accession in this checkout" >&2; return 2; }
+  # sha256 of the frozen export + the target declarations, straight from the manifest.
+  local sha decls
+  sha="$("$PY" -c 'import json,sys;print((json.load(open(sys.argv[1])).get("frozen_export") or {}).get("sha256") or "")' "$mf")"
+  [ -n "$sha" ] || { echo "  ✗ $acc — manifest carries no frozen_export.sha256 (nothing to re-derive)" >&2; return 2; }
+  local decls_arr=()
+  while IFS= read -r d; do [ -n "$d" ] && decls_arr+=("$d"); done < <(
+    "$PY" -c 'import json,sys;[print(x) for x in ((json.load(open(sys.argv[1])).get("statement") or {}).get("decl_names") or [])]' "$mf")
+  [ "${#decls_arr[@]}" -gt 0 ] || { echo "  ✗ $acc — manifest names no decls to check" >&2; return 2; }
+
+  test -x "$EXE" || { echo "FATAL: gate exe not built. Run: mathesis build" >&2; exit 2; }
+  ensure_lean || exit 2
+
+  local blob="$MATHESIS_EXPORTS_DIR/$sha.export"
+  if [ ! -f "$blob" ]; then
+    echo "  fetching frozen export $sha (sha256-verified after download) ..."
+    bash "$ROOT/ci/fetch_exports.sh" "$sha" >/dev/null || { echo "  ✗ $acc — could not fetch/verify the frozen export" >&2; return 2; }
+  fi
+
+  local out
+  out="$("$EXE" "$blob" -- "${decls_arr[@]}" 2>/dev/null)" || true
+  local verdict
+  verdict="$("$PY" -c 'import json,sys;print(json.load(sys.stdin).get("verdict","?"))' <<<"$out" 2>/dev/null || echo '?')"
+  if [ "$verdict" = "ADMITTED" ]; then
+    echo "  ✓ $acc  ADMITTED  ($(printf '%s ' "${decls_arr[@]}")— kernel re-derived)"
+    return 0
+  fi
+  echo "  ✗ $acc  $verdict"
+  return 1
+}
+
+cmd_check() {
+  local accs=()
+  if [ "${1:-}" = "--all" ]; then
+    while IFS= read -r a; do accs+=("$a"); done < <(ls "$ROOT/registry/results" 2>/dev/null | sort)
+  else
+    accs=("$@")
+  fi
+  [ "${#accs[@]}" -gt 0 ] || { echo "usage: mathesis check <ACCESSION> [...] | --all" >&2; exit 2; }
+  local fail=0 n=0
+  for a in "${accs[@]}"; do
+    n=$((n+1))
+    check_one "$a" || fail=1
+  done
+  echo ""
+  if [ "$fail" -eq 0 ]; then echo "all $n accession(s) ADMITTED — independently re-derived through the kernel."; else echo "one or more accessions did not re-derive; see above."; fi
+  return "$fail"
+}
+
+case "${1:-help}" in
+  check) shift; cmd_check "$@";;
+  build) cmd_build;;
+  help|-h|--help) usage;;
+  *) echo "unknown command: $1" >&2; usage; exit 2;;
+esac

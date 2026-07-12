@@ -1,0 +1,59 @@
+{
+  "axiom_manifest": null,
+  "bibtex": null,
+  "cites": "WMSpec.QubitSystem.pos_bisimilar_iff_wigner_orbit",
+  "created": "2026-07-12",
+  "dependency_closure": [],
+  "deposit_class": "claim",
+  "discharged_by": [
+    "MTH.R-2026-1186"
+  ],
+  "discharges": null,
+  "doi": null,
+  "evidence_leg": null,
+  "exercisability": null,
+  "frozen_export": null,
+  "gloss": "Statement of record: `Eidometry.Thesis.quantum_wigner_orbit` (Eidometry thesis, section Experiments).\n\nAway from resonance, two normalized qubit states become indistinguishable under repeated position-expectation measurement exactly when one is obtained from the other by a phase rotation, or by a conjugation-swap followed by a phase rotation. These physical symmetry orbits emerge from a single observable's dynamics even though no symmetry structure was supplied.\n\nDischarged by [MTH.R-2026-1186].\n",
+  "handle": "MTH.C-2026-1186",
+  "headline": null,
+  "import_path": "Eidometry.Thesis",
+  "library": "Eidometry",
+  "ontology_section": "Experiments",
+  "pin": {
+    "gate_pins": {
+      "Lean4Checker": "b7398199245524275543dec6113229c9bb4902e5",
+      "lean4export": "ca36c44858e2d7ba40996203d2f08a69113d1211"
+    },
+    "lib_revs": {
+      "Eidometry": "design-lab@WMTheory (Eidometry thesis; single-Mathlib)"
+    },
+    "mathlib_rev": "fabf563a7c95a166b8d7b6efca11c8b4dc9d911f",
+    "toolchain": "leanprover/lean4:v4.31.0"
+  },
+  "polarity": "universal",
+  "predicted": null,
+  "provenance": "selfSeeded",
+  "schema_version": 2,
+  "statement": {
+    "decl_names": [
+      "Eidometry.Thesis.quantum_wigner_orbit"
+    ],
+    "module": "Eidometry.Thesis",
+    "pretty": "∀ (Q : WMSpec.QubitSystem) (t : ℝ), Real.sin (WMSpec.QubitSystem.ω Q * t) ≠ 0 → ∀ (ψ χ : ℂ × ℂ), WMSpec.QubitSystem.pop 0 ψ + WMSpec.QubitSystem.pop 1 ψ = 1 → WMSpec.QubitSystem.pop 0 χ + WMSpec.QubitSystem.pop 1 χ = 1 → ((TLT.NonIdentifiability.bisimilarity (fun x => WMSpec.QubitSystem.posExp Q) (TLT.NonIdentifiability.pureKernel (WMSpec.QubitSystem.U Q t))) ψ χ ↔ ∃ θ, χ = WMSpec.QubitSystem.phase θ ψ ∨ χ = WMSpec.QubitSystem.phase θ (WMSpec.QubitSystem.swapConj ψ))"
+  },
+  "status": "well-posed",
+  "suite": null,
+  "superseded_by": null,
+  "theorem_type": null,
+  "tier": null,
+  "title": "Eidometry.Thesis.quantum_wigner_orbit",
+  "trust_boundary_extensions": [],
+  "verdict": null,
+  "vouching": {
+    "gloss": "author",
+    "proof": null,
+    "statement": "kernel",
+    "witness": null
+  },
+  "witness": null
+}

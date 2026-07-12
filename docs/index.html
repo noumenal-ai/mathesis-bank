@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Mathesis · Noumenal Research</title>
-<meta name="description" content="An evidence bank for machine-checked machine-learning theory.">
+<meta name="description" content="A public ledger for machine-checked learning-theory claims.">
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -16,6 +16,7 @@
         <a href="results.html" class="">Results</a>
 <a href="claims.html" class="">Claims</a>
 <a href="dictionary.html" class="">Dictionary</a>
+<a href="ontology.html" class="">Ontology</a>
 <a href="deposit.html" class="">Deposit</a>
 <a href="charter.html" class="">Charter</a>
 <a href="about.html" class="">About</a>
@@ -40,39 +41,168 @@
 
 <section class="hero shell">
   <p class="kicker">Noumenal Research &middot; Mathesis</p>
-  <h1 class="measure">An evidence bank for machine-checked theory.</h1>
+  <h1 class="measure">A public ledger for machine-checked learning-theory claims.</h1>
   <p class="lede">
-    Mathesis holds three banks: <strong>definitions</strong> (the Dictionary),
-    <strong>claims</strong> (statements of record), and <strong>results</strong>
-    (kernel-checked demonstrations that discharge claims). Nothing here is ranked.
-    Every result carries its own proof, its own witness, and its own axiom manifest,
-    rendered exactly as the kernel and the author left them.
+    Mathesis stores definitions, claims, and verified results with their exact proofs,
+    witnesses, and axiom manifests. Every result is independently checkable. Corrections
+    create new immutable accessions instead of rewriting history.
   </p>
   <div class="actions">
     <a class="btn primary" href="results.html">Browse results</a>
+    <a class="btn" href="#verify">Verify one yourself</a>
     <a class="btn" href="deposit.html">Deposit</a>
-    <a class="btn" href="charter.html">Read the charter</a>
   </div>
   <div class="factline">
-    <div class="fact"><strong>171</strong><span>total results</span></div>
-    <div class="fact"><strong>158</strong><span>T0 results (scale)</span></div>
-    <div class="fact"><strong>0</strong><span>T2 results (quality)</span></div>
-    <div class="fact"><strong>430</strong><span>total accessions</span></div>
+    <div class="fact"><strong>212</strong><span>results</span></div>
+    <div class="fact"><strong>157</strong><span>proved</span></div>
+    <div class="fact"><strong>40</strong><span>witnessed</span></div>
+    <div class="fact"><strong>15</strong><span>mechanized-empirical</span></div>
+    <div class="fact"><strong>512</strong><span>total accessions</span></div>
   </div>
+</section>
+
+<section class="shell qa-block">
+  <div class="qa">
+    <h3>What is this?</h3>
+    <p>A public evidence bank for machine-checked learning-theory results.</p>
+  </div>
+  <div class="qa">
+    <h3>Why should I care?</h3>
+    <p>Every claim can be traced to an exact proof, a witness where one applies, a kernel
+       check, and the list of axioms it depends on.</p>
+  </div>
+  <div class="qa">
+    <h3>What can I do here?</h3>
+    <p>Browse verified results, inspect claims, deposit new proofs, and cite immutable
+       accessions.</p>
+  </div>
+</section>
+
+<section class="shell detail-section measure">
+  <h2>What does &ldquo;verified&rdquo; mean?</h2>
+  <p>A verified result has passed the kernel. Mathesis records the exact formal statement, the
+     proof, a witness when applicable, and the axiom manifest. Verification does <strong>not</strong>
+     mean the result is important, original, elegant, or aligned with informal mathematical intent.
+     Those are separate review layers, tracked apart from the machine check.</p>
+</section>
+
+<section class="shell section-head-block">
+  <div class="section-head">
+    <h2>Three kinds of evidence</h2>
+    <p>Every result clears the same floor &mdash; the Lean&nbsp;4 kernel accepted its proof. On top of
+       that floor, results differ by the <em>kind</em> of evidence that carries them. This is a
+       distinction of kind, not a ranking.</p>
+  </div>
+  <div class="obligations">
+    <div class="ob">
+      <span class="tag">Proved</span>
+      <h3>157 results</h3>
+      <p>A general statement, established for every case by a kernel-checked proof term. Pure
+         deduction: no instance is privileged. <a href="a/MTH.R-2026-1001.html">See one &rarr;</a></p>
+    </div>
+    <div class="ob">
+      <span class="tag">Witnessed</span>
+      <h3>40 results</h3>
+      <p>An existence statement whose concrete witness <em>is</em> the evidence &mdash; the kernel
+         checks that the exhibited object has the claimed property. <a href="a/MTH.R-2026-1017.html">See one &rarr;</a></p>
+    </div>
+    <div class="ob">
+      <span class="tag">Mechanized-empirical</span>
+      <h3>15 results</h3>
+      <p>A statement about a specific executed system, whose behaviour is reflected exactly into
+         the kernel and reasoned over &mdash; the empirical object lives inside the proof. <a href="a/MTH.R-2026-1005.html">See one &rarr;</a></p>
+    </div>
+  </div>
+  <p class="mono-note measure">How the label is derived: a result whose statement is about a concretely
+     executed system (its declarations sit under an <code>Executed</code> namespace) is shown as
+     mechanized-empirical; otherwise a universal statement is <em>proved</em> and an existential one is
+     <em>witnessed</em>. It reads the gate&rsquo;s own polarity field and the authors&rsquo; own
+     namespacing &mdash; it never invents a verdict the accession does not carry.</p>
+</section>
+
+<section class="shell section-head-block">
+  <div class="section-head">
+    <h2>Example results</h2>
+    <p>Real accessions, rendered exactly as the gate and the author left them. Each is checkable with
+       the one command below.</p>
+  </div>
+  <div class="ex-cards">
+
+    <div class="ex-card">
+      <div class="ex-row"><span class="ex-k">Result</span><span class="ex-v"><code>WMSpec.fiber_saturated</code></span></div>
+      <div class="ex-row"><span class="ex-k">Kind</span><span class="ex-v"><span class="badge badge-leg badge-leg-proved" title="a general statement, established for every case by a kernel-checked proof term">Proved<span class="badge-caption">a general statement, established for every case by a kernel-checked proof term</span></span></span></div>
+      <div class="ex-row"><span class="ex-k">Coverage</span><span class="ex-v"><code>T0</code></span></div>
+      <div class="ex-row"><span class="ex-k">Axioms</span><span class="ex-v"><code class="chip chip-axiom">propext</code> <code class="chip chip-axiom">Classical.choice</code> <code class="chip chip-axiom">Quot.sound</code></span></div>
+      <div class="ex-row"><span class="ex-k">Witness</span><span class="ex-v">&mdash;</span></div>
+      <div class="ex-row"><span class="ex-k">Discharges</span><span class="ex-v"><code>MTH.C-2026-1001</code></span></div>
+      <div class="ex-row"><span class="ex-k">Accession</span><span class="ex-v"><a href="a/MTH.R-2026-1001.html"><code>MTH.R-2026-1001</code></a></span></div>
+      <div class="ex-row"><span class="ex-k">Verify</span><span class="ex-v"><code>mathesis check MTH.R-2026-1001</code></span></div>
+    </div>
+
+    <div class="ex-card">
+      <div class="ex-row"><span class="ex-k">Result</span><span class="ex-v"><code>TLT.NonIdentifiability.JEPA.jepa_target_not_identifiable</code></span></div>
+      <div class="ex-row"><span class="ex-k">Kind</span><span class="ex-v"><span class="badge badge-leg badge-leg-witnessed" title="established by exhibiting a concrete witness or construction, which is itself the kernel-checked evidence">Witnessed<span class="badge-caption">established by exhibiting a concrete witness or construction, which is itself the kernel-checked evidence</span></span></span></div>
+      <div class="ex-row"><span class="ex-k">Coverage</span><span class="ex-v"><code>T0</code></span></div>
+      <div class="ex-row"><span class="ex-k">Axioms</span><span class="ex-v"><span class="empty-note">none &mdash; axiom-free</span></span></div>
+      <div class="ex-row"><span class="ex-k">Witness</span><span class="ex-v">&mdash;</span></div>
+      <div class="ex-row"><span class="ex-k">Discharges</span><span class="ex-v"><code>MTH.C-2026-1017</code></span></div>
+      <div class="ex-row"><span class="ex-k">Accession</span><span class="ex-v"><a href="a/MTH.R-2026-1017.html"><code>MTH.R-2026-1017</code></a></span></div>
+      <div class="ex-row"><span class="ex-k">Verify</span><span class="ex-v"><code>mathesis check MTH.R-2026-1017</code></span></div>
+    </div>
+
+    <div class="ex-card">
+      <div class="ex-row"><span class="ex-k">Result</span><span class="ex-v"><code>TLT.NonIdentifiability.Executed.x₁_toReal</code></span></div>
+      <div class="ex-row"><span class="ex-k">Kind</span><span class="ex-v"><span class="badge badge-leg badge-leg-mechanized-empirical" title="a statement about a specific executed system, whose behaviour is reflected exactly into the kernel and reasoned over">Mechanized-empirical<span class="badge-caption">a statement about a specific executed system, whose behaviour is reflected exactly into the kernel and reasoned over</span></span></span></div>
+      <div class="ex-row"><span class="ex-k">Coverage</span><span class="ex-v"><code>T0</code></span></div>
+      <div class="ex-row"><span class="ex-k">Axioms</span><span class="ex-v"><code class="chip chip-axiom">propext</code> <code class="chip chip-axiom">Classical.choice</code> <code class="chip chip-axiom">Quot.sound</code></span></div>
+      <div class="ex-row"><span class="ex-k">Witness</span><span class="ex-v">&mdash;</span></div>
+      <div class="ex-row"><span class="ex-k">Discharges</span><span class="ex-v"><code>MTH.C-2026-1005</code></span></div>
+      <div class="ex-row"><span class="ex-k">Accession</span><span class="ex-v"><a href="a/MTH.R-2026-1005.html"><code>MTH.R-2026-1005</code></a></span></div>
+      <div class="ex-row"><span class="ex-k">Verify</span><span class="ex-v"><code>mathesis check MTH.R-2026-1005</code></span></div>
+    </div>
+  </div>
+</section>
+
+<section class="shell detail-section measure" id="verify">
+  <h2>Verify it yourself</h2>
+  <p>Nothing here asks for trust. Clone the bank, build the kernel gate once, and re-derive any
+     accession from its frozen proof export &mdash; the tool fetches the export (content-addressed,
+     sha256-verified) and replays it through the Lean&nbsp;4 kernel. It never reads the verdict the
+     bank records about itself.</p>
+  <pre class="statement-pretty"><code>git clone https://github.com/noumenal-ai/mathesis-bank
+cd mathesis-bank
+bin/mathesis build                     # build the kernel gate once
+bin/mathesis check MTH.R-2026-1001     # re-derive one accession
+bin/mathesis check --all               # re-derive every result</code></pre>
+  <p class="mono-note">Exit code is the verdict: <code>0</code> means an independent machine re-derived
+     the proof. This is exactly what the bank&rsquo;s own continuous integration runs on every change.</p>
+</section>
+
+<section class="shell section-head-block">
+  <div class="section-head">
+    <h2>How it works</h2>
+    <p>Each accession is immutable once written. Corrections mint a new accession; they never edit
+       the old one.</p>
+  </div>
+  <ol class="how-steps">
+    <li><strong>Define terms.</strong> Definitions enter the Dictionary.</li>
+    <li><strong>Freeze a claim.</strong> A claim can be recorded before any proof is attempted (optional).</li>
+    <li><strong>Deposit a result.</strong> A proof attempts to discharge the claim.</li>
+    <li><strong>Check and accession.</strong> The kernel re-derives the result and Mathesis mints an immutable accession.</li>
+    <li><strong>Correct by adding, not editing.</strong> Errors mint new accessions; old records stay visible.</li>
+  </ol>
 </section>
 
 <section class="shell section-head-block">
   <div class="section-head">
     <h2>Three banks, one ledger</h2>
-    <p>Each accession is immutable once written. Corrections mint a new accession; they never
-       edit the old one.</p>
   </div>
   <div class="obligations">
     <div class="ob">
       <span class="tag">Dictionary</span>
       <h3>Definitions</h3>
       <p>The vocabulary the claims and results are stated in. Kernel-checked for internal
-         consistency; interrogation of fit against intent is a separate, ongoing overlay.</p>
+         consistency; review of naming, meaning, and intent is tracked separately.</p>
       <a href="dictionary.html">Browse the Dictionary &rarr;</a>
     </div>
     <div class="ob">

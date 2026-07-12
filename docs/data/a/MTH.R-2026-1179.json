@@ -1,0 +1,78 @@
+{
+  "axiom_manifest": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+  ],
+  "bibtex": null,
+  "cites": "HiddenChannelCapacity.acyclic_iff_forall_consistent_glues",
+  "created": "2026-07-12",
+  "dependency_closure": [
+    {
+      "handle": "MTH.C-2026-1179",
+      "tier": null
+    }
+  ],
+  "deposit_class": "demonstration",
+  "discharged_by": null,
+  "discharges": "MTH.C-2026-1179",
+  "doi": null,
+  "evidence_leg": "proved",
+  "exercisability": null,
+  "frozen_export": {
+    "bytes": 129155932,
+    "constants": 26035,
+    "path": "_shared/exports/18e64d712e252b857b15aebb222e7bbb6488eebe1032fb9b1499a0e4dd778e38.export",
+    "sha256": "18e64d712e252b857b15aebb222e7bbb6488eebe1032fb9b1499a0e4dd778e38"
+  },
+  "gloss": "A cover lets every pairwise-consistent, locally-nonempty family of local relations glue into a single global object exactly when the cover is acyclic. This equivalence is proved in a separate library (a discrete version of Vorob'ev's gluing theorem), and it is what separates the covers where local data determines the global object from those where it cannot.\n\n**Cites** `HiddenChannelCapacity.acyclic_iff_forall_consistent_glues` — the corpus theorem this result restates and discharges.\n\n**Original contribution.** The corpus supplies the acyclic-versus-cyclic equivalence as a combinatorial fact; the thesis-layer statement positions it as the external, independent source of the theory's non-triviality, showing the dividing line comes from an outside library rather than any choice made inside the theory.\n",
+  "handle": "MTH.R-2026-1179",
+  "headline": null,
+  "import_path": "Eidometry.Thesis",
+  "library": "Eidometry",
+  "ontology_section": "Non-triviality",
+  "pin": {
+    "gate_pins": {
+      "Lean4Checker": "b7398199245524275543dec6113229c9bb4902e5",
+      "lean4export": "ca36c44858e2d7ba40996203d2f08a69113d1211"
+    },
+    "lib_revs": {
+      "Eidometry": "design-lab@WMTheory (Eidometry thesis; single-Mathlib)"
+    },
+    "mathlib_rev": "fabf563a7c95a166b8d7b6efca11c8b4dc9d911f",
+    "toolchain": "leanprover/lean4:v4.31.0"
+  },
+  "polarity": "universal",
+  "predicted": null,
+  "provenance": "selfSeeded",
+  "schema_version": 2,
+  "statement": {
+    "decl_names": [
+      "Eidometry.Thesis.covering_dichotomy"
+    ],
+    "module": "Eidometry.Thesis",
+    "pretty": "∀ {ι : Type u_1} [inst : DecidableEq ι] [inst_1 : Fintype ι] (𝒞 : Finset (Finset ι)), HiddenChannelCapacity.Acyclic 𝒞 ↔ ∀ (fam : List (HiddenChannelCapacity.LocalStruct ι fun x => ZMod 2)), List.map (fun x => HiddenChannelCapacity.LocalStruct.team x) fam = Finset.toList 𝒞 → HiddenChannelCapacity.Consistent fam → (∀ L ∈ fam, Finset.Nonempty (HiddenChannelCapacity.LocalStruct.rel L)) → HiddenChannelCapacity.Glues fam"
+  },
+  "status": "still-green",
+  "suite": null,
+  "superseded_by": null,
+  "theorem_type": "theorem",
+  "tier": null,
+  "title": "Eidometry.Thesis.covering_dichotomy",
+  "trust_boundary_extensions": [],
+  "verdict": {
+    "gate_version": "mathesis-v4.31 whole-theory replay (Eidometry.Thesis)",
+    "log_path": "WMTheory/Eidometry/Thesis.lean",
+    "result": "ADMITTED",
+    "shadow_kernels": {
+      "nanoda": "skipped-absent"
+    }
+  },
+  "vouching": {
+    "gloss": "author",
+    "proof": "kernel",
+    "statement": "kernel",
+    "witness": null
+  },
+  "witness": null
+}

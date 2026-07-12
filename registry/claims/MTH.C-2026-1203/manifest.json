@@ -1,0 +1,58 @@
+{
+ "schema_version": 2,
+ "handle": "MTH.C-2026-1203",
+ "doi": null,
+ "title": "Eidometry.Thesis.carrier_conservative",
+ "deposit_class": "claim",
+ "polarity": "universal",
+ "provenance": "selfSeeded",
+ "exercisability": null,
+ "tier": null,
+ "status": "well-posed",
+ "superseded_by": null,
+ "discharges": null,
+ "discharged_by": [
+  "MTH.R-2026-1203"
+ ],
+ "predicted": null,
+ "statement": {
+  "decl_names": [
+   "Eidometry.Thesis.carrier_conservative"
+  ],
+  "module": "Eidometry.Thesis",
+  "pretty": "∀ {S : Type u_1} [inst : Fintype S] (P : S → WMSpec.Compiler.QPMF S) (r : Setoid S), WMSpec.DynCong (fun s => WMSpec.Compiler.QPMF.toReal (P s)) r ↔ WMSpec.Compiler.DynCongQ P r"
+ },
+ "frozen_export": null,
+ "axiom_manifest": null,
+ "trust_boundary_extensions": [],
+ "witness": null,
+ "verdict": null,
+ "pin": {
+  "toolchain": "leanprover/lean4:v4.31.0",
+  "mathlib_rev": "fabf563a7c95a166b8d7b6efca11c8b4dc9d911f",
+  "lib_revs": {
+   "Eidometry": "design-lab@WMTheory (Eidometry thesis; single-Mathlib)"
+  },
+  "gate_pins": {
+   "lean4export": "ca36c44858e2d7ba40996203d2f08a69113d1211",
+   "Lean4Checker": "b7398199245524275543dec6113229c9bb4902e5"
+  }
+ },
+ "dependency_closure": [],
+ "suite": null,
+ "vouching": {
+  "statement": "kernel",
+  "proof": null,
+  "witness": null,
+  "gloss": "author"
+ },
+ "import_path": "Eidometry.Thesis",
+ "headline": null,
+ "library": "Eidometry",
+ "theorem_type": null,
+ "created": "2026-07-12",
+ "bibtex": null,
+ "ontology_section": "Executed runs",
+ "evidence_leg": null,
+ "cites": "WMSpec.Compiler.dynCongQ_iff"
+}

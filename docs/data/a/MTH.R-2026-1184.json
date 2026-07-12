@@ -1,0 +1,78 @@
+{
+  "axiom_manifest": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+  ],
+  "bibtex": null,
+  "cites": "WMSpec.Transform.support_moves_width",
+  "created": "2026-07-12",
+  "dependency_closure": [
+    {
+      "handle": "MTH.C-2026-1184",
+      "tier": null
+    }
+  ],
+  "deposit_class": "demonstration",
+  "discharged_by": null,
+  "discharges": "MTH.C-2026-1184",
+  "doi": null,
+  "evidence_leg": "witnessed",
+  "exercisability": null,
+  "frozen_export": {
+    "bytes": 129155932,
+    "constants": 26035,
+    "path": "_shared/exports/18e64d712e252b857b15aebb222e7bbb6488eebe1032fb9b1499a0e4dd778e38.export",
+    "sha256": "18e64d712e252b857b15aebb222e7bbb6488eebe1032fb9b1499a0e4dd778e38"
+  },
+  "gloss": "There is a concrete two-bit causal model where switching which family of measurements is available (from the observational family to a richer response-type family, without adding any new data) shrinks the residual spread of an interventional quantity from one-half to zero. This shows the companion invariance results are not empty: the spread stays fixed when you merely re-weight the same information, but genuinely moves when you change the structure of what can be distinguished.\n\n**Cites** `WMSpec.Transform.support_moves_width` — the corpus theorem this result restates and discharges.\n\n**Original contribution.** The corpus lemma supplies the single separating example; the thesis frames it as the necessary companion that makes the two invariance theorems non-vacuous, contrasting a quantity that is fixed along the re-weighting axis with one that changes along the structural axis, at the same model.\n",
+  "handle": "MTH.R-2026-1184",
+  "headline": null,
+  "import_path": "Eidometry.Thesis",
+  "library": "Eidometry",
+  "ontology_section": "Orthogonality",
+  "pin": {
+    "gate_pins": {
+      "Lean4Checker": "b7398199245524275543dec6113229c9bb4902e5",
+      "lean4export": "ca36c44858e2d7ba40996203d2f08a69113d1211"
+    },
+    "lib_revs": {
+      "Eidometry": "design-lab@WMTheory (Eidometry thesis; single-Mathlib)"
+    },
+    "mathlib_rev": "fabf563a7c95a166b8d7b6efca11c8b4dc9d911f",
+    "toolchain": "leanprover/lean4:v4.31.0"
+  },
+  "polarity": "existential",
+  "predicted": null,
+  "provenance": "selfSeeded",
+  "schema_version": 2,
+  "statement": {
+    "decl_names": [
+      "Eidometry.Thesis.support_moves_width"
+    ],
+    "module": "Eidometry.Thesis",
+    "pretty": "∃ M₀, WMSpec.Transform.fiberWidth (fun M => WMSpec.Transform.BowSCM.intRead M true) (WMSpec.Transform.fiberOf (WMSpec.Transform.bowFam (Bool × Bool)) M₀) = ENNReal.ofReal (1 / 2) ∧ WMSpec.Transform.fiberWidth (fun M => WMSpec.Transform.BowSCM.intRead M true) (WMSpec.Transform.fiberOf (WMSpec.Transform.rtFam (Bool × Bool)) M₀) = 0"
+  },
+  "status": "still-green",
+  "suite": null,
+  "superseded_by": null,
+  "theorem_type": "theorem",
+  "tier": null,
+  "title": "Eidometry.Thesis.support_moves_width",
+  "trust_boundary_extensions": [],
+  "verdict": {
+    "gate_version": "mathesis-v4.31 whole-theory replay (Eidometry.Thesis)",
+    "log_path": "WMTheory/Eidometry/Thesis.lean",
+    "result": "ADMITTED",
+    "shadow_kernels": {
+      "nanoda": "skipped-absent"
+    }
+  },
+  "vouching": {
+    "gloss": "author",
+    "proof": "kernel",
+    "statement": "kernel",
+    "witness": null
+  },
+  "witness": null
+}

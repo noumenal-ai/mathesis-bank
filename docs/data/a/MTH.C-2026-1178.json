@@ -1,0 +1,59 @@
+{
+  "axiom_manifest": null,
+  "bibtex": null,
+  "cites": "WMSpec.Transform.extendFiber_eq_fiberOf",
+  "created": "2026-07-12",
+  "dependency_closure": [],
+  "deposit_class": "claim",
+  "discharged_by": [
+    "MTH.R-2026-1178"
+  ],
+  "discharges": null,
+  "doi": null,
+  "evidence_leg": null,
+  "exercisability": null,
+  "frozen_export": null,
+  "gloss": "Statement of record: `Eidometry.Thesis.extension_eq_forced_fiber` (Eidometry thesis, section Non-triviality).\n\nThe set of global states that are compatible with all local observations across a cover is built with no reference to any quotient or partition; the theorem proves that once the cover reaches every observable, this set exactly equals the set of states that agree with a given state on every observation. The two objects coincide by proof, not by definition.\n\nDischarged by [MTH.R-2026-1178].\n",
+  "handle": "MTH.C-2026-1178",
+  "headline": null,
+  "import_path": "Eidometry.Thesis",
+  "library": "Eidometry",
+  "ontology_section": "Non-triviality",
+  "pin": {
+    "gate_pins": {
+      "Lean4Checker": "b7398199245524275543dec6113229c9bb4902e5",
+      "lean4export": "ca36c44858e2d7ba40996203d2f08a69113d1211"
+    },
+    "lib_revs": {
+      "Eidometry": "design-lab@WMTheory (Eidometry thesis; single-Mathlib)"
+    },
+    "mathlib_rev": "fabf563a7c95a166b8d7b6efca11c8b4dc9d911f",
+    "toolchain": "leanprover/lean4:v4.31.0"
+  },
+  "polarity": "universal",
+  "predicted": null,
+  "provenance": "selfSeeded",
+  "schema_version": 2,
+  "statement": {
+    "decl_names": [
+      "Eidometry.Thesis.extension_eq_forced_fiber"
+    ],
+    "module": "Eidometry.Thesis",
+    "pretty": "∀ {S : Type u_1} {ι : Type u_2} {J : Type u_3} {V : ι → Type u_4} (C : J → Set ι) (T : (i : ι) → S → V i) (s₀ : S), (∀ (i : ι), ∃ j, i ∈ C j) → WMSpec.Transform.ExtendFiber C T (WMSpec.Transform.localData C T s₀) = WMSpec.Transform.fiberOf T s₀"
+  },
+  "status": "well-posed",
+  "suite": null,
+  "superseded_by": null,
+  "theorem_type": null,
+  "tier": null,
+  "title": "Eidometry.Thesis.extension_eq_forced_fiber",
+  "trust_boundary_extensions": [],
+  "verdict": null,
+  "vouching": {
+    "gloss": "author",
+    "proof": null,
+    "statement": "kernel",
+    "witness": null
+  },
+  "witness": null
+}

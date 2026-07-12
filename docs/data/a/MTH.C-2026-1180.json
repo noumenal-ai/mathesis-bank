@@ -1,0 +1,59 @@
+{
+  "axiom_manifest": null,
+  "bibtex": null,
+  "cites": "WMSpec.Transform.parity_boundary",
+  "created": "2026-07-12",
+  "dependency_closure": [],
+  "deposit_class": "claim",
+  "discharged_by": [
+    "MTH.R-2026-1180"
+  ],
+  "discharges": null,
+  "doi": null,
+  "evidence_leg": null,
+  "exercisability": null,
+  "frozen_export": null,
+  "gloss": "Statement of record: `Eidometry.Thesis.parity_boundary` (Eidometry thesis, section Non-triviality).\n\nOn one fixed cyclic cover, the even-parity family of local relations is consistent, locally nonempty, and glues into a global object, while the odd-parity family (a possibilistic Popescu-Rohrlich box) is consistent, locally nonempty, yet glues nowhere. Both sides of the boundary are exhibited together on the same cover.\n\nDischarged by [MTH.R-2026-1180].\n",
+  "handle": "MTH.C-2026-1180",
+  "headline": null,
+  "import_path": "Eidometry.Thesis",
+  "library": "Eidometry",
+  "ontology_section": "Non-triviality",
+  "pin": {
+    "gate_pins": {
+      "Lean4Checker": "b7398199245524275543dec6113229c9bb4902e5",
+      "lean4export": "ca36c44858e2d7ba40996203d2f08a69113d1211"
+    },
+    "lib_revs": {
+      "Eidometry": "design-lab@WMTheory (Eidometry thesis; single-Mathlib)"
+    },
+    "mathlib_rev": "fabf563a7c95a166b8d7b6efca11c8b4dc9d911f",
+    "toolchain": "leanprover/lean4:v4.31.0"
+  },
+  "polarity": "universal",
+  "predicted": null,
+  "provenance": "selfSeeded",
+  "schema_version": 2,
+  "statement": {
+    "decl_names": [
+      "Eidometry.Thesis.parity_boundary"
+    ],
+    "module": "Eidometry.Thesis",
+    "pretty": "(HiddenChannelCapacity.Consistent WMSpec.Transform.zeroBox ∧ (∀ L ∈ WMSpec.Transform.zeroBox, Finset.Nonempty (HiddenChannelCapacity.LocalStruct.rel L)) ∧ HiddenChannelCapacity.Glues WMSpec.Transform.zeroBox) ∧ HiddenChannelCapacity.Consistent HiddenChannelCapacity.prBox ∧ (∀ L ∈ HiddenChannelCapacity.prBox, Finset.Nonempty (HiddenChannelCapacity.LocalStruct.rel L)) ∧ ¬HiddenChannelCapacity.Glues HiddenChannelCapacity.prBox"
+  },
+  "status": "well-posed",
+  "suite": null,
+  "superseded_by": null,
+  "theorem_type": null,
+  "tier": null,
+  "title": "Eidometry.Thesis.parity_boundary",
+  "trust_boundary_extensions": [],
+  "verdict": null,
+  "vouching": {
+    "gloss": "author",
+    "proof": null,
+    "statement": "kernel",
+    "witness": null
+  },
+  "witness": null
+}

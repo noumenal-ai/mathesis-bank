@@ -1,0 +1,59 @@
+{
+  "axiom_manifest": null,
+  "bibtex": null,
+  "cites": "ZPM.ReLU.relu_uat",
+  "created": "2026-07-12",
+  "dependency_closure": [],
+  "deposit_class": "claim",
+  "discharged_by": [
+    "MTH.R-2026-1191"
+  ],
+  "discharges": null,
+  "doi": null,
+  "evidence_leg": null,
+  "exercisability": null,
+  "frozen_export": null,
+  "gloss": "Statement of record: `Eidometry.Thesis.learning_rigid_half` (Eidometry thesis, section Experiments).\n\nFor rich readout classes, every continuous target on a compact domain can be approximated to any desired accuracy by an explicitly constructed ReLU network. This is the rigid side of the dichotomy, where approximation is total.\n\nDischarged by [MTH.R-2026-1191].\n",
+  "handle": "MTH.C-2026-1191",
+  "headline": null,
+  "import_path": "Eidometry.Thesis",
+  "library": "Eidometry",
+  "ontology_section": "Experiments",
+  "pin": {
+    "gate_pins": {
+      "Lean4Checker": "b7398199245524275543dec6113229c9bb4902e5",
+      "lean4export": "ca36c44858e2d7ba40996203d2f08a69113d1211"
+    },
+    "lib_revs": {
+      "Eidometry": "design-lab@WMTheory (Eidometry thesis; single-Mathlib)"
+    },
+    "mathlib_rev": "fabf563a7c95a166b8d7b6efca11c8b4dc9d911f",
+    "toolchain": "leanprover/lean4:v4.31.0"
+  },
+  "polarity": "universal",
+  "predicted": null,
+  "provenance": "selfSeeded",
+  "schema_version": 2,
+  "statement": {
+    "decl_names": [
+      "Eidometry.Thesis.learning_rigid_half"
+    ],
+    "module": "Eidometry.Thesis",
+    "pretty": "∀ {ι : Type u_1} [inst : Fintype ι] (K : Set (ι → ℝ)) [CompactSpace ↑K] (T : C(↑K, ℝ)) {ε : ℝ}, 0 < ε → ∃ N, ∀ (x : ↑K), |T x - ZPM.ReLU.ReLUNet.eval N ↑x| < ε"
+  },
+  "status": "well-posed",
+  "suite": null,
+  "superseded_by": null,
+  "theorem_type": null,
+  "tier": null,
+  "title": "Eidometry.Thesis.learning_rigid_half",
+  "trust_boundary_extensions": [],
+  "verdict": null,
+  "vouching": {
+    "gloss": "author",
+    "proof": null,
+    "statement": "kernel",
+    "witness": null
+  },
+  "witness": null
+}

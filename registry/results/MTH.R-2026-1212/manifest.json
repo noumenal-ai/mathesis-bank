@@ -1,0 +1,77 @@
+{
+ "schema_version": 2,
+ "handle": "MTH.R-2026-1212",
+ "doi": null,
+ "title": "Eidometry.Thesis.counterfactual_cfread_unreadable",
+ "deposit_class": "demonstration",
+ "polarity": "universal",
+ "provenance": "selfSeeded",
+ "exercisability": null,
+ "tier": null,
+ "status": "still-green",
+ "superseded_by": null,
+ "discharges": "MTH.C-2026-1212",
+ "discharged_by": null,
+ "predicted": null,
+ "statement": {
+  "decl_names": [
+   "Eidometry.Thesis.counterfactual_cfread_unreadable"
+  ],
+  "module": "Eidometry.Thesis",
+  "pretty": "WMSpec.Transform.cfRead ∉ WMSpec.Transform.readable (WMSpec.Transform.wordBisim {id} fun x p => WMSpec.Transform.intRead p x)"
+ },
+ "frozen_export": {
+  "path": "_shared/exports/18e64d712e252b857b15aebb222e7bbb6488eebe1032fb9b1499a0e4dd778e38.export",
+  "sha256": "18e64d712e252b857b15aebb222e7bbb6488eebe1032fb9b1499a0e4dd778e38",
+  "bytes": 129155932,
+  "constants": 26035
+ },
+ "axiom_manifest": [
+  "Classical.choice",
+  "Quot.sound",
+  "propext"
+ ],
+ "trust_boundary_extensions": [],
+ "witness": null,
+ "verdict": {
+  "result": "ADMITTED",
+  "gate_version": "mathesis-v4.31 whole-theory replay (Eidometry.Thesis)",
+  "shadow_kernels": {
+   "nanoda": "skipped-absent"
+  },
+  "log_path": "WMTheory/Eidometry/Thesis.lean"
+ },
+ "pin": {
+  "toolchain": "leanprover/lean4:v4.31.0",
+  "mathlib_rev": "fabf563a7c95a166b8d7b6efca11c8b4dc9d911f",
+  "lib_revs": {
+   "Eidometry": "design-lab@WMTheory (Eidometry thesis; single-Mathlib)"
+  },
+  "gate_pins": {
+   "lean4export": "ca36c44858e2d7ba40996203d2f08a69113d1211",
+   "Lean4Checker": "b7398199245524275543dec6113229c9bb4902e5"
+  }
+ },
+ "dependency_closure": [
+  {
+   "handle": "MTH.C-2026-1212",
+   "tier": null
+  }
+ ],
+ "suite": null,
+ "vouching": {
+  "statement": "kernel",
+  "proof": "kernel",
+  "witness": null,
+  "gloss": "author"
+ },
+ "import_path": "Eidometry.Thesis",
+ "headline": null,
+ "library": "Eidometry",
+ "theorem_type": "theorem",
+ "created": "2026-07-12",
+ "bibtex": null,
+ "ontology_section": "Counterfactuals",
+ "evidence_leg": "witnessed",
+ "cites": "WMSpec.Transform.cz_alpha_cfRead_not_readable"
+}

@@ -1,0 +1,59 @@
+{
+  "axiom_manifest": null,
+  "bibtex": null,
+  "cites": "WMSpec.Compiler.quotCert_sound",
+  "created": "2026-07-12",
+  "dependency_closure": [],
+  "deposit_class": "claim",
+  "discharged_by": [
+    "MTH.R-2026-1206"
+  ],
+  "discharges": null,
+  "doi": null,
+  "evidence_leg": null,
+  "exercisability": null,
+  "frozen_export": null,
+  "gloss": "Statement of record: `Eidometry.Thesis.quotient_certificate_sound` (Eidometry thesis, section Executed runs).\n\nWhenever a Boolean checker accepts a quotient certificate, the certified relation is a fixed point of the partition-refinement step. The engine's claim that its partition has stabilized is itself certificate-checkable.\n\nDischarged by [MTH.R-2026-1206].\n",
+  "handle": "MTH.C-2026-1206",
+  "headline": null,
+  "import_path": "Eidometry.Thesis",
+  "library": "Eidometry",
+  "ontology_section": "Executed runs",
+  "pin": {
+    "gate_pins": {
+      "Lean4Checker": "b7398199245524275543dec6113229c9bb4902e5",
+      "lean4export": "ca36c44858e2d7ba40996203d2f08a69113d1211"
+    },
+    "lib_revs": {
+      "Eidometry": "design-lab@WMTheory (Eidometry thesis; single-Mathlib)"
+    },
+    "mathlib_rev": "fabf563a7c95a166b8d7b6efca11c8b4dc9d911f",
+    "toolchain": "leanprover/lean4:v4.31.0"
+  },
+  "polarity": "universal",
+  "predicted": null,
+  "provenance": "selfSeeded",
+  "schema_version": 2,
+  "statement": {
+    "decl_names": [
+      "Eidometry.Thesis.quotient_certificate_sound"
+    ],
+    "module": "Eidometry.Thesis",
+    "pretty": "∀ {S : Type u_1} [inst : Fintype S] [inst_1 : DecidableEq S] {V : Type u_2} [inst_2 : DecidableEq V] {A : Type u_3} [inst_3 : Fintype A] {Q : Type u_4} [inst_4 : DecidableEq Q] [inst_5 : AddCommMonoid Q] (c : WMSpec.Compiler.QuotCert S V A Q), WMSpec.Compiler.checkQuotCert c = true → WMSpec.Compiler.refineStep (WMSpec.Compiler.EidProgram.words (WMSpec.Compiler.QuotCert.prog c)) (WMSpec.Compiler.QuotCert.rel c) = WMSpec.Compiler.QuotCert.rel c"
+  },
+  "status": "well-posed",
+  "suite": null,
+  "superseded_by": null,
+  "theorem_type": null,
+  "tier": null,
+  "title": "Eidometry.Thesis.quotient_certificate_sound",
+  "trust_boundary_extensions": [],
+  "verdict": null,
+  "vouching": {
+    "gloss": "author",
+    "proof": null,
+    "statement": "kernel",
+    "witness": null
+  },
+  "witness": null
+}
