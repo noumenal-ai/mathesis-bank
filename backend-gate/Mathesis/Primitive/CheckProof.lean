@@ -66,6 +66,36 @@ def canonLevels (levelParams : List Name) (type : Expr) : Expr :=
   let canon := (List.range levelParams.length).map fun i => Level.param (Name.mkSimple s!"_canonU{i}")
   type.instantiateLevelParams levelParams canon
 
+/-- Does candidate constant `cand` agree with the trusted constant `genuine` of the same name?
+Used to reject a candidate that REDEFINES a trusted logical-core constant (`Iff`, `Eq`, `False`, …)
+— the fake-connective attack: a `prelude` deposit keeps a genuine-TYPED `propext` but fakes the
+connectives its type names, deriving `True = False`. The name-only whitelist and the axiom
+type-binding do not catch that; comparing every reached constant that also exists in the trusted
+base does. `genuine` comes from a bank-owned `init.export` PARSED THE SAME WAY as the candidate
+(both lean4export representation), so genuine constants match byte-for-byte and only a real
+redefinition diverges (comparing against a freshly *imported* env fails — the representations
+differ). Compares canonicalized TYPE, kind, inductive constructor list/arities, and definition
+value; a theorem's proof is intentionally not compared. -/
+def trustedMatches (cand genuine : ConstantInfo) : Bool :=
+  cand.levelParams.length == genuine.levelParams.length
+  && canonLevels cand.levelParams cand.type == canonLevels genuine.levelParams genuine.type
+  && (match cand, genuine with
+      | .inductInfo c, .inductInfo g =>
+          c.ctors == g.ctors && c.numParams == g.numParams
+            && c.numIndices == g.numIndices && c.all == g.all && c.isRec == g.isRec
+      | .ctorInfo c, .ctorInfo g =>
+          c.induct == g.induct && c.cidx == g.cidx
+            && c.numParams == g.numParams && c.numFields == g.numFields
+      | .axiomInfo _, .axiomInfo _ => true          -- type already compared above
+      | .inductInfo _, _ | _, .inductInfo _ => false
+      | .ctorInfo _, _ | _, .ctorInfo _ => false
+      | .axiomInfo _, _ | _, .axiomInfo _ => false
+      | _, _ =>
+          match cand.value? (allowOpaque := false), genuine.value? (allowOpaque := false) with
+          | some cv, some gv => canonLevels cand.levelParams cv == canonLevels genuine.levelParams gv
+          | none, none => true
+          | _, _ => false)
+
 /-! ### Constant traversal (generalized `Comparator.runForUsedConsts`) -/
 
 /-- Run `f` on every constant referenced by `info`: the constants in its type, its own name, the
@@ -170,6 +200,11 @@ structure Ctx where
   Binds name→type so a permitted *name* declared with a non-genuine *type* (a spoof) is rejected.
   Empty ⇒ name-only (legacy) — callers that can supply the trusted types MUST, or the spoof is open. -/
   permittedTypes : Std.HashMap Name ConstantInfo := {}
+  /-- Lookup into a TRUSTED base (a bank-owned `init.export`, parsed the same way as the candidate).
+  Any reached constant whose name resolves here must match it (`trustedMatches`), else it is rejected
+  as a redefinition of a trusted logical-core constant — this closes the fake-connective (`Iff`/`Eq`/
+  `False`) class the axiom type-binding alone leaves open. `fun _ => none` ⇒ no base check (legacy). -/
+  trusted : Name → Option ConstantInfo := fun _ => none
 
 structure St where
   worklist : Array Name
@@ -204,6 +239,12 @@ where
       if let some genuine := (← read).permittedTypes[ax.name]? then
         if canonLevels ax.levelParams ax.type != canonLevels genuine.levelParams genuine.type then
           throw s!"illegal axiom reached: '{ax.name}' (permitted name declared with a non-genuine type — spoof)"
+    -- Trusted-base redefinition check (ALL kinds): a reached constant whose name is in the trusted
+    -- `init.export` must match it, else it is a redefinition of a trusted logical-core constant (a
+    -- faked `Iff`/`Eq`/`False` used to derive falsehood under a genuine-typed `propext`).
+    if let some genuine := (← read).trusted n then
+      if !trustedMatches info genuine then
+        throw s!"trusted constant redefined: '{n}' (candidate's declaration differs from the trusted init.export copy)"
     if !(← get).checked.contains n then
       modify fun s => { s with worklist := s.worklist.push n }
 
@@ -219,14 +260,15 @@ with the target itself makes `Axioms.loop` close over `runForUsedConsts`, which 
 value + children — this also audits a theorem's TYPE-side constants (matching `#print axioms`
 closure), which the previous proof-value-only seeding missed. -/
 def checkAxioms (candidate : ExportedEnv) (targets permitted : Array Name)
-    (permittedTypes : Std.HashMap Name ConstantInfo := {}) :
+    (permittedTypes : Std.HashMap Name ConstantInfo := {})
+    (trusted : Name → Option ConstantInfo := fun _ => none) :
     Except String Unit := do
   let mut worklist := #[]
   for target in targets do
     if !candidate.constMap.contains target then
       throw s!"target absent from candidate: '{target}'"
     worklist := worklist.push target
-  Axioms.loop.run { candidate, permitted := Std.HashSet.ofArray permitted, permittedTypes }
+  Axioms.loop.run { candidate, permitted := Std.HashSet.ofArray permitted, permittedTypes, trusted }
     |>.run' { worklist, checked := {} }
 
 /-! ### Leg 1c — kernel replay -/
@@ -261,13 +303,14 @@ shadow cross-check silently). -/
 def checkProof (reference candidate : ExportedEnv)
     (targets permitted primitive : Array Name)
     (kernels : Array KernelSpec := #[leanGatingKernel])
-    (permittedTypes : Std.HashMap Name ConstantInfo := {}) : IO ProofReport := do
+    (permittedTypes : Std.HashMap Name ConstantInfo := {})
+    (trusted : Name → Option ConstantInfo := fun _ => none) : IO ProofReport := do
   let statement : LegResult :=
     match checkStatement reference candidate targets primitive with
     | .ok _ => .pass
     | .error e => .fail e
   let «axioms» : LegResult :=
-    match checkAxioms candidate targets permitted permittedTypes with
+    match checkAxioms candidate targets permitted permittedTypes trusted with
     | .ok _ => .pass
     | .error e => .fail e
   let mut outcomes : Array KernelOutcome := #[]

@@ -187,10 +187,10 @@ structure TargetAudit where
 `checkAxioms`; `triviality` is emitted for the CI to route to review but NEVER affects `pass` (a
 trivial theorem is valid, just mis-claimed). -/
 def auditTarget (candidate : ExportedEnv) (permittedTypes : Std.HashMap Name ConstantInfo)
-    (decl : Name) : TargetAudit :=
+    (trusted : Name → Option ConstantInfo) (decl : Name) : TargetAudit :=
   let info? := candidate.constMap[decl]?
   let (pass, illegalAxiom) :=
-    match checkAxioms candidate #[decl] permittedAxioms permittedTypes with
+    match checkAxioms candidate #[decl] permittedAxioms permittedTypes trusted with
     | .ok () => (true, none)
     | .error e => (false, some e)
   let (reached, _note) := collectAxioms candidate decl
@@ -302,6 +302,20 @@ def main (args : List String) : IO UInt32 := do
     | none =>
       IO.eprintln s!"FATAL: permitted axiom '{n}' not found in trusted base env; refusing to run (cannot bind name→type)"
       return 1
+  -- Bank-owned TRUSTED logical-core reference (init.export), parsed the SAME way as candidates (both
+  -- lean4export representation), so genuine constants match exactly and only a real redefinition of a
+  -- trusted constant (fake `Iff`/`Eq`/`False`) diverges → rejected. When MATHESIS_INIT_EXPORT is set
+  -- the redefinition check is active (production gates set it); when absent it is skipped (the axiom
+  -- type-binding stays active, and the deposit build-barrier also blocks the attack structurally).
+  let trusted : Name → Option ConstantInfo ← do
+    match ← IO.getEnv "MATHESIS_INIT_EXPORT" with
+    | some p =>
+      let tEnv ← loadFrozenText (← IO.FS.readFile p)
+      IO.eprintln s!"trusted init.export loaded: {tEnv.constMap.size} constants"
+      pure (fun n => tEnv.constMap[n]?)
+    | none =>
+      IO.eprintln "note: MATHESIS_INIT_EXPORT not set; trusted-redefinition check DISABLED (type-binding active)"
+      pure (fun _ => none)
   match parseArgs args with
   | .error msg =>
     IO.eprintln msg
@@ -311,7 +325,7 @@ def main (args : List String) : IO UInt32 := do
     let text ← IO.FS.readFile path
     let candidate ← loadFrozenText text
     let (accepted, detail) ← replayLean candidate
-    let audits := targets.map (auditTarget candidate permittedTypes)
+    let audits := targets.map (auditTarget candidate permittedTypes trusted)
     let allPass := audits.all (·.pass)
     -- Statement-identity leg (the UK-i definition-smuggling defense): runs ONLY when a reference is
     -- supplied. When present it re-uses the proven-sound `checkProof` primitive over R-vs-candidate;
@@ -324,7 +338,7 @@ def main (args : List String) : IO UInt32 := do
       | some refPath => do
         let reference ← loadFrozenText (← IO.FS.readFile refPath)
         let report ← checkProof reference candidate targets permittedAxioms #[]
-                        (permittedTypes := permittedTypes)
+                        (permittedTypes := permittedTypes) (trusted := trusted)
         match report.statement with
         | .pass       => pure (LegResult.pass, Json.str "pass")
         | .fail reason => pure (LegResult.fail reason, Json.str reason)

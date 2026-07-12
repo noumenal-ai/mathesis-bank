@@ -112,6 +112,9 @@ jobs:
         env:
           MATHESIS_STRICT: '1'
           MATHESIS_EXPORTS_DIR: ${{ github.workspace }}/registry/_shared/exports
+          # Trusted logical-core reference: the gate rejects any candidate that
+          # redefines a trusted constant (fake Iff/Eq/False). Bundled + auditable.
+          MATHESIS_INIT_EXPORT: ${{ github.workspace }}/backend-gate/init.export
         run: |
           chmod +x ci/verify.sh
           ci/verify.sh docs/verification.json
