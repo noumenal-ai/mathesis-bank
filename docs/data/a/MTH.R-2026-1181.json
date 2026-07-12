@@ -1,0 +1,78 @@
+{
+  "axiom_manifest": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+  ],
+  "bibtex": null,
+  "cites": "WMSpec.Transform.ct5c_acyclic_iff_no_phantom",
+  "created": "2026-07-12",
+  "dependency_closure": [
+    {
+      "handle": "MTH.C-2026-1181",
+      "tier": null
+    }
+  ],
+  "deposit_class": "demonstration",
+  "discharged_by": null,
+  "discharges": "MTH.C-2026-1181",
+  "doi": null,
+  "evidence_leg": "proved",
+  "exercisability": null,
+  "frozen_export": {
+    "bytes": 129155932,
+    "constants": 26035,
+    "path": "_shared/exports/18e64d712e252b857b15aebb222e7bbb6488eebe1032fb9b1499a0e4dd778e38.export",
+    "sha256": "18e64d712e252b857b15aebb222e7bbb6488eebe1032fb9b1499a0e4dd778e38"
+  },
+  "gloss": "In a four-observable scenario, no obstructing family exists — one that is locally consistent and everywhere nonempty yet fails to glue into a global object — exactly when the cover of questions is acyclic. Whether the local pieces can fail to determine the global object is thereby fixed by the shape of the questioning pattern alone.\n\n**Cites** `WMSpec.Transform.ct5c_acyclic_iff_no_phantom` — the corpus theorem this result restates and discharges.\n\n**Original contribution.** The corpus gives the four-observable equivalence; the thesis-layer statement recasts the non-existence of obstructions as fully determined by the cover's geometry, tying the theory's foundation to the interrogation shape alone.\n",
+  "handle": "MTH.R-2026-1181",
+  "headline": null,
+  "import_path": "Eidometry.Thesis",
+  "library": "Eidometry",
+  "ontology_section": "Non-triviality",
+  "pin": {
+    "gate_pins": {
+      "Lean4Checker": "b7398199245524275543dec6113229c9bb4902e5",
+      "lean4export": "ca36c44858e2d7ba40996203d2f08a69113d1211"
+    },
+    "lib_revs": {
+      "Eidometry": "design-lab@WMTheory (Eidometry thesis; single-Mathlib)"
+    },
+    "mathlib_rev": "fabf563a7c95a166b8d7b6efca11c8b4dc9d911f",
+    "toolchain": "leanprover/lean4:v4.31.0"
+  },
+  "polarity": "universal",
+  "predicted": null,
+  "provenance": "selfSeeded",
+  "schema_version": 2,
+  "statement": {
+    "decl_names": [
+      "Eidometry.Thesis.phantom_dichotomy"
+    ],
+    "module": "Eidometry.Thesis",
+    "pretty": "∀ (cover : Finset (Finset (Fin 4))), HiddenChannelCapacity.Acyclic cover ↔ ∀ (fam : List (HiddenChannelCapacity.LocalStruct (Fin 4) fun x => ZMod 2)), List.map (fun x => HiddenChannelCapacity.LocalStruct.team x) fam = Finset.toList cover → HiddenChannelCapacity.Consistent fam → (∀ L ∈ fam, Finset.Nonempty (HiddenChannelCapacity.LocalStruct.rel L)) → HiddenChannelCapacity.Glues fam"
+  },
+  "status": "still-green",
+  "suite": null,
+  "superseded_by": null,
+  "theorem_type": "theorem",
+  "tier": null,
+  "title": "Eidometry.Thesis.phantom_dichotomy",
+  "trust_boundary_extensions": [],
+  "verdict": {
+    "gate_version": "mathesis-v4.31 whole-theory replay (Eidometry.Thesis)",
+    "log_path": "WMTheory/Eidometry/Thesis.lean",
+    "result": "ADMITTED",
+    "shadow_kernels": {
+      "nanoda": "skipped-absent"
+    }
+  },
+  "vouching": {
+    "gloss": "author",
+    "proof": "kernel",
+    "statement": "kernel",
+    "witness": null
+  },
+  "witness": null
+}

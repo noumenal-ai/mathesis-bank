@@ -1,0 +1,59 @@
+{
+  "axiom_manifest": null,
+  "bibtex": null,
+  "cites": "WMSpec.Transform.fiberOf_support_invariant",
+  "created": "2026-07-12",
+  "dependency_closure": [],
+  "deposit_class": "claim",
+  "discharged_by": [
+    "MTH.R-2026-1182"
+  ],
+  "discharges": null,
+  "doi": null,
+  "evidence_leg": null,
+  "exercisability": null,
+  "frozen_export": null,
+  "gloss": "Statement of record: `Eidometry.Thesis.fiber_support_invariant` (Eidometry thesis, section Orthogonality).\n\nIf two families of measurements collapse the state space to the same quotient, then at every state they leave exactly the same set of states indistinguishable, no matter what the individual measurements output or how their outputs are indexed. The indistinguishability class is a property of the collapsed structure alone.\n\nDischarged by [MTH.R-2026-1182].\n",
+  "handle": "MTH.C-2026-1182",
+  "headline": null,
+  "import_path": "Eidometry.Thesis",
+  "library": "Eidometry",
+  "ontology_section": "Orthogonality",
+  "pin": {
+    "gate_pins": {
+      "Lean4Checker": "b7398199245524275543dec6113229c9bb4902e5",
+      "lean4export": "ca36c44858e2d7ba40996203d2f08a69113d1211"
+    },
+    "lib_revs": {
+      "Eidometry": "design-lab@WMTheory (Eidometry thesis; single-Mathlib)"
+    },
+    "mathlib_rev": "fabf563a7c95a166b8d7b6efca11c8b4dc9d911f",
+    "toolchain": "leanprover/lean4:v4.31.0"
+  },
+  "polarity": "universal",
+  "predicted": null,
+  "provenance": "selfSeeded",
+  "schema_version": 2,
+  "statement": {
+    "decl_names": [
+      "Eidometry.Thesis.fiber_support_invariant"
+    ],
+    "module": "Eidometry.Thesis",
+    "pretty": "∀ {S : Type u_1} {ι : Type u_2} {V : ι → Type u_3} {T : (i : ι) → S → V i} {ι' : Type u_4} {V' : ι' → Type u_5} {T' : (i : ι') → S → V' i}, WMSpec.Transform.wordBisim {id} T = WMSpec.Transform.wordBisim {id} T' → ∀ (s₀ : S), WMSpec.Transform.fiberOf T s₀ = WMSpec.Transform.fiberOf T' s₀"
+  },
+  "status": "well-posed",
+  "suite": null,
+  "superseded_by": null,
+  "theorem_type": null,
+  "tier": null,
+  "title": "Eidometry.Thesis.fiber_support_invariant",
+  "trust_boundary_extensions": [],
+  "verdict": null,
+  "vouching": {
+    "gloss": "author",
+    "proof": null,
+    "statement": "kernel",
+    "witness": null
+  },
+  "witness": null
+}

@@ -1,0 +1,59 @@
+{
+  "axiom_manifest": null,
+  "bibtex": null,
+  "cites": "TLT.NonIdentifiability.lipschitz_readout_iff",
+  "created": "2026-07-12",
+  "dependency_closure": [],
+  "deposit_class": "claim",
+  "discharged_by": [
+    "MTH.R-2026-1190"
+  ],
+  "discharges": null,
+  "doi": null,
+  "evidence_leg": null,
+  "exercisability": null,
+  "frozen_export": null,
+  "gloss": "Statement of record: `Eidometry.Thesis.learning_readout_iff` (Eidometry thesis, section Experiments).\n\nA Lipschitz readout that recovers a real-valued target from an encoder's representation exists exactly when, for every pair of inputs, the gap between their target values is bounded by the Lipschitz constant times the distance between their representations. Recoverability through a representation reduces to a checkable pairwise metric inequality.\n\nDischarged by [MTH.R-2026-1190].\n",
+  "handle": "MTH.C-2026-1190",
+  "headline": null,
+  "import_path": "Eidometry.Thesis",
+  "library": "Eidometry",
+  "ontology_section": "Experiments",
+  "pin": {
+    "gate_pins": {
+      "Lean4Checker": "b7398199245524275543dec6113229c9bb4902e5",
+      "lean4export": "ca36c44858e2d7ba40996203d2f08a69113d1211"
+    },
+    "lib_revs": {
+      "Eidometry": "design-lab@WMTheory (Eidometry thesis; single-Mathlib)"
+    },
+    "mathlib_rev": "fabf563a7c95a166b8d7b6efca11c8b4dc9d911f",
+    "toolchain": "leanprover/lean4:v4.31.0"
+  },
+  "polarity": "universal",
+  "predicted": null,
+  "provenance": "selfSeeded",
+  "schema_version": 2,
+  "statement": {
+    "decl_names": [
+      "Eidometry.Thesis.learning_readout_iff"
+    ],
+    "module": "Eidometry.Thesis",
+    "pretty": "∀ {S : Type u_1} {Z : Type u_2} [inst : PseudoMetricSpace Z] (E : S → Z) (T : S → ℝ) (L : NNReal), (∃ g, LipschitzWith L g ∧ ∀ (s : S), T s = g (E s)) ↔ ∀ (s₁ s₂ : S), |T s₁ - T s₂| ≤ ↑L * dist (E s₁) (E s₂)"
+  },
+  "status": "well-posed",
+  "suite": null,
+  "superseded_by": null,
+  "theorem_type": null,
+  "tier": null,
+  "title": "Eidometry.Thesis.learning_readout_iff",
+  "trust_boundary_extensions": [],
+  "verdict": null,
+  "vouching": {
+    "gloss": "author",
+    "proof": null,
+    "statement": "kernel",
+    "witness": null
+  },
+  "witness": null
+}

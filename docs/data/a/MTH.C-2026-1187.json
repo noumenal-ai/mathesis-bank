@@ -1,0 +1,59 @@
+{
+  "axiom_manifest": null,
+  "bibtex": null,
+  "cites": "WMSpec.LevelSystem.exists_dark_pair_wigner_gap",
+  "created": "2026-07-12",
+  "dependency_closure": [],
+  "deposit_class": "claim",
+  "discharged_by": [
+    "MTH.R-2026-1187"
+  ],
+  "discharges": null,
+  "doi": null,
+  "evidence_leg": null,
+  "exercisability": null,
+  "frozen_export": null,
+  "gloss": "Statement of record: `Eidometry.Thesis.quantum_wigner_gap` (Eidometry thesis, section Experiments).\n\nOn a three-level system there exist two states that stay indistinguishable for all time under both the tridiagonal measurement family and the position observable, yet are not related by any additive, real-scaling, modulus-preserving, population-preserving map. Below full tomographic measurement, dynamical indistinguishability is strictly coarser than symmetry equivalence.\n\nDischarged by [MTH.R-2026-1187].\n",
+  "handle": "MTH.C-2026-1187",
+  "headline": null,
+  "import_path": "Eidometry.Thesis",
+  "library": "Eidometry",
+  "ontology_section": "Experiments",
+  "pin": {
+    "gate_pins": {
+      "Lean4Checker": "b7398199245524275543dec6113229c9bb4902e5",
+      "lean4export": "ca36c44858e2d7ba40996203d2f08a69113d1211"
+    },
+    "lib_revs": {
+      "Eidometry": "design-lab@WMTheory (Eidometry thesis; single-Mathlib)"
+    },
+    "mathlib_rev": "fabf563a7c95a166b8d7b6efca11c8b4dc9d911f",
+    "toolchain": "leanprover/lean4:v4.31.0"
+  },
+  "polarity": "existential",
+  "predicted": null,
+  "provenance": "selfSeeded",
+  "schema_version": 2,
+  "statement": {
+    "decl_names": [
+      "Eidometry.Thesis.quantum_wigner_gap"
+    ],
+    "module": "Eidometry.Thesis",
+    "pretty": "∀ (S₂ : WMSpec.LevelSystem 2), ∃ ψ χ, (∀ (t : ℝ), (TLT.NonIdentifiability.bisimilarity WMSpec.LevelSystem.tridiagFam (TLT.NonIdentifiability.pureKernel (WMSpec.LevelSystem.U S₂ t))) ψ χ) ∧ (∀ (t : ℝ), (TLT.NonIdentifiability.bisimilarity (fun x => WMSpec.LevelSystem.posN S₂) (TLT.NonIdentifiability.pureKernel (WMSpec.LevelSystem.U S₂ t))) ψ χ) ∧ ∀ (G : (Fin 3 → ℂ) → Fin 3 → ℂ), (∀ (φ₁ φ₂ : Fin 3 → ℂ), G (φ₁ + φ₂) = G φ₁ + G φ₂) → (∀ (r : ℝ) (φ : Fin 3 → ℂ), G (↑r • φ) = ↑r • G φ) → (∀ (φ : Fin 3 → ℂ) (n : Fin 3), Complex.normSq (G φ n) = Complex.normSq (φ n)) → (∀ (φ : Fin 3 → ℂ) (j : Fin 2), WMSpec.LevelSystem.wj j (G φ) = WMSpec.LevelSystem.wj j φ) → G ψ ≠ χ"
+  },
+  "status": "well-posed",
+  "suite": null,
+  "superseded_by": null,
+  "theorem_type": null,
+  "tier": null,
+  "title": "Eidometry.Thesis.quantum_wigner_gap",
+  "trust_boundary_extensions": [],
+  "verdict": null,
+  "vouching": {
+    "gloss": "author",
+    "proof": null,
+    "statement": "kernel",
+    "witness": null
+  },
+  "witness": null
+}

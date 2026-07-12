@@ -1,0 +1,77 @@
+{
+  "axiom_manifest": [
+    "Quot.sound",
+    "propext"
+  ],
+  "bibtex": null,
+  "cites": "WMSpec.Transform.fiberOf_support_invariant",
+  "created": "2026-07-12",
+  "dependency_closure": [
+    {
+      "handle": "MTH.C-2026-1182",
+      "tier": null
+    }
+  ],
+  "deposit_class": "demonstration",
+  "discharged_by": null,
+  "discharges": "MTH.C-2026-1182",
+  "doi": null,
+  "evidence_leg": "proved",
+  "exercisability": null,
+  "frozen_export": {
+    "bytes": 129155932,
+    "constants": 26035,
+    "path": "_shared/exports/18e64d712e252b857b15aebb222e7bbb6488eebe1032fb9b1499a0e4dd778e38.export",
+    "sha256": "18e64d712e252b857b15aebb222e7bbb6488eebe1032fb9b1499a0e4dd778e38"
+  },
+  "gloss": "If two families of measurements collapse the state space to the same quotient, then at every state they leave exactly the same set of states indistinguishable, no matter what the individual measurements output or how their outputs are indexed. The indistinguishability class is a property of the collapsed structure alone.\n\n**Cites** `WMSpec.Transform.fiberOf_support_invariant` — the corpus theorem this result restates and discharges.\n\n**Original contribution.** The corpus lemma is a raw equality of fiber sets under a bisimulation hypothesis. The thesis restatement fixes it at fully polymorphic type (arbitrary codomains V i, arbitrary index types) and frames the equality as an invariance principle: the indistinguishability class depends only on which states get merged, not on how the measurements are encoded or weighted.\n",
+  "handle": "MTH.R-2026-1182",
+  "headline": null,
+  "import_path": "Eidometry.Thesis",
+  "library": "Eidometry",
+  "ontology_section": "Orthogonality",
+  "pin": {
+    "gate_pins": {
+      "Lean4Checker": "b7398199245524275543dec6113229c9bb4902e5",
+      "lean4export": "ca36c44858e2d7ba40996203d2f08a69113d1211"
+    },
+    "lib_revs": {
+      "Eidometry": "design-lab@WMTheory (Eidometry thesis; single-Mathlib)"
+    },
+    "mathlib_rev": "fabf563a7c95a166b8d7b6efca11c8b4dc9d911f",
+    "toolchain": "leanprover/lean4:v4.31.0"
+  },
+  "polarity": "universal",
+  "predicted": null,
+  "provenance": "selfSeeded",
+  "schema_version": 2,
+  "statement": {
+    "decl_names": [
+      "Eidometry.Thesis.fiber_support_invariant"
+    ],
+    "module": "Eidometry.Thesis",
+    "pretty": "∀ {S : Type u_1} {ι : Type u_2} {V : ι → Type u_3} {T : (i : ι) → S → V i} {ι' : Type u_4} {V' : ι' → Type u_5} {T' : (i : ι') → S → V' i}, WMSpec.Transform.wordBisim {id} T = WMSpec.Transform.wordBisim {id} T' → ∀ (s₀ : S), WMSpec.Transform.fiberOf T s₀ = WMSpec.Transform.fiberOf T' s₀"
+  },
+  "status": "still-green",
+  "suite": null,
+  "superseded_by": null,
+  "theorem_type": "theorem",
+  "tier": null,
+  "title": "Eidometry.Thesis.fiber_support_invariant",
+  "trust_boundary_extensions": [],
+  "verdict": {
+    "gate_version": "mathesis-v4.31 whole-theory replay (Eidometry.Thesis)",
+    "log_path": "WMTheory/Eidometry/Thesis.lean",
+    "result": "ADMITTED",
+    "shadow_kernels": {
+      "nanoda": "skipped-absent"
+    }
+  },
+  "vouching": {
+    "gloss": "author",
+    "proof": "kernel",
+    "statement": "kernel",
+    "witness": null
+  },
+  "witness": null
+}

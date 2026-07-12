@@ -1,0 +1,59 @@
+{
+  "axiom_manifest": null,
+  "bibtex": null,
+  "cites": "WMSpec.Transform.ct3a_smooth",
+  "created": "2026-07-12",
+  "dependency_closure": [],
+  "deposit_class": "claim",
+  "discharged_by": [
+    "MTH.R-2026-1211"
+  ],
+  "discharges": null,
+  "doi": null,
+  "evidence_leg": null,
+  "exercisability": null,
+  "frozen_export": null,
+  "gloss": "Statement of record: `Eidometry.Thesis.counterfactual_ct3a_discharged` (Eidometry thesis, section Counterfactuals).\n\nOne of a pair of smoothness conjectures: the other form was disproved, but this one holds. It states that for any measurable state space equipped with a countable family of measurable readout functions and a measurable transition, one can construct a countable family of measurable sets that respects the behavioral equivalence (bisimilarity) of states and separates its equivalence classes — with no topological-regularity assumption on the space.\n\nDischarged by [MTH.R-2026-1211].\n",
+  "handle": "MTH.C-2026-1211",
+  "headline": null,
+  "import_path": "Eidometry.Thesis",
+  "library": "Eidometry",
+  "ontology_section": "Counterfactuals",
+  "pin": {
+    "gate_pins": {
+      "Lean4Checker": "b7398199245524275543dec6113229c9bb4902e5",
+      "lean4export": "ca36c44858e2d7ba40996203d2f08a69113d1211"
+    },
+    "lib_revs": {
+      "Eidometry": "design-lab@WMTheory (Eidometry thesis; single-Mathlib)"
+    },
+    "mathlib_rev": "fabf563a7c95a166b8d7b6efca11c8b4dc9d911f",
+    "toolchain": "leanprover/lean4:v4.31.0"
+  },
+  "polarity": "universal",
+  "predicted": null,
+  "provenance": "selfSeeded",
+  "schema_version": 2,
+  "statement": {
+    "decl_names": [
+      "Eidometry.Thesis.counterfactual_ct3a_discharged"
+    ],
+    "module": "Eidometry.Thesis",
+    "pretty": "WMSpec.Transform.CT3a_smooth"
+  },
+  "status": "well-posed",
+  "suite": null,
+  "superseded_by": null,
+  "theorem_type": null,
+  "tier": null,
+  "title": "Eidometry.Thesis.counterfactual_ct3a_discharged",
+  "trust_boundary_extensions": [],
+  "verdict": null,
+  "vouching": {
+    "gloss": "author",
+    "proof": null,
+    "statement": "kernel",
+    "witness": null
+  },
+  "witness": null
+}

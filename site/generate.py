@@ -99,7 +99,8 @@ EVIDENCE_LEG = {
     "proved": ("Proved",
                "a general statement, established for every case by a kernel-checked proof term"),
     "witnessed": ("Witnessed",
-                  "an existence statement whose concrete witness is itself the kernel-checked evidence"),
+                  "established by exhibiting a concrete witness or construction, which is itself the "
+                  "kernel-checked evidence"),
     "mechanized-empirical": ("Mechanized-empirical",
                              "a statement about a specific executed system, whose behaviour is reflected "
                              "exactly into the kernel and reasoned over"),
@@ -107,14 +108,18 @@ EVIDENCE_LEG = {
 
 
 def evidence_leg(m):
-    """Derive a result's evidence leg (a key in EVIDENCE_LEG, or None for non-results).
+    """A result's evidence leg (a key in EVIDENCE_LEG, or None for non-results).
 
-    Disclosed rule: a statement whose declarations include an `Executed` namespace
-    segment is mechanized-empirical; otherwise a universal statement is proved and an
-    existential statement is witnessed. Derived from the gate's own `polarity` field and
-    the authors' own namespacing — never a claim the manifest does not already carry."""
+    Prefers the EXPLICIT `evidence_leg` manifest field when present (the Eidometry volume sets
+    it, since the kind of evidence is not always the syntactic polarity — a universal statement
+    can still be proved by exhibiting a construction). Otherwise falls back to the disclosed
+    derivation: an `Executed` namespace segment ⇒ mechanized-empirical; universal ⇒ proved;
+    existential ⇒ witnessed. The generator never invents a gate verdict (INV-3)."""
     if m.get("deposit_class") != "demonstration":
         return None
+    explicit = m.get("evidence_leg")
+    if explicit in EVIDENCE_LEG:
+        return explicit
     decls = (m.get("statement") or {}).get("decl_names") or []
     if any("Executed" in d.split(".") for d in decls):
         return "mechanized-empirical"
@@ -124,6 +129,41 @@ def evidence_leg(m):
     if pol == "existential":
         return "witnessed"
     return None
+
+
+# Ontology axis (the Eidometry volume): where a result sits in the theory. ORTHOGONAL to the
+# evidence leg — a result has both. Plain public labels (no Greek: γ is firewall-banned in prose,
+# and plain reads better). Descriptions are author-adapted from the thesis.
+ONTOLOGY = {
+    "Forcing": "A specification of which states must be told apart, and which dynamics preserved, "
+               "forces one canonical way of grouping states — from the definition alone, over an "
+               "arbitrary state space with no finiteness or topology assumed.",
+    "Non-triviality": "That same canonical grouping is rebuilt independently, from scratch, by gluing "
+                      "local observations across a cover of questions; whether local data pins down the "
+                      "global object turns on whether the pattern of questions contains a cycle.",
+    "Orthogonality": "The forced structure and the uncertainty it assigns depend only on how finely "
+                     "states can be distinguished, so re-weighting or re-indexing the same information "
+                     "leaves them fixed, while changing what can be distinguished can move them.",
+    "Experiments": "Four independent testbeds — a qubit, a classical conservative system, learning "
+                   "through a representation, and causal models — each supply only a set of measurements "
+                   "and prove the forced structure equals an object defined separately, supplied nowhere "
+                   "in advance.",
+    "Executed runs": "The theory is executable: real floating-point runs read exactly as mathematics "
+                     "rather than approximation, and machine-checked certificates equate a compiler's "
+                     "output to the exact geometric fact it claims.",
+    "Counterfactuals": "Refuted and repaired conjectures are recorded as first-class results alongside "
+                       "their disproofs — including that a counterfactual quantity provably cannot be "
+                       "recovered from intervention results alone.",
+}
+ONTOLOGY_ORDER = ["Forcing", "Non-triviality", "Orthogonality", "Experiments", "Executed runs", "Counterfactuals"]
+
+
+def ontology_badge(m):
+    sec = m.get("ontology_section")
+    if not sec or sec not in ONTOLOGY:
+        return ""
+    return (f'<span class="badge badge-onto" title="{esc(ONTOLOGY[sec])}">{esc(sec)}'
+            f'<span class="badge-caption">{esc(ONTOLOGY[sec])}</span></span>')
 
 
 def evidence_leg_badge(m):
@@ -286,6 +326,7 @@ def page_shell(title, description, active, body, depth=0):
         ("results", "Results"),
         ("claims", "Claims"),
         ("dictionary", "Dictionary"),
+        ("ontology", "Ontology"),
         ("deposit", "Deposit"),
         ("charter", "Charter"),
         ("about", "About"),
@@ -454,6 +495,7 @@ def render_accession_detail(handle, rec, records):
     header_badges = []
     if m["deposit_class"] == "demonstration":
         header_badges.append(evidence_leg_badge(m))       # the kind of evidence (primary)
+        header_badges.append(ontology_badge(m))           # where in the theory (orthogonal axis)
         header_badges.append(tier_badge(m.get("tier"), m.get("polarity")))  # coverage (secondary)
         header_badges.append(axiom_chip(m))
         header_badges.append(admitted_stamp(m))
@@ -463,6 +505,7 @@ def render_accession_detail(handle, rec, records):
             header_badges.append(f'<span class="badge badge-exercisability">{esc(m["exercisability"])}</span>')
     else:  # claim
         header_badges.append(f'<span class="badge badge-status">{esc(status_label(m.get("status")))}</span>')
+        header_badges.append(ontology_badge(m))
         if m.get("polarity"):
             header_badges.append(f'<span class="badge badge-polarity">{esc(m["polarity"])}</span>')
 
@@ -532,6 +575,24 @@ def render_accession_detail(handle, rec, records):
             'but the kernel itself.</p>'
             f'<p>{chips}</p>{tbe_html}</section>')
 
+    cites_html = ""
+    if m.get("cites"):
+        cites_html = (f'<p><strong>Cites</strong> <code>{esc(m["cites"])}</code> '
+                      f'<span class="empty-note">— the corpus theorem this result restates and discharges by naming it.</span></p>')
+
+    # "Cite this / share" — the accession is the citable, permanent unit. No JS required to copy
+    # the id; the share row offers the canonical link. (INV-2: no citation COUNTS, just the id.)
+    cite_url = f"https://noumenal-ai.github.io/mathesis-bank/a/{handle}.html"
+    cite_this_html = (
+        '<section class="shell detail-section" id="cite">'
+        '<h3>Cite this</h3>'
+        '<p class="empty-note">The accession id is permanent and always resolves to this exact '
+        'statement, proof, and axiom manifest. Corrections mint a new accession; this one never changes.</p>'
+        f'<pre class="statement-pretty"><code>Mathesis Bank, accession {esc(handle)}.\n{esc(cite_url)}</code></pre>'
+        f'<p class="share-row"><a class="btn" href="{esc(cite_url)}">Permalink</a> '
+        f'<a class="btn" href="https://github.com/noumenal-ai/mathesis-bank/tree/main/registry">Registry</a></p>'
+        '</section>')
+
     body = f"""
 <section class="detail-hero shell">
   <p class="kicker"><a href="../{esc(bank['slug'])}.html">{esc(bank['label'])}</a> &middot; {esc(class_label)}</p>
@@ -551,6 +612,7 @@ def render_accession_detail(handle, rec, records):
   <h3>Status</h3>
   <p>{esc(status_label(m.get('status')))}</p>
   {discharges_html}
+  {cites_html}
 </section>
 
 <section class="shell detail-section">
@@ -572,6 +634,8 @@ def render_accession_detail(handle, rec, records):
 {suite_html}
 
 {export_html}
+
+{cite_this_html}
 
 <section class="shell detail-section">
   <h3>Pin</h3>
@@ -911,6 +975,93 @@ bin/mathesis check --all               # re-derive every result</code></pre>
     return page_shell(title, "A public ledger for machine-checked learning-theory claims.", "home", body, depth=0)
 
 
+def render_ontology(records):
+    """The ontology axis: where a result sits in the theory, orthogonal to the evidence leg.
+    Populated by the Eidometry volume. Section blocks list their results from real manifests."""
+    demos = [h for h, r in records.items() if r["bank"] == "results"]
+    by_sec = {s: [] for s in ONTOLOGY_ORDER}
+    for h in demos:
+        s = records[h]["manifest"].get("ontology_section")
+        if s in by_sec:
+            by_sec[s].append(h)
+    total = sum(len(v) for v in by_sec.values())
+
+    section_blocks = []
+    for s in ONTOLOGY_ORDER:
+        hs = sorted(by_sec[s])
+        items = "\n".join(
+            f'<li><a href="a/{esc(h)}.html"><code>{esc(records[h]["manifest"]["title"])}</code></a> '
+            f'{evidence_leg_badge(records[h]["manifest"])}</li>'
+            for h in hs
+        ) or '<li class="empty-note">No results filed here in this snapshot.</li>'
+        section_blocks.append(f"""
+    <div class="onto-section">
+      <div class="onto-head"><h3>{esc(s)}</h3><span class="onto-count">{len(hs)}</span></div>
+      <p>{esc(ONTOLOGY[s])}</p>
+      <ul class="onto-list">{items}</ul>
+    </div>""")
+
+    body = f"""
+<section class="hero shell">
+  <p class="kicker">Noumenal Research &middot; Mathesis</p>
+  <h1 class="measure">The ontology axis</h1>
+  <p class="lede">
+    Every result is filed on two independent axes. One is the <a href="results.html">kind of
+    evidence</a> behind it &mdash; proved, witnessed, or mechanized-empirical. The other, shown here,
+    is where the result sits in the theory itself. The two are orthogonal: a result's evidence kind
+    tells you nothing about which part of the theory it belongs to, and the reverse. Nothing here is
+    ranked.
+  </p>
+  <div class="factline factline-2">
+    <div class="fact"><strong>{total}</strong><span>results on this axis</span></div>
+    <div class="fact"><strong>{len(ONTOLOGY_ORDER)}</strong><span>sections</span></div>
+  </div>
+</section>
+
+<section class="shell section-head-block">
+  <div class="section-head">
+    <h2>Six sections, one theory</h2>
+    <p>These are the parts of the banked theory: identification as a geometry &mdash; a specification of
+       what must be measured and which dynamics preserved forces a single canonical structure on a
+       system's states, and that structure is executable and machine-checkable end to end.</p>
+  </div>
+  <div class="onto-grid">{"".join(section_blocks)}</div>
+</section>
+
+<section class="shell detail-section measure">
+  <h2>More than one proof</h2>
+  <p>A single claim can be discharged by more than one banked result. The same statement may be reached
+     through a general principle, a specific construction, or an executed run, and each is a valid,
+     separately banked discharge. When one proof depends on strictly fewer background assumptions than
+     another &mdash; it invokes fewer axioms to reach the same conclusion &mdash; that proof is the stronger
+     discharge, because the claim then rests on a narrower foundation. The bank records every discharge
+     of a claim, not only one.</p>
+</section>
+
+<section class="shell detail-section measure">
+  <h2>Citing a result</h2>
+  <p>Each banked result is issued a permanent accession identifier that never changes and always points
+     to this exact machine-checked statement and its proof. That accession is the citable unit: cite the
+     accession id, which resolves to the frozen record, its exact formal statement, and the kernel
+     re-verification behind it. A result also carries a pointer to the published work it formalizes or
+     restates. Citing the accession credits the machine-checked deposit; the record credits the prior
+     source it builds on. The two are kept distinct, so a citation of the bank is never mistaken for a
+     claim of originality over the classical result it mechanizes.</p>
+</section>
+
+<section class="shell detail-section measure">
+  <h2>Dictionary quality</h2>
+  <p>Every dictionary entry is backed by a formal statement the kernel checks for internal consistency,
+     so no entry can encode a formally incoherent claim. That mechanical check certifies the mathematics
+     is sound; it does not certify that the entry is named well, describes the right theorem, or reflects
+     the intended meaning. Naming, meaning, and intent are reviewed on a separate track and tracked
+     independently, and an entry can be formally consistent while that review is still pending.</p>
+</section>
+"""
+    title = "Ontology · Mathesis"
+    return page_shell(title, "The ontology axis: where each result sits in the theory.", "ontology", body, depth=0)
+
+
 def render_deposit():
     body = """
 <section class="hero shell">
@@ -1208,8 +1359,7 @@ def main():
           f"{sum(1 for r in records.values() if r['bank']=='claims')} claims, "
           f"{sum(1 for r in records.values() if r['bank']=='results')} results).")
 
-    if len(records) != 430:
-        print(f"WARNING: expected 430 accessions, found {len(records)}.", file=sys.stderr)
+    print(f"registry: {len(records)} accessions.", file=sys.stderr)
 
     # clean slate for determinism, but preserve a real verification.json across
     # the wipe: ci/verify.sh may run before or after this script (order varies
@@ -1253,6 +1403,7 @@ def main():
 
     # home / deposit / charter / about
     (DOCS / "index.html").write_text(render_home(records))
+    (DOCS / "ontology.html").write_text(render_ontology(records))
     (DOCS / "deposit.html").write_text(render_deposit())
     (DOCS / "charter.html").write_text(render_charter())
     (DOCS / "about.html").write_text(render_about())

@@ -1,0 +1,59 @@
+{
+  "axiom_manifest": null,
+  "bibtex": null,
+  "cites": "WMSpec.Transform.cz_alpha_cfRead_not_readable",
+  "created": "2026-07-12",
+  "dependency_closure": [],
+  "deposit_class": "claim",
+  "discharged_by": [
+    "MTH.R-2026-1212"
+  ],
+  "discharges": null,
+  "doi": null,
+  "evidence_leg": null,
+  "exercisability": null,
+  "frozen_export": null,
+  "gloss": "Statement of record: `Eidometry.Thesis.counterfactual_cfread_unreadable` (Eidometry thesis, section Counterfactuals).\n\nA counterfactual quantity cannot be recovered from interventional data alone: two distributions over outcomes can agree on every intervention result yet still disagree on the counterfactual, so the counterfactual is not a function of what interventions reveal. This gap — Pearl's third causal rung sitting above the second — is why the two levels must be kept distinct rather than collapsed into one.\n\nDischarged by [MTH.R-2026-1212].\n",
+  "handle": "MTH.C-2026-1212",
+  "headline": null,
+  "import_path": "Eidometry.Thesis",
+  "library": "Eidometry",
+  "ontology_section": "Counterfactuals",
+  "pin": {
+    "gate_pins": {
+      "Lean4Checker": "b7398199245524275543dec6113229c9bb4902e5",
+      "lean4export": "ca36c44858e2d7ba40996203d2f08a69113d1211"
+    },
+    "lib_revs": {
+      "Eidometry": "design-lab@WMTheory (Eidometry thesis; single-Mathlib)"
+    },
+    "mathlib_rev": "fabf563a7c95a166b8d7b6efca11c8b4dc9d911f",
+    "toolchain": "leanprover/lean4:v4.31.0"
+  },
+  "polarity": "universal",
+  "predicted": null,
+  "provenance": "selfSeeded",
+  "schema_version": 2,
+  "statement": {
+    "decl_names": [
+      "Eidometry.Thesis.counterfactual_cfread_unreadable"
+    ],
+    "module": "Eidometry.Thesis",
+    "pretty": "WMSpec.Transform.cfRead ∉ WMSpec.Transform.readable (WMSpec.Transform.wordBisim {id} fun x p => WMSpec.Transform.intRead p x)"
+  },
+  "status": "well-posed",
+  "suite": null,
+  "superseded_by": null,
+  "theorem_type": null,
+  "tier": null,
+  "title": "Eidometry.Thesis.counterfactual_cfread_unreadable",
+  "trust_boundary_extensions": [],
+  "verdict": null,
+  "vouching": {
+    "gloss": "author",
+    "proof": null,
+    "statement": "kernel",
+    "witness": null
+  },
+  "witness": null
+}

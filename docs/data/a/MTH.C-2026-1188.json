@@ -1,0 +1,59 @@
+{
+  "axiom_manifest": null,
+  "bibtex": null,
+  "cites": "TLT.NonIdentifiability.bisimilarity_pureKernel_of_conserved",
+  "created": "2026-07-12",
+  "dependency_closure": [],
+  "deposit_class": "claim",
+  "discharged_by": [
+    "MTH.R-2026-1188"
+  ],
+  "discharges": null,
+  "doi": null,
+  "evidence_leg": null,
+  "exercisability": null,
+  "frozen_export": null,
+  "gloss": "Statement of record: `Eidometry.Thesis.classical_conserved_geometry` (Eidometry thesis, section Experiments).\n\nWhen the dynamics conserve every target quantity, the indistinguishability relation collapses to exactly the partition induced by those quantities; the state geometry of a conservative system is just the target partition. Companion result: a harmonic oscillator's conserved energy yields no readout of position.\n\nDischarged by [MTH.R-2026-1188].\n",
+  "handle": "MTH.C-2026-1188",
+  "headline": null,
+  "import_path": "Eidometry.Thesis",
+  "library": "Eidometry",
+  "ontology_section": "Experiments",
+  "pin": {
+    "gate_pins": {
+      "Lean4Checker": "b7398199245524275543dec6113229c9bb4902e5",
+      "lean4export": "ca36c44858e2d7ba40996203d2f08a69113d1211"
+    },
+    "lib_revs": {
+      "Eidometry": "design-lab@WMTheory (Eidometry thesis; single-Mathlib)"
+    },
+    "mathlib_rev": "fabf563a7c95a166b8d7b6efca11c8b4dc9d911f",
+    "toolchain": "leanprover/lean4:v4.31.0"
+  },
+  "polarity": "universal",
+  "predicted": null,
+  "provenance": "selfSeeded",
+  "schema_version": 2,
+  "statement": {
+    "decl_names": [
+      "Eidometry.Thesis.classical_conserved_geometry"
+    ],
+    "module": "Eidometry.Thesis",
+    "pretty": "∀ {S : Type u_1} {ι : Type u_2} {W : ι → Type u_3} {T : (i : ι) → S → W i} {f : S → S}, (∀ (i : ι) (s : S), T i (f s) = T i s) → TLT.NonIdentifiability.bisimilarity T (TLT.NonIdentifiability.pureKernel f) = Setoid.ker fun s i => T i s"
+  },
+  "status": "well-posed",
+  "suite": null,
+  "superseded_by": null,
+  "theorem_type": null,
+  "tier": null,
+  "title": "Eidometry.Thesis.classical_conserved_geometry",
+  "trust_boundary_extensions": [],
+  "verdict": null,
+  "vouching": {
+    "gloss": "author",
+    "proof": null,
+    "statement": "kernel",
+    "witness": null
+  },
+  "witness": null
+}

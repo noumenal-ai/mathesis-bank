@@ -1,0 +1,77 @@
+{
+  "axiom_manifest": [
+    "Quot.sound",
+    "propext"
+  ],
+  "bibtex": null,
+  "cites": "WMSpec.Transform.extendFiber_eq_fiberOf",
+  "created": "2026-07-12",
+  "dependency_closure": [
+    {
+      "handle": "MTH.C-2026-1178",
+      "tier": null
+    }
+  ],
+  "deposit_class": "demonstration",
+  "discharged_by": null,
+  "discharges": "MTH.C-2026-1178",
+  "doi": null,
+  "evidence_leg": "proved",
+  "exercisability": null,
+  "frozen_export": {
+    "bytes": 129155932,
+    "constants": 26035,
+    "path": "_shared/exports/18e64d712e252b857b15aebb222e7bbb6488eebe1032fb9b1499a0e4dd778e38.export",
+    "sha256": "18e64d712e252b857b15aebb222e7bbb6488eebe1032fb9b1499a0e4dd778e38"
+  },
+  "gloss": "The set of global states that are compatible with all local observations across a cover is built with no reference to any quotient or partition; the theorem proves that once the cover reaches every observable, this set exactly equals the set of states that agree with a given state on every observation. The two objects coincide by proof, not by definition.\n\n**Cites** `WMSpec.Transform.extendFiber_eq_fiberOf` — the corpus theorem this result restates and discharges.\n\n**Original contribution.** The corpus lemma just states the set equality; the thesis-layer statement reframes it as the fact that a construction defined without any quotient nonetheless lands on the same object, so agreement is earned rather than built in.\n",
+  "handle": "MTH.R-2026-1178",
+  "headline": null,
+  "import_path": "Eidometry.Thesis",
+  "library": "Eidometry",
+  "ontology_section": "Non-triviality",
+  "pin": {
+    "gate_pins": {
+      "Lean4Checker": "b7398199245524275543dec6113229c9bb4902e5",
+      "lean4export": "ca36c44858e2d7ba40996203d2f08a69113d1211"
+    },
+    "lib_revs": {
+      "Eidometry": "design-lab@WMTheory (Eidometry thesis; single-Mathlib)"
+    },
+    "mathlib_rev": "fabf563a7c95a166b8d7b6efca11c8b4dc9d911f",
+    "toolchain": "leanprover/lean4:v4.31.0"
+  },
+  "polarity": "universal",
+  "predicted": null,
+  "provenance": "selfSeeded",
+  "schema_version": 2,
+  "statement": {
+    "decl_names": [
+      "Eidometry.Thesis.extension_eq_forced_fiber"
+    ],
+    "module": "Eidometry.Thesis",
+    "pretty": "∀ {S : Type u_1} {ι : Type u_2} {J : Type u_3} {V : ι → Type u_4} (C : J → Set ι) (T : (i : ι) → S → V i) (s₀ : S), (∀ (i : ι), ∃ j, i ∈ C j) → WMSpec.Transform.ExtendFiber C T (WMSpec.Transform.localData C T s₀) = WMSpec.Transform.fiberOf T s₀"
+  },
+  "status": "still-green",
+  "suite": null,
+  "superseded_by": null,
+  "theorem_type": "theorem",
+  "tier": null,
+  "title": "Eidometry.Thesis.extension_eq_forced_fiber",
+  "trust_boundary_extensions": [],
+  "verdict": {
+    "gate_version": "mathesis-v4.31 whole-theory replay (Eidometry.Thesis)",
+    "log_path": "WMTheory/Eidometry/Thesis.lean",
+    "result": "ADMITTED",
+    "shadow_kernels": {
+      "nanoda": "skipped-absent"
+    }
+  },
+  "vouching": {
+    "gloss": "author",
+    "proof": "kernel",
+    "statement": "kernel",
+    "witness": null
+  },
+  "witness": null
+}

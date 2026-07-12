@@ -1,0 +1,74 @@
+{
+  "axiom_manifest": [],
+  "bibtex": null,
+  "cites": "WMSpec.Grammar.ObservationGrammar.forcing_principle",
+  "created": "2026-07-12",
+  "dependency_closure": [
+    {
+      "handle": "MTH.C-2026-1172",
+      "tier": null
+    }
+  ],
+  "deposit_class": "demonstration",
+  "discharged_by": null,
+  "discharges": "MTH.C-2026-1172",
+  "doi": null,
+  "evidence_leg": "proved",
+  "exercisability": null,
+  "frozen_export": {
+    "bytes": 129155932,
+    "constants": 26035,
+    "path": "_shared/exports/18e64d712e252b857b15aebb222e7bbb6488eebe1032fb9b1499a0e4dd778e38.export",
+    "sha256": "18e64d712e252b857b15aebb222e7bbb6488eebe1032fb9b1499a0e4dd778e38"
+  },
+  "gloss": "Given a complete lattice of candidate distinguishability structures on a state space, a set of structures that comply with an observation specification (closed under taking suprema), and a readability relation that is preserved toward finer structures (whatever a coarser structure can read, every finer structure below it can also read), there is a single greatest compliant structure, and anything readable at that greatest structure is readable under every compliant structure. The greatest compliant structure is fixed by the specification alone.\n\n**Cites** `WMSpec.Grammar.ObservationGrammar.forcing_principle` — the corpus theorem this result restates and discharges.\n\n**Original contribution.** The corpus lemma proves the greatest-element existence plus readability transfer; the thesis statement names this the root forcing principle at lattice generality and positions it as the single abstraction that the measurable, kernel-level, relational, and metric results below all specialize.\n",
+  "handle": "MTH.R-2026-1172",
+  "headline": null,
+  "import_path": "Eidometry.Thesis",
+  "library": "Eidometry",
+  "ontology_section": "Forcing",
+  "pin": {
+    "gate_pins": {
+      "Lean4Checker": "b7398199245524275543dec6113229c9bb4902e5",
+      "lean4export": "ca36c44858e2d7ba40996203d2f08a69113d1211"
+    },
+    "lib_revs": {
+      "Eidometry": "design-lab@WMTheory (Eidometry thesis; single-Mathlib)"
+    },
+    "mathlib_rev": "fabf563a7c95a166b8d7b6efca11c8b4dc9d911f",
+    "toolchain": "leanprover/lean4:v4.31.0"
+  },
+  "polarity": "universal",
+  "predicted": null,
+  "provenance": "selfSeeded",
+  "schema_version": 2,
+  "statement": {
+    "decl_names": [
+      "Eidometry.Thesis.forcing_principle"
+    ],
+    "module": "Eidometry.Thesis",
+    "pretty": "∀ {S : Type u_1} {V : Type u_2} {Str : Type u_3} [inst : CompleteLattice Str] (G : WMSpec.Grammar.ObservationGrammar S V Str), IsGreatest (WMSpec.Grammar.ObservationGrammar.Compliant G) (WMSpec.Grammar.ObservationGrammar.forced G) ∧ ∀ {T : S → V}, WMSpec.Grammar.ObservationGrammar.Readable G (WMSpec.Grammar.ObservationGrammar.forced G) T → ∀ {d : Str}, d ∈ WMSpec.Grammar.ObservationGrammar.Compliant G → WMSpec.Grammar.ObservationGrammar.Readable G d T"
+  },
+  "status": "still-green",
+  "suite": null,
+  "superseded_by": null,
+  "theorem_type": "theorem",
+  "tier": null,
+  "title": "Eidometry.Thesis.forcing_principle",
+  "trust_boundary_extensions": [],
+  "verdict": {
+    "gate_version": "mathesis-v4.31 whole-theory replay (Eidometry.Thesis)",
+    "log_path": "WMTheory/Eidometry/Thesis.lean",
+    "result": "ADMITTED",
+    "shadow_kernels": {
+      "nanoda": "skipped-absent"
+    }
+  },
+  "vouching": {
+    "gloss": "author",
+    "proof": "kernel",
+    "statement": "kernel",
+    "witness": null
+  },
+  "witness": null
+}

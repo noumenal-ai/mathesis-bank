@@ -456,6 +456,34 @@
         "string",
         "null"
       ]
+    },
+    "ontology_section": {
+      "enum": [
+        null,
+        "Forcing",
+        "Non-triviality",
+        "Orthogonality",
+        "Experiments",
+        "Executed runs",
+        "Counterfactuals"
+      ],
+      "description": "Eidometry-volume ONLY: the thesis section (ontology axis), orthogonal to evidence_leg. null for corpus/other."
+    },
+    "evidence_leg": {
+      "enum": [
+        null,
+        "proved",
+        "witnessed",
+        "mechanized-empirical"
+      ],
+      "description": "Explicit evidence kind (a general proof / a concrete witness or construction / a statement about an executed system). null ⇒ derived from polarity + Executed namespace."
+    },
+    "cites": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Eidometry-volume: the corpus lemma this thesis result discharges by naming it (citation/provenance)."
     }
   }
 }

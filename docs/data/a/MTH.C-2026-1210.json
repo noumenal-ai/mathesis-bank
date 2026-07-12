@@ -1,0 +1,59 @@
+{
+  "axiom_manifest": null,
+  "bibtex": null,
+  "cites": "WMSpec.Transform.measurableSet_selector_fixedPoints",
+  "created": "2026-07-12",
+  "dependency_closure": [],
+  "deposit_class": "claim",
+  "discharged_by": [
+    "MTH.R-2026-1210"
+  ],
+  "discharges": null,
+  "doi": null,
+  "evidence_leg": null,
+  "exercisability": null,
+  "frozen_export": null,
+  "gloss": "Statement of record: `Eidometry.Thesis.counterfactual_ct3b_repair` (Eidometry thesis, section Counterfactuals).\n\nThe repaired version of the disproved claim: once you assume a measurable selector that respects the \"behaves the same\" relation, its fixed-point set is measurable and every state has exactly one behaviorally-equivalent fixed point. This is the surviving, usable form of the conjecture.\n\nDischarged by [MTH.R-2026-1210].\n",
+  "handle": "MTH.C-2026-1210",
+  "headline": null,
+  "import_path": "Eidometry.Thesis",
+  "library": "Eidometry",
+  "ontology_section": "Counterfactuals",
+  "pin": {
+    "gate_pins": {
+      "Lean4Checker": "b7398199245524275543dec6113229c9bb4902e5",
+      "lean4export": "ca36c44858e2d7ba40996203d2f08a69113d1211"
+    },
+    "lib_revs": {
+      "Eidometry": "design-lab@WMTheory (Eidometry thesis; single-Mathlib)"
+    },
+    "mathlib_rev": "fabf563a7c95a166b8d7b6efca11c8b4dc9d911f",
+    "toolchain": "leanprover/lean4:v4.31.0"
+  },
+  "polarity": "universal",
+  "predicted": null,
+  "provenance": "selfSeeded",
+  "schema_version": 2,
+  "statement": {
+    "decl_names": [
+      "Eidometry.Thesis.counterfactual_ct3b_repair"
+    ],
+    "module": "Eidometry.Thesis",
+    "pretty": "∀ {S : Type} [inst : MeasurableSpace S] [StandardBorelSpace S] (T : ℕ → S → ℝ) (f σ : S → S), Measurable σ → (∀ (x : S), (TLT.NonIdentifiability.bisimilarity T (TLT.NonIdentifiability.pureKernel f)) (σ x) x) → (∀ (x y : S), (TLT.NonIdentifiability.bisimilarity T (TLT.NonIdentifiability.pureKernel f)) x y → σ x = σ y) → MeasurableSet {x | σ x = x} ∧ ∀ (x : S), ∃! y, y ∈ {z | σ z = z} ∧ (TLT.NonIdentifiability.bisimilarity T (TLT.NonIdentifiability.pureKernel f)) x y"
+  },
+  "status": "well-posed",
+  "suite": null,
+  "superseded_by": null,
+  "theorem_type": null,
+  "tier": null,
+  "title": "Eidometry.Thesis.counterfactual_ct3b_repair",
+  "trust_boundary_extensions": [],
+  "verdict": null,
+  "vouching": {
+    "gloss": "author",
+    "proof": null,
+    "statement": "kernel",
+    "witness": null
+  },
+  "witness": null
+}

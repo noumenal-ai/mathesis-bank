@@ -1,0 +1,59 @@
+{
+  "axiom_manifest": null,
+  "bibtex": null,
+  "cites": "WMSpec.Transform.support_moves_width",
+  "created": "2026-07-12",
+  "dependency_closure": [],
+  "deposit_class": "claim",
+  "discharged_by": [
+    "MTH.R-2026-1184"
+  ],
+  "discharges": null,
+  "doi": null,
+  "evidence_leg": null,
+  "exercisability": null,
+  "frozen_export": null,
+  "gloss": "Statement of record: `Eidometry.Thesis.support_moves_width` (Eidometry thesis, section Orthogonality).\n\nThere is a concrete two-bit causal model where switching which family of measurements is available (from the observational family to a richer response-type family, without adding any new data) shrinks the residual spread of an interventional quantity from one-half to zero. This shows the companion invariance results are not empty: the spread stays fixed when you merely re-weight the same information, but genuinely moves when you change the structure of what can be distinguished.\n\nDischarged by [MTH.R-2026-1184].\n",
+  "handle": "MTH.C-2026-1184",
+  "headline": null,
+  "import_path": "Eidometry.Thesis",
+  "library": "Eidometry",
+  "ontology_section": "Orthogonality",
+  "pin": {
+    "gate_pins": {
+      "Lean4Checker": "b7398199245524275543dec6113229c9bb4902e5",
+      "lean4export": "ca36c44858e2d7ba40996203d2f08a69113d1211"
+    },
+    "lib_revs": {
+      "Eidometry": "design-lab@WMTheory (Eidometry thesis; single-Mathlib)"
+    },
+    "mathlib_rev": "fabf563a7c95a166b8d7b6efca11c8b4dc9d911f",
+    "toolchain": "leanprover/lean4:v4.31.0"
+  },
+  "polarity": "existential",
+  "predicted": null,
+  "provenance": "selfSeeded",
+  "schema_version": 2,
+  "statement": {
+    "decl_names": [
+      "Eidometry.Thesis.support_moves_width"
+    ],
+    "module": "Eidometry.Thesis",
+    "pretty": "∃ M₀, WMSpec.Transform.fiberWidth (fun M => WMSpec.Transform.BowSCM.intRead M true) (WMSpec.Transform.fiberOf (WMSpec.Transform.bowFam (Bool × Bool)) M₀) = ENNReal.ofReal (1 / 2) ∧ WMSpec.Transform.fiberWidth (fun M => WMSpec.Transform.BowSCM.intRead M true) (WMSpec.Transform.fiberOf (WMSpec.Transform.rtFam (Bool × Bool)) M₀) = 0"
+  },
+  "status": "well-posed",
+  "suite": null,
+  "superseded_by": null,
+  "theorem_type": null,
+  "tier": null,
+  "title": "Eidometry.Thesis.support_moves_width",
+  "trust_boundary_extensions": [],
+  "verdict": null,
+  "vouching": {
+    "gloss": "author",
+    "proof": null,
+    "statement": "kernel",
+    "witness": null
+  },
+  "witness": null
+}

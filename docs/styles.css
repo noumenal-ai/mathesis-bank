@@ -393,3 +393,19 @@ footer { padding: 2.2rem 0; border-bottom: none; }
 @media (max-width: 900px) {
   .qa-block, .ex-cards { grid-template-columns: 1fr; }
 }
+
+/* ── ontology axis (orthogonal to evidence legs; warm sepia so the two axes read apart) ── */
+.badge-onto { text-transform: none; font-family: var(--sans); font-size: 0.76rem; font-weight: 600;
+  background: #f3ead8; color: #7a5a1e; border: 1px solid #e6d6b8; }
+.onto-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.6rem; }
+.onto-section { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 1.3rem 1.5rem; }
+.onto-head { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; border-bottom: 1px solid var(--line-soft); padding-bottom: 0.5rem; margin-bottom: 0.7rem; }
+.onto-head h3 { margin: 0; font-size: 1.15rem; }
+.onto-count { font-family: var(--serif); font-size: 1.4rem; color: var(--ink-faint); }
+.onto-section > p { font-size: 0.9rem; margin: 0 0 0.9rem; }
+.onto-list { list-style: none; margin: 0; padding: 0; }
+.onto-list li { padding: 0.28rem 0; border-bottom: 1px solid var(--line-soft); font-size: 0.86rem; display: flex; gap: 0.6rem; align-items: baseline; flex-wrap: wrap; }
+.onto-list li:last-child { border-bottom: none; }
+.share-row { display: flex; gap: 0.7rem; margin-top: 0.9rem; }
+
+@media (max-width: 820px) { .onto-grid { grid-template-columns: 1fr; } }
