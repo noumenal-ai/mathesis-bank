@@ -147,6 +147,10 @@ jobs:
           # the fetch degrades and a discharge deposit is rejected (fail-closed).
           MATHESIS_EXPORT_STORE: gh:${{ github.repository }}@exports-v1
           MATHESIS_EXPORTS_DIR: ${{ github.workspace }}/registry/_shared/exports
+          # Trusted logical-core reference: the gate rejects an untrusted deposit
+          # that redefines a trusted constant (fake Iff/Eq/False → derive False).
+          # This is the untrusted path, where that attack actually matters.
+          MATHESIS_INIT_EXPORT: ${{ github.workspace }}/backend-gate/init.export
           GH_TOKEN: ${{ github.token }}
         run: |
           chmod +x ci/gate_deposit.sh ci/parse_deposit.py ci/fetch_exports.sh

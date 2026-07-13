@@ -1067,6 +1067,10 @@ def render_deposit():
 <section class="hero shell">
   <p class="kicker">Noumenal Research &middot; Mathesis</p>
   <h1 class="measure">Deposit</h1>
+  <p class="beta-banner"><strong>Beta.</strong> External deposits are open. The gate is new and the
+  untrusted-build isolation on CI is the read-only fork token plus kernel replay (a hardened
+  disposable-VM builder is a planned follow-on). A maintainer reviews every deposit before it merges.
+  Expect rough edges &mdash; report them on the repository.</p>
   <p class="measure">The bank accepts deposits the way arXiv accepts papers and GenBank accepts
   sequences: you submit, an automated gate checks it, and it enters the public record. Here the gate
   is a proof kernel, and it re-derives every deposit from scratch &mdash; it never takes the deposit's
@@ -1171,11 +1175,13 @@ def render_deposit():
 </section>
 
 <section class="shell detail-section">
-  <h3>Status</h3>
-  <p>The founding volume was deposited by the maintainers, and the gate above runs live on every
-     change to the bank. Deposits from outside the maintainer team are being enabled after a final
-     security review of the untrusted-build path; until then, open an issue on the repository to
-     propose one.</p>
+  <h3>Status: open (beta)</h3>
+  <p>External deposits are open. Every deposit runs through the gate on its pull request; a first-time
+     contributor's build waits for a maintainer to approve the CI run before it executes (the build is
+     untrusted). Admission is decided by the kernel re-deriving the frozen export, never by the build,
+     and the gate additionally rejects any deposit that redefines a trusted logical-core constant. A
+     maintainer merges only after confirming the plain-language description. During beta, expect the
+     occasional rough edge and please report it.</p>
   <p class="mono-note"><a href="https://github.com/noumenal-ai/mathesis-bank">github.com/noumenal-ai/mathesis-bank</a></p>
 </section>
 
