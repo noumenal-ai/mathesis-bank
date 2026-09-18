@@ -1,0 +1,1 @@
+A deliberately tiny definition, deposited in the Mathlib environment to exercise minting end to end. Imports Mathlib so the pinned environment images are used, but declares something whose constant closure is small, so the frozen export stays small.

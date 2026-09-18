@@ -1,0 +1,58 @@
+{
+  "axiom_manifest": [],
+  "bibtex": null,
+  "created": "2026-09-18",
+  "dependency_closure": null,
+  "deposit_class": "definition",
+  "discharged_by": null,
+  "discharges": null,
+  "doi": null,
+  "exercisability": null,
+  "frozen_export": {
+    "bytes": 7417,
+    "constants": 10,
+    "path": "_shared/exports/f4e983cc52d534e0e9025460bd7258ed7a2314014b3bc34410ac149dd8a7f5b2.export",
+    "sha256": "f4e983cc52d534e0e9025460bd7258ed7a2314014b3bc34410ac149dd8a7f5b2"
+  },
+  "handle": "MTH.D-2026-1089",
+  "headline": null,
+  "import_path": "Submission",
+  "library": null,
+  "pin": {
+    "gate_pins": null,
+    "lib_revs": null,
+    "mathlib_rev": "fabf563a7c95a166b8d7b6efca11c8b4dc9d911f",
+    "toolchain": "leanprover/lean4:v4.31.0"
+  },
+  "polarity": null,
+  "predicted": null,
+  "provenance": "external",
+  "schema_version": 2,
+  "statement": {
+    "decl_names": [
+      "Probe.smallClosure"
+    ],
+    "module": "Submission",
+    "pretty": ""
+  },
+  "status": "proposed",
+  "suite": null,
+  "superseded_by": null,
+  "theorem_type": "definition",
+  "tier": null,
+  "title": "end-to-end probe: a definition in the Mathlib environment",
+  "trust_boundary_extensions": [],
+  "verdict": {
+    "gate_version": "mathesis-gate (unversioned)",
+    "log_path": null,
+    "result": "ADMITTED",
+    "shadow_kernels": null
+  },
+  "vouching": {
+    "gloss": "author",
+    "proof": null,
+    "statement": "kernel",
+    "witness": null
+  },
+  "witness": null
+}
