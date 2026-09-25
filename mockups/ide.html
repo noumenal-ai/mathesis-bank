@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mathesis IDE mockup</title>
+<style>
+  :root {
+    --bg:#FCFCFD; --surface:#FFFFFF; --code-bg:#F7F8FA; --text:#14171C; --muted:#4E5765;
+    --border:#E3E6EB; --border-strong:#CDD2DA; --link:#2450BC; --accent:#3566D4;
+    --thesis-bg:#EAF0FC; --def-bg:#E4F4F1; --def-bd:#1D8A74; --lock:#8A5A00; --lock-bg:#FCF3E2;
+    --kw:#2450BC; --ty:#1D8A74; --cm:#737B88; --str:#8A5A00;
+    --serif:"Times New Roman", Times, Tinos, "Liberation Serif", serif;
+    --mono:"JuliaMono","JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  }
+  @media (prefers-color-scheme: dark) { :root {
+    --bg:#0D0F13; --surface:#131720; --code-bg:#10141C; --text:#E8EBF0; --muted:#A7AEBB;
+    --border:#262C38; --border-strong:#333B49; --link:#7BA3EE; --accent:#7BA3EE;
+    --thesis-bg:#161F33; --def-bg:#10261F; --def-bd:#4CC7A8; --lock:#E8B455; --lock-bg:#2C2413;
+    --kw:#7BA3EE; --ty:#4CC7A8; --cm:#7C8493; --str:#E8B455;
+  } }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font-family:var(--serif); font-size:1.0625rem; line-height:1.6; }
+  a { color:var(--link); text-decoration:none; }
+  header.site { border-bottom:1px solid var(--border); background:var(--surface); }
+  header.site .in { max-width:1180px; margin:0 auto; padding:12px 20px; display:flex; gap:24px; align-items:baseline; }
+  header.site .brand { font-size:1.375rem; font-weight:600; letter-spacing:.01em; }
+  header.site nav a { color:var(--muted); margin-right:18px; }
+  main { max-width:1180px; margin:0 auto; padding:24px 20px 60px; }
+  .modes { display:flex; gap:6px; margin-bottom:18px; }
+  .modes button { font:inherit; font-size:1rem; padding:6px 14px; border:1px solid var(--border-strong); background:var(--surface); color:var(--muted); border-radius:999px; cursor:pointer; }
+  .modes button[aria-pressed=true] { background:var(--text); color:var(--bg); border-color:var(--text); }
+  .grid { display:grid; grid-template-columns: 320px 1fr; gap:28px; }
+  @media (max-width: 860px) { .grid { grid-template-columns: 1fr; } }
+  .byline { display:flex; gap:12px; align-items:center; margin-bottom:18px; }
+  .glyph { width:44px; height:44px; border-radius:50%; background:
+      conic-gradient(from 45deg, #3566D4 0 25%, #E4F4F1 0 50%, #3566D4 0 75%, #E4F4F1 0); flex:none; }
+  .byline .who { line-height:1.3; } .byline .who small { color:var(--muted); }
+  label { display:block; font-size:.875rem; color:var(--muted); margin:14px 0 4px; }
+  input[type=text], textarea { width:100%; font:inherit; color:var(--text); background:var(--surface); border:1px solid var(--border-strong); border-radius:8px; padding:8px 10px; }
+  textarea { min-height:120px; resize:vertical; }
+  .claim { border:1px solid var(--border); border-left:3px solid var(--accent); background:var(--thesis-bg); border-radius:8px; padding:10px 12px; margin-top:4px; }
+  .claim .t { font-weight:600; } .claim small { color:var(--muted); }
+  .editor { border:1px solid var(--border-strong); border-radius:10px; background:var(--surface); overflow:hidden; }
+  .tabs { display:flex; border-bottom:1px solid var(--border); background:var(--code-bg); }
+  .tabs button { font:inherit; font-size:.95rem; padding:9px 16px; border:0; border-right:1px solid var(--border); background:transparent; color:var(--muted); cursor:pointer; }
+  .tabs button[aria-selected=true] { background:var(--surface); color:var(--text); }
+  .tabs .pin { margin-left:auto; padding:9px 14px; font-family:var(--mono); font-size:.72rem; color:var(--muted); align-self:center; }
+  pre { margin:0; padding:14px 16px; font-family:var(--mono); font-size:.8125rem; line-height:1.6; background:var(--surface); overflow:auto; min-height:360px; }
+  .locked { background:var(--lock-bg); display:block; margin:0 -16px; padding:0 16px; border-left:3px solid var(--lock); }
+  .k { color:var(--kw); } .ty { color:var(--ty); } .c { color:var(--cm); font-style:italic; } .s { color:var(--str); }
+  .lockline { font-family:var(--serif); font-size:.85rem; color:var(--lock); padding:6px 16px; border-top:1px solid var(--border); background:var(--lock-bg); }
+  .submit { display:flex; gap:12px; align-items:center; margin-top:16px; flex-wrap:wrap; }
+  .btn { font:inherit; padding:9px 18px; border-radius:8px; border:1px solid var(--text); background:var(--text); color:var(--bg); cursor:pointer; }
+  .btn.ghost { background:transparent; color:var(--text); border-color:var(--border-strong); }
+  .note { color:var(--muted); font-size:.95rem; }
+  .flow { margin-top:26px; border-top:1px solid var(--border); padding-top:16px; color:var(--muted); font-size:.95rem; }
+  .flow ol { margin:6px 0 0 18px; padding:0; }
+  .hide { display:none; }
+</style>
+</head>
+<body>
+<header class="site"><div class="in"><span class="brand">Mathesis</span><nav><a href="#">Arguments</a><a href="#">People</a><a href="#">Forum ↗</a></nav></div></header>
+<main>
+  <div class="modes" role="group" aria-label="What are you writing?">
+    <button aria-pressed="false" data-mode="argue">New argument</button>
+    <button aria-pressed="false" data-mode="pose">Pose a claim</button>
+    <button aria-pressed="true" data-mode="prove">Prove a claim</button>
+  </div>
+
+  <div class="grid">
+    <aside>
+      <div class="byline">
+        <div class="glyph" aria-hidden="true"></div>
+        <div class="who"><strong>Dhruv Gupta</strong><br><small>@Zetetic-Dhruv · the pull request comes from the GitHub account you are signed in to</small></div>
+      </div>
+
+      <div data-show="prove">
+        <label>Claim</label>
+        <div class="claim">
+          <div class="t">An analytic set of reals that is not Borel</div>
+          <small>posed by <a href="#">Dhruv Gupta</a> · statement locked</small>
+        </div>
+      </div>
+
+      <div data-show="argue pose">
+        <label for="title">Title</label>
+        <input id="title" type="text" value="An analytic set of reals that is not Borel">
+      </div>
+
+      <label for="gloss">What the argument says</label>
+      <textarea id="gloss">Diagonalize the sections of a closed set universal for the closed subsets of Baire space; its projection is analytic and not Borel. An explicit continuous injection carries it into ℝ.</textarea>
+    </aside>
+
+    <section>
+      <div class="editor">
+        <div class="tabs" role="tablist">
+          <button role="tab" aria-selected="false" data-tab="statement">Statement</button>
+          <button role="tab" aria-selected="true" data-tab="proof">Proof</button>
+          <span class="pin">Lean 4.31 · Mathlib fabf563</span>
+        </div>
+<pre data-pane="statement" class="hide"><span class="k">import</span> Mathlib.MeasureTheory.Constructions.Polish.Basic
+
+<span class="c">-- The statement readers see. Definitions and theorem statements only:</span>
+<span class="c">-- every proof here is `sorry`.</span>
+<span class="locked"><span class="k">theorem</span> MeasureTheory.exists_analyticSet_not_measurableSet_real :
+    <span class="k">∃</span> A : <span class="ty">Set</span> ℝ, <span class="ty">MeasureTheory.AnalyticSet</span> A ∧ ¬ <span class="ty">MeasurableSet</span> A := <span class="k">by</span>
+  sorry</span></pre>
+<pre data-pane="proof"><span class="k">import</span> Mathlib.MeasureTheory.Constructions.Polish.Basic
+
+<span class="k">namespace</span> MeasureTheory
+
+<span class="c">/-- Every second-countable space carries a closed set whose sections</span>
+<span class="c">exhaust its closed subsets. -/</span>
+<span class="k">theorem</span> exists_closed_universal_sections (X : <span class="k">Type</span>*) [<span class="ty">TopologicalSpace</span> X]
+    [<span class="ty">SecondCountableTopology</span> X] : <span class="k">∃</span> U : <span class="ty">Set</span> (X × (ℕ → ℕ)), <span class="ty">IsClosed</span> U ∧ … := <span class="k">by</span>
+  …
+
+<span class="locked"><span class="k">theorem</span> exists_analyticSet_not_measurableSet_real :
+    <span class="k">∃</span> A : <span class="ty">Set</span> ℝ, <span class="ty">AnalyticSet</span> A ∧ ¬ <span class="ty">MeasurableSet</span> A := <span class="k">by</span></span>  <span class="k">obtain</span> ⟨U, hU, hsec⟩ := exists_closed_universal_sections (ℕ → ℕ)
+  …
+
+<span class="k">end</span> MeasureTheory</pre>
+        <div class="lockline" data-show="prove">The claim's statement is locked; the proof may add any lemmas before it.</div>
+      </div>
+
+      <div class="submit">
+        <button class="btn">Open pull request on GitHub</button>
+        <button class="btn ghost">Try it in Lean 4 Web ↗</button>
+        <span class="note">GitHub opens with this file ready; you propose it from your account.</span>
+      </div>
+
+      <div class="flow">
+        What happens next
+        <ol>
+          <li>GitHub forks the bank to your account and opens the pull request.</li>
+          <li>CI builds your file with no network, then replays it through the kernel against the claim.</li>
+          <li>When it passes, it is merged and appears under your name, linked to the claim.</li>
+        </ol>
+      </div>
+    </section>
+  </div>
+</main>
+<script>
+  const modes = document.querySelectorAll('.modes button');
+  const setMode = m => {
+    modes.forEach(b => b.setAttribute('aria-pressed', String(b.dataset.mode === m)));
+    document.querySelectorAll('[data-show]').forEach(el =>
+      el.classList.toggle('hide', !el.dataset.show.split(' ').includes(m)));
+    document.querySelector('[data-tab=proof]').classList.toggle('hide', m === 'pose');
+    if (m === 'pose') setTab('statement');
+  };
+  const tabs = document.querySelectorAll('.tabs button');
+  const setTab = t => {
+    tabs.forEach(b => b.setAttribute('aria-selected', String(b.dataset.tab === t)));
+    document.querySelectorAll('[data-pane]').forEach(p => p.classList.toggle('hide', p.dataset.pane !== t));
+  };
+  modes.forEach(b => b.addEventListener('click', () => setMode(b.dataset.mode)));
+  tabs.forEach(b => b.addEventListener('click', () => setTab(b.dataset.tab)));
+  setMode('prove');
+</script>
+</body>
+</html>
