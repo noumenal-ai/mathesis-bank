@@ -104,6 +104,14 @@ CAND_EXPORT="$WORK/candidate.export"
 # A two-part deposit's statement export: the reference R its proof is checked against, and, for
 # a posed claim, the only thing the gate produces. Outside every part's build directory.
 STMT_EXPORT="$WORK/statement.export"
+# The untrusted build gets a directory under $WORK and nothing else: $WORK/build for a single-part
+# deposit, one per part for a two-part one (see build_part). Everything the gate itself writes and
+# then trusts — the report that becomes the PR comment, the exports, the adjudicator's JSON, the
+# logs — lives in $WORK, outside them. When a single-part build wrote into $WORK directly, a hostile
+# build could rewrite report.md (forging the verdict text of the PR comment; the exit code was
+# unaffected), or plant a symlink where the host would next write with `>`: `candidate.export`
+# pointing at the checkout's `init.export` would have had the host overwrite the trusted reference
+# with the candidate's own export.
 
 # MATHESIS_OUT_DIR: where to KEEP the two artifacts a caller needs. Without it, the EXIT trap
 # below deletes `candidate.export` — the blob that becomes the accession — and `adj.json`, the
@@ -319,7 +327,7 @@ fi
 # checked against, and rewrite it to agree with itself. (On the bare path
 # nothing is confined and this does not hold; that path says so in the report.)
 #
-# A single-part deposit builds in $WORK itself, exactly as before.
+# A single-part deposit builds in $WORK/build, for the reason given where $WORK is made.
 
 # build_part <dir> <log> <what>: build <dir>/Submission.lean → <dir>/Submission.olean,
 # confined to <dir>. Rejects (exit 2) on failure, naming <what> as the thing that failed.
@@ -382,9 +390,9 @@ build_part() {
     # submission and an olean that is afterwards replayed through the trusted kernel — so tampering
     # with either buys nothing that writing the submission did not already buy.
     #
-    # For a two-part deposit <dir> is a subdirectory of $WORK, and $WORK itself stays 0700: the
-    # bind mount is resolved on the host, so the container needs no way through the parent, and
-    # a sibling part's directory stays out of reach of anything else on the host.
+    # <dir> is always a subdirectory of $WORK, and $WORK itself stays 0700: the bind mount is
+    # resolved on the host, so the container needs no way through the parent, and the report,
+    # the exports and a sibling part's directory stay out of reach of anything else on the host.
     chmod 0777 "$dir"
     chmod 0644 "$dir/Submission.lean"
 
@@ -695,7 +703,7 @@ run_adjudicate() {
 #      permitted axioms — a `sorry` left in the proof is sorryAx, and fails.
 # Both parts are built as the module `Submission`, so names Lean derives from the
 # module (`private` declarations) come out the same in R and in the candidate.
-BUILD_DIR="$WORK"
+BUILD_DIR="$WORK/build"
 SUBMISSION_LABEL="submission.lean"
 # A mode this script does not know would otherwise fall through to the single-part path and
 # build the WHOLE file — both sections at once — as though it had no sections at all.
@@ -841,15 +849,18 @@ else
 fi
 BUILD_LOG="$WORK/build.log"
 
-# Copy the untrusted source into the scratch dir under a FIXED module name
-# (Submission) so: (a) `lean --root=$WORK` treats the scratch dir as the module
+# Copy the untrusted source into the build dir under a FIXED module name
+# (Submission) so: (a) `lean --root=$BUILD_DIR` treats the build dir as the module
 # root — the source need not live inside any lake package, and lean will not
 # reject it as "not contained in root directory"; and (b) the exported module
 # name is deterministic regardless of the deposit @module (which is untrusted
 # and could carry path separators). The deposit's decls are root-namespaced
 # inside this module, so a fixed module name is sound. (A two-part deposit's
 # proof part was already written to its own dir above.)
-[ "$MODE" = "two-part" ] || cp "$SUBMISSION" "$WORK/Submission.lean"
+if [ "$MODE" != "two-part" ]; then
+  mkdir "$BUILD_DIR" || { md "- **reject** — cannot create the build's scratch dir."; emit_and_exit 2; }
+  cp "$SUBMISSION" "$BUILD_DIR/Submission.lean"
+fi
 build_part "$BUILD_DIR" "$BUILD_LOG" "$SUBMISSION_LABEL"
 
 # ── 3. export the @decls closure with lean4export → candidate.export ─────────
