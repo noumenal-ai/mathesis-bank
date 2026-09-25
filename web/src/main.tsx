@@ -17,6 +17,10 @@ function boot(): void {
     case "posts":
       mountPostsFilter(document);
       break;
+    case "ide":
+      // The editor is an island: only this page downloads it.
+      void import("./ide/mount").then((m) => m.mountIde(document));
+      break;
     case "collection":
       mountCollection(document);
       mountTableSort(document);

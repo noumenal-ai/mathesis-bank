@@ -22,7 +22,7 @@ test("the shipped reason table passes every rule", () => {
 test("reason-lint exits 0 on the shipped table and 1 on a broken one", () => {
   const cli = join(here, "..", "src", "reason-lint.js");
   const out = execFileSync(process.execPath, [cli, shared], { encoding: "utf8" });
-  assert.match(out, /62 reasons, 0 violations/);
+  assert.match(out, new RegExp(`^reason-lint: ${base().reasons.length} reasons, 0 violations`));
 
   const dir = mkdtempSync(join(tmpdir(), "reason-lint-"));
   const broken = base();
