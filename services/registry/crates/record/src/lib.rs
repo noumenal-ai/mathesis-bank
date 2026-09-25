@@ -371,7 +371,7 @@ fn render(
         local_terms,
     };
 
-    // ---- the four nav pages, the three routes that are not nav items ----
+    // ---- the nav pages, the routes that are not nav items ----
     w.page("index.html", "posts", &pages::posts_page(s))?;
     w.page(
         "collection/claims/index.html",
@@ -384,6 +384,7 @@ fn render(
         &pages::collection_page(s, "arguments"),
     )?;
     w.page("about/index.html", "about", &pages::about_page(s))?;
+    w.page("ide/index.html", "ide", &pages::ide_page(s))?;
     for p in &s.profiles {
         w.page(
             &format!("u/{}/index.html", p.login),

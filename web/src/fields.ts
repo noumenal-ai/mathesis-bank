@@ -62,6 +62,8 @@ export const FIELDS: Field[] = [
   { field: "substrate", shape: "label", source: "manifest" },
   { field: "dictionary.label", shape: "label", source: "manifest" },
   { field: "dictionary.curation", shape: "enum", source: "manifest" },
+  { field: "dictionary.toolchain", shape: "label", source: "manifest" },
+  { field: "dictionary.mathlib_rev", shape: "sha256-prefix", source: "manifest" },
   { field: "profile.login", shape: "login", source: "manifest" },
   { field: "profile.citation_name", shape: "name", source: "manifest" },
   { field: "argument.cites", shape: "name", source: "manifest" },

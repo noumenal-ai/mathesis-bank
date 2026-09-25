@@ -145,6 +145,16 @@
     "source": "manifest"
   },
   {
+    "field": "dictionary.toolchain",
+    "shape": "label",
+    "source": "manifest"
+  },
+  {
+    "field": "dictionary.mathlib_rev",
+    "shape": "sha256-prefix",
+    "source": "manifest"
+  },
+  {
     "field": "profile.login",
     "shape": "login",
     "source": "manifest"

@@ -25,8 +25,8 @@ pub fn shell(page: &str, body: &str, profile_href: Option<&str>) -> String {
     )
 }
 
-/// The nav is unconditional: four items, the same four labels and the same four
-/// targets on every generated page, so its bytes never vary.
+/// The nav is unconditional: the same items, labels and targets on every
+/// generated page, so its bytes never vary.
 pub fn nav(profile_href: Option<&str>, page: &str) -> String {
     let mut b = B::new();
     b.open("header", "class=\"mth-nav\"");
@@ -39,15 +39,21 @@ pub fn nav(profile_href: Option<&str>, page: &str) -> String {
         items.push(("profile", href));
     }
     items.push(("collection", "/collection/claims"));
+    items.push(("write", "/ide/"));
     items.push(("about", "/about"));
     for (key, href) in items {
         let current = match (key, page) {
-            ("posts", "posts") | ("profile", "profile") | ("collection", "collection") | ("about", "about") => {
-                " aria-current=\"page\""
-            }
+            ("posts", "posts")
+            | ("profile", "profile")
+            | ("collection", "collection")
+            | ("write", "ide")
+            | ("about", "about") => " aria-current=\"page\"",
             _ => "",
         };
-        b.open("a", &format!("class=\"mth-nav__link\" href=\"{href}\"{current}"));
+        b.open(
+            "a",
+            &format!("class=\"mth-nav__link\" href=\"{href}\"{current}"),
+        );
         b.text(label(key));
         b.close("a");
     }
@@ -1245,6 +1251,169 @@ pub fn submit_page() -> B {
 
     b.open("section", "data-region=\"verdict\" id=\"verdict\" hidden");
     b.close("section");
+    b.close("main");
+    b
+}
+
+/// The IDE: write a deposit in the browser and open it as a pull request.
+///
+/// The page is a shell of catalogue labels; the client mounts the editor into
+/// `#ide-editor` and fills the byline, the claim list and the problems. The
+/// three modes share one layout, and `data-show` names the modes an element
+/// belongs to, so the stylesheet shows the right ones before any script runs.
+/// The pin chip carries the dictionary's toolchain and Mathlib revision, the
+/// environment a deposit is built in.
+pub fn ide_page(input: &Snapshot) -> B {
+    let mut b = B::new();
+    b.open("main", "class=\"mth-ide\" data-mode=\"argue\"");
+
+    b.open(
+        "div",
+        &format!(
+            "class=\"mth-ide__modes\" role=\"group\" aria-label=\"{}\"",
+            escape(label("mode"))
+        ),
+    );
+    for (mode, key, pressed) in [
+        ("argue", "newArgument", "true"),
+        ("pose", "poseClaim", "false"),
+        ("prove", "proveClaim", "false"),
+    ] {
+        b.open(
+            "button",
+            &format!(
+                "class=\"mth-ide__mode\" type=\"button\" data-mode=\"{mode}\" aria-pressed=\"{pressed}\""
+            ),
+        );
+        b.text(label(key));
+        b.close("button");
+    }
+    b.close("div");
+
+    b.open("div", "class=\"mth-ide__grid\"");
+
+    // ---- the people and the words: byline, claim, title, gloss ----
+    b.open("aside", "class=\"mth-ide__aside\"");
+    b.open("div", "class=\"mth-ide__byline\" id=\"ide-byline\"");
+    b.close("div");
+    b.open("label", "class=\"mth-field mth-ide__field\"");
+    b.text(label("githubAccount"));
+    b.open(
+        "input",
+        "class=\"mth-input\" id=\"ide-login\" type=\"text\" autocomplete=\"username\" \
+         spellcheck=\"false\" autocapitalize=\"off\"",
+    );
+    b.close("label");
+
+    b.open("div", "class=\"mth-ide__claim-pick\" data-show=\"prove\"");
+    b.open("label", "class=\"mth-field mth-ide__field\"");
+    b.text(label("claim"));
+    b.open("select", "class=\"mth-select\" id=\"ide-claim\"");
+    b.close("select");
+    b.close("label");
+    b.open(
+        "div",
+        "class=\"mth-ide__claim\" id=\"ide-claim-card\" hidden",
+    );
+    b.close("div");
+    b.close("div");
+
+    b.open(
+        "label",
+        "class=\"mth-field mth-ide__field\" data-show=\"argue pose\"",
+    );
+    b.text(label("titleField"));
+    b.open(
+        "input",
+        "class=\"mth-input\" id=\"ide-title\" type=\"text\"",
+    );
+    b.close("label");
+
+    b.open("label", "class=\"mth-field mth-ide__field\"");
+    b.open("span", "data-show=\"argue prove\"");
+    b.text(label("glossArgument"));
+    b.close("span");
+    b.open("span", "data-show=\"pose\"");
+    b.text(label("glossClaim"));
+    b.close("span");
+    b.open(
+        "textarea",
+        "class=\"mth-input mth-ide__gloss\" id=\"ide-gloss\" rows=\"6\"",
+    );
+    b.close("textarea");
+    b.close("label");
+    b.close("aside");
+
+    // ---- the two parts, and what leaves the page ----
+    b.open("section", "class=\"mth-ide__work\"");
+    b.open("div", "class=\"mth-ide__editor\"");
+    b.open("div", "class=\"mth-ide__tabs\" role=\"tablist\"");
+    for (tab, key, selected, show) in [
+        ("statement", "statement", "true", ""),
+        ("proof", "proof", "false", " data-show=\"argue prove\""),
+    ] {
+        b.open(
+            "button",
+            &format!(
+                "class=\"mth-ide__tab\" type=\"button\" role=\"tab\" id=\"ide-tab-{tab}\" \
+                 data-tab=\"{tab}\" aria-selected=\"{selected}\" aria-controls=\"ide-editor\"{show}"
+            ),
+        );
+        b.text(label(key));
+        b.close("button");
+    }
+    b.open("span", "class=\"mth-ide__pin\"");
+    b.val(
+        "span",
+        "dictionary.toolchain",
+        &input.dictionary.toolchain,
+        "",
+    );
+    b.lab("span", "", "mathlib");
+    b.val(
+        "span",
+        "dictionary.mathlib_rev",
+        input
+            .dictionary
+            .mathlib_rev
+            .get(..12)
+            .unwrap_or(&input.dictionary.mathlib_rev),
+        "",
+    );
+    b.close("span");
+    b.close("div");
+    b.open(
+        "div",
+        "class=\"mth-ide__code\" id=\"ide-editor\" role=\"tabpanel\"",
+    );
+    b.close("div");
+    b.open("div", "class=\"mth-ide__lockline\" data-show=\"prove\"");
+    b.text(label("statementLocked"));
+    b.close("div");
+    b.close("div");
+
+    b.open("div", "class=\"mth-error-host\" id=\"ide-problems\"");
+    b.close("div");
+
+    b.open("div", "class=\"mth-ide__actions\"");
+    b.open(
+        "button",
+        "class=\"mth-btn mth-btn--primary mth-btn--lg\" id=\"ide-submit\" type=\"button\"",
+    );
+    b.text(label("openPullRequest"));
+    b.close("button");
+    b.open(
+        "button",
+        "class=\"mth-btn mth-btn--lg mth-ide__external\" id=\"ide-lean\" type=\"button\"",
+    );
+    b.text(label("leanWeb"));
+    b.close("button");
+    b.open("span", "class=\"mth-ide__sent\" id=\"ide-sent\" hidden");
+    b.close("span");
+    b.close("div");
+    b.close("section");
+
+    b.close("div");
     b.close("main");
     b
 }

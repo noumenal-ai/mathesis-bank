@@ -92,6 +92,24 @@ export const LABELS = {
   build: "Build",
   export: "Export",
   adjudicate: "Adjudicate",
+
+  // the IDE
+  write: "Write",
+  mode: "Mode",
+  newArgument: "New argument",
+  poseClaim: "Pose a claim",
+  proveClaim: "Prove a claim",
+  proof: "Proof",
+  titleField: "Title",
+  glossArgument: "What the argument says",
+  glossClaim: "What the claim says",
+  githubAccount: "GitHub account",
+  posedBy: "Posed by",
+  statementLocked: "Statement locked",
+  mathlib: "Mathlib",
+  openPullRequest: "Open pull request",
+  leanWeb: "Lean 4 Web",
+  pasteFromClipboard: "Paste from clipboard",
 } as const;
 
 export type LabelKey = keyof typeof LABELS;

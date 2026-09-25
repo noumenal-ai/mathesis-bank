@@ -123,6 +123,7 @@
 
   --container-doc: 760px;
   --container-stream: 1080px;
+  --container-ide: 1180px;
   --container-shell: 1600px;
   --breakpoint-3xl: 1760px;
 
@@ -149,6 +150,7 @@
   --rail-tick-w: 12px; --rail-tick-h: 2px;   /* G9's nine ticks */
   --authored-rail: 3px;                       /* #authored's left rail */
   --avatar: 48px;
+  --w-ide-aside: 320px;   /* the IDE's byline, claim, title and gloss */
 
   --clamp-stream: 12;   /* lines */
   --clamp-table: 3;     /* lines */

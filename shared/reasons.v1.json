@@ -166,6 +166,96 @@
       "message_template": "Too many in-flight verifications; retry after {retry_after_s} seconds."
     },
     {
+      "code": "TITLE_MISSING",
+      "stage": "precheck",
+      "terminal_state": "rejected",
+      "retryable": false,
+      "producer": "gateway",
+      "params": [],
+      "message_template": "The submission carries no title."
+    },
+    {
+      "code": "CLAIM_NOT_CHOSEN",
+      "stage": "precheck",
+      "terminal_state": "rejected",
+      "retryable": false,
+      "producer": "gateway",
+      "params": [],
+      "message_template": "No claim is chosen to prove."
+    },
+    {
+      "code": "PRELUDE_DECLARED",
+      "stage": "precheck",
+      "terminal_state": "rejected",
+      "retryable": false,
+      "producer": "gateway",
+      "params": ["part", "line"],
+      "message_template": "The {part} declares prelude at line {line}; a deposit builds on the standard prelude."
+    },
+    {
+      "code": "COMMAND_NOT_ACCEPTED",
+      "stage": "precheck",
+      "terminal_state": "rejected",
+      "retryable": false,
+      "producer": "gateway",
+      "params": ["part", "command", "line"],
+      "message_template": "The {part} runs {command} at line {line}; a deposit runs no code while it builds."
+    },
+    {
+      "code": "IMPORT_NOT_LEADING",
+      "stage": "precheck",
+      "terminal_state": "rejected",
+      "retryable": false,
+      "producer": "gateway",
+      "params": ["part", "line"],
+      "message_template": "The import at line {line} of the {part} follows other source; imports come first."
+    },
+    {
+      "code": "IMPORT_INVALID",
+      "stage": "precheck",
+      "terminal_state": "rejected",
+      "retryable": false,
+      "producer": "gateway",
+      "params": ["module"],
+      "message_template": "The import {module} is not a dotted module name."
+    },
+    {
+      "code": "IMPORTS_DIFFER",
+      "stage": "precheck",
+      "terminal_state": "rejected",
+      "retryable": false,
+      "producer": "gateway",
+      "params": ["statement", "proof"],
+      "message_template": "The statement imports {statement} and the proof imports {proof}; both parts share one list."
+    },
+    {
+      "code": "STATEMENT_DECLARES_NOTHING",
+      "stage": "precheck",
+      "terminal_state": "rejected",
+      "retryable": false,
+      "producer": "gateway",
+      "params": [],
+      "message_template": "The statement declares no theorem."
+    },
+    {
+      "code": "PROOF_DECL_MISSING",
+      "stage": "precheck",
+      "terminal_state": "rejected",
+      "retryable": false,
+      "producer": "gateway",
+      "params": ["decl"],
+      "message_template": "The proof declares no theorem named {decl}."
+    },
+    {
+      "code": "PROOF_LEAVES_GAP",
+      "stage": "precheck",
+      "terminal_state": "rejected",
+      "retryable": false,
+      "producer": "gateway",
+      "params": ["tactic", "line"],
+      "message_template": "The proof leaves {tactic} at line {line}."
+    },
+    {
       "code": "BUILD_FAILED",
       "stage": "build",
       "terminal_state": "rejected",
