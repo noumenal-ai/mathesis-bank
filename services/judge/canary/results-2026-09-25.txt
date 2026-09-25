@@ -1,0 +1,14 @@
+kernel 7.0.0-1011-gcp
+Lean (version 4.31.0, x86_64-unknown-linux-gnu, commit 68218e876d2a38b1985b8590fff244a83c321783, Release)
+landrun version 0.1.18
+touch: cannot touch '/home/judge/landrun-probe': Permission denied
+landrun inside write: made (must be made: proves the sandbox ran)
+landrun outside write: denied (must be denied)
+sockets in the judged unit: dns-blocked bus-blocked  (must be dns-blocked bus-blocked)
+good rc=0 secs=55 escaped=no
+weaker rc=1 secs=26 escaped=no
+axiom rc=1 secs=30 escaped=no
+sorry rc=1 secs=30 escaped=no
+escape rc=1 secs=21 escaped=no
+escape2 rc=0 secs=53 escaped=no
+DONE

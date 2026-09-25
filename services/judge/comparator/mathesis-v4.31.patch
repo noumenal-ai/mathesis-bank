@@ -1,0 +1,1054 @@
+From 873a61459de35568ca554881261b80ea376745c3 Mon Sep 17 00:00:00 2001
+From: Dhruv Gupta <dhruv@zetesislabs.com>
+Date: Fri, 25 Sep 2026 04:40:42 +0530
+Subject: [PATCH 1/2] Backport soundness fixes to the v4.31 comparator for
+ Mathesis
+
+- landrun: terminate its flags before the command (upstream 9badaf470d)
+- kernel built-ins Char.ofNat, List, Nat, String, String.mk, Char, optParam,
+  autoParam, semiOutParam, outParam must match the kernel's (8c0e44e73c,
+  2312244ac7)
+- theorem targets reached from the worklist are compared by statement, not
+  proof (#64)
+- constants reached only through an Expr.proj are collected and compared (#68)
+- the quotient constants the replay skips are checked against the kernel's (#71)
+- regression tests char_ofnat_issue, proj_trick, quot_mismatch,
+  theorem_hole_issue
+---
+ Comparator/Compare.lean                       | 13 ++--
+ Comparator/Util.lean                          | 28 ++++++++-
+ Main.lean                                     | 36 +++++++++--
+ .../projects/char_ofnat_issue/Challenge.lean  |  1 +
+ tests/projects/char_ofnat_issue/Solution.lean | 60 +++++++++++++++++++
+ tests/projects/char_ofnat_issue/config.json   | 13 ++++
+ tests/projects/char_ofnat_issue/test.json     |  3 +
+ tests/projects/proj_trick/Challenge.lean      | 15 +++++
+ tests/projects/proj_trick/Solution.lean       | 16 +++++
+ tests/projects/proj_trick/config.json         | 12 ++++
+ tests/projects/proj_trick/test.json           |  3 +
+ tests/projects/quot_mismatch/Challenge.lean   | 27 +++++++++
+ tests/projects/quot_mismatch/Solution.lean    | 27 +++++++++
+ tests/projects/quot_mismatch/config.json      |  9 +++
+ tests/projects/quot_mismatch/test.json        |  3 +
+ .../theorem_hole_issue/Challenge.lean         |  7 +++
+ .../projects/theorem_hole_issue/Solution.lean |  5 ++
+ tests/projects/theorem_hole_issue/config.json | 14 +++++
+ tests/projects/theorem_hole_issue/test.json   |  3 +
+ 19 files changed, 282 insertions(+), 13 deletions(-)
+ create mode 100644 tests/projects/char_ofnat_issue/Challenge.lean
+ create mode 100644 tests/projects/char_ofnat_issue/Solution.lean
+ create mode 100644 tests/projects/char_ofnat_issue/config.json
+ create mode 100644 tests/projects/char_ofnat_issue/test.json
+ create mode 100644 tests/projects/proj_trick/Challenge.lean
+ create mode 100644 tests/projects/proj_trick/Solution.lean
+ create mode 100644 tests/projects/proj_trick/config.json
+ create mode 100644 tests/projects/proj_trick/test.json
+ create mode 100644 tests/projects/quot_mismatch/Challenge.lean
+ create mode 100644 tests/projects/quot_mismatch/Solution.lean
+ create mode 100644 tests/projects/quot_mismatch/config.json
+ create mode 100644 tests/projects/quot_mismatch/test.json
+ create mode 100644 tests/projects/theorem_hole_issue/Challenge.lean
+ create mode 100644 tests/projects/theorem_hole_issue/Solution.lean
+ create mode 100644 tests/projects/theorem_hole_issue/config.json
+ create mode 100644 tests/projects/theorem_hole_issue/test.json
+
+diff --git a/Comparator/Compare.lean b/Comparator/Compare.lean
+index 2d7491a..17ce22d 100644
+--- a/Comparator/Compare.lean
++++ b/Comparator/Compare.lean
+@@ -14,6 +14,7 @@ structure Context where
+   challenge : Export.ExportedEnv
+   solution : Export.ExportedEnv
+   definitionTargets : Std.HashSet Lean.Name
++  theoremTargets : Std.HashSet Lean.Name
+ 
+ structure State where
+   worklist : Array Lean.Name
+@@ -46,8 +47,11 @@ partial def loop : CompareM Unit := do
+     let some solutionConst := (← read).solution.constMap[target]?
+       | throw s!"Const not found in solution '{target}'"
+ 
+-    if (← read).definitionTargets.contains solutionConst.name then
+-      solutionConst.type.getUsedConstants.forM addWorklist
++    -- A theorem target is compared by its statement, never by its proof
++    -- (leanprover/comparator#64).
++    if (← read).definitionTargets.contains solutionConst.name
++        || (← read).theoremTargets.contains solutionConst.name then
++      (usedConstants solutionConst.type).forM addWorklist
+     else
+       if challengeConst != solutionConst then
+         throw s!"Const does not match between challenge and target '{target}'"
+@@ -82,7 +86,7 @@ def compareAt (challenge solution : Export.ExportedEnv) (theoremTargets : Array
+     if challengeConst != solutionConst then
+       throw s!"Challenge and solution theorem statement do not match: '{target}'"
+ 
+-    worklist := worklist ++ challengeConst.type.getUsedConstants
++    worklist := worklist ++ usedConstants challengeConst.type
+ 
+   for target in definitionTargets do
+     let some challengeConst := challenge.constMap[target]?
+@@ -102,6 +106,7 @@ def compareAt (challenge solution : Export.ExportedEnv) (theoremTargets : Array
+     worklist := worklist.push solutionConst.name
+ 
+   let definitionTargets := Std.HashSet.ofArray definitionTargets
+-  Compare.loop.run { challenge, solution, definitionTargets } |>.run' { worklist, checked := {} }
++  let theoremTargets := Std.HashSet.ofArray theoremTargets
++  Compare.loop.run { challenge, solution, definitionTargets, theoremTargets } |>.run' { worklist, checked := {} }
+ 
+ end Comparator
+diff --git a/Comparator/Util.lean b/Comparator/Util.lean
+index 131a070..61273d5 100644
+--- a/Comparator/Util.lean
++++ b/Comparator/Util.lean
+@@ -7,11 +7,33 @@ import Lean.Environment
+ 
+ namespace Comparator
+ 
++/-- The constants an expression depends on: those `Expr.getUsedConstants` returns, and the
++structure named by every `Expr.proj` node, which it omits. A statement reaching a structure
++only through a projection would otherwise leave that structure uncompared, and a solution
++could redefine it (leanprover/comparator#68, backported to v4.31 for Mathesis). -/
++def usedConstants (e : Lean.Expr) : Array Lean.Name := Id.run do
++  let mut out : Std.HashSet Lean.Name := Std.HashSet.ofArray e.getUsedConstants
++  let mut seen : Std.HashSet Lean.Expr := {}
++  let mut todo : Array Lean.Expr := #[e]
++  while todo.size > 0 do
++    let x := todo.back!
++    todo := todo.pop
++    if seen.contains x then continue
++    seen := seen.insert x
++    match x with
++    | .proj s _ b => out := out.insert s; todo := todo.push b
++    | .app f a => todo := todo.push f |>.push a
++    | .lam _ t b _ | .forallE _ t b _ => todo := todo.push t |>.push b
++    | .letE _ t v b _ => todo := todo.push t |>.push v |>.push b
++    | .mdata _ b => todo := todo.push b
++    | _ => pure ()
++  return out.toArray
++
+ def runForUsedConsts [Monad m] (info : Lean.ConstantInfo) (f : Lean.Name → m Unit) : m Unit := do
+-  info.type.getUsedConstants.forM f
++  (usedConstants info.type).forM f
+   f info.name
+   if let some val := info.value? (allowOpaque := true) then
+-    val.getUsedConstants.forM f
++    (usedConstants val).forM f
+ 
+   match info with
+   | .axiomInfo .. | .quotInfo .. | .defnInfo .. | .thmInfo .. | .opaqueInfo .. => return ()
+@@ -23,6 +45,6 @@ def runForUsedConsts [Monad m] (info : Lean.ConstantInfo) (f : Lean.Name → m U
+   | .recInfo info =>
+     info.rules.forM fun rule => do
+       f rule.ctor
+-      rule.rhs.getUsedConstants.forM f
++      (usedConstants rule.rhs).forM f
+ 
+ end Comparator
+diff --git a/Main.lean b/Main.lean
+index 3fe7c54..9298f40 100644
+--- a/Main.lean
++++ b/Main.lean
+@@ -85,7 +85,9 @@ def buildLandrunArgs (spawnArgs : LandrunArgs) : Array String :=
+   let args := spawnArgs.readablePaths.foldl (init := args) (fun acc path => acc ++ #["--ro", path.toString])
+   let args := spawnArgs.writablePaths.foldl (init := args) (fun acc path => acc ++ #["--rwx", path.toString])
+   let args := spawnArgs.executablePaths.foldl (init := args) (fun acc path => acc ++ #["--rox", path.toString])
+-  args ++ #[spawnArgs.cmd] ++ spawnArgs.args
++  -- landrun keeps scanning for its own flags past the command; `--` ends them, so the
++  -- command's own arguments (lean4export's `--`) reach it intact (upstream 9badaf470d).
++  args ++ #["--", spawnArgs.cmd] ++ spawnArgs.args
+ 
+ def runSandBoxedWithStdout (spawnArgs : LandrunArgs) : M String := do
+   let args := buildLandrunArgs spawnArgs
+@@ -193,13 +195,23 @@ def runNanoda (solutionExport : String) : M Unit := do
+ 
+ def runKernel (solution : Export.ExportedEnv) : M Unit := do
+   IO.println "Running Lean default kernel on solution."
+-  let mut env ← Lean.mkEmptyEnvironment
+-  let mut constMap := solution.constMap
++  let env ← Lean.mkEmptyEnvironment
++  let origConstMap := solution.constMap
+   -- Lean's kernel interprets just the addition of `Quot as adding all of these so adding them
+   -- multiple times leads to errors.
+-  constMap := constMap.erase `Quot.mk |>.erase `Quot.lift |>.erase `Quot.ind
+-  discard <| env.replay' constMap
++  let quotTargets := [`Quot.mk, `Quot.lift, `Quot.ind]
++  let kernelConstMap := quotTargets.foldl (init := origConstMap) (·.erase ·)
++  let env' ← env.replay' kernelConstMap
+   IO.println "Lean default kernel accepts the solution"
++  -- The erased quotient constants were never checked by the replay: the kernel installs its
++  -- own with `Quot`. Each the solution carries must equal the kernel's, or it slipped a
++  -- different one past the replay (leanprover/comparator#71, backported).
++  for quotTarget in `Quot :: quotTargets do
++    if let some info := origConstMap[quotTarget]? then
++      let some info' := env'.find? quotTarget
++        | throw <| .userError s!"Could not find quotient constant in final kernel env: {quotTarget}"
++      if info != info' then
++        throw <| .userError s!"Quotient constant mismatch on: {quotTarget}"
+ 
+ def primitiveTargets : M (Array Lean.Name) := do
+   -- The challenge needs to have all the built-in constants of the kernel, as the
+@@ -223,12 +235,24 @@ def primitiveTargets : M (Array Lean.Name) := do
+     ``Nat.shiftLeft,
+     ``Nat.shiftRight,
+     ``String.ofList,
++    -- Built-ins the kernel also treats specially: a solution must not redefine any of
++    -- them (upstream 8c0e44e73c, 2312244ac7).
++    ``Char.ofNat,
++    ``List,
++    ``Nat,
++    ``String,
++    ``String.mk,
++    ``Char,
++    ``optParam,
++    ``autoParam,
++    ``semiOutParam,
++    ``outParam,
+   ]
+ 
+ def builtinTargets : M (Array Lean.Name) := do
+   if ← getNanodaEnabled then
+     -- TODO: fix when nanoda fixes its string handling
+-    let mut additional := #[``Nat, ``String, ``String.mk, ``Char, ``Char.ofNat, ``List]
++    let mut additional : Array Lean.Name := #[]
+     if (← getLegalAxioms).contains ``Quot.sound then
+       additional := additional ++ #[``Quot, ``Quot.mk, ``Quot.lift, ``Quot.ind]
+     return additional
+diff --git a/tests/projects/char_ofnat_issue/Challenge.lean b/tests/projects/char_ofnat_issue/Challenge.lean
+new file mode 100644
+index 0000000..a5626c9
+--- /dev/null
++++ b/tests/projects/char_ofnat_issue/Challenge.lean
+@@ -0,0 +1 @@
++theorem boom : False := sorry
+diff --git a/tests/projects/char_ofnat_issue/Solution.lean b/tests/projects/char_ofnat_issue/Solution.lean
+new file mode 100644
+index 0000000..363caef
+--- /dev/null
++++ b/tests/projects/char_ofnat_issue/Solution.lean
+@@ -0,0 +1,60 @@
++prelude
++set_option genCtorIdx false
++set_option linter.all false
++
++unsafe axiom lcErased : Type
++unsafe axiom lcAny : Type
++unsafe axiom lcVoid : Type
++
++universe u
++
++inductive False : Prop
++
++inductive True' : Prop where
++  | intro : True'
++
++inductive Unit'' where
++  | intro : Unit''
++
++inductive Nat where
++  | zero : Nat
++  | succ (n : Nat) : Nat
++
++-- `Char` is a structure whose field is a PROOF OF FALSE, so `Char.n : Char → False`.
++-- Char is uninhabited; we never build one.
++structure Char : Type where
++  mk ::
++  n : False
++
++-- `Box` is a structure with an INHABITED field.
++structure Box : Type where
++  mk ::
++  f : True'
++
++inductive List (α : Type u) where
++  | nil : List α
++  | cons (hd : α) (tl : List α) : List α
++
++structure String where
++  ofList ::
++  data : List Char
++
++-- THE MISSING CHECK: the kernel never verifies `Char.ofNat : Nat → Char`.
++-- We declare it returning `Box` instead.
++noncomputable def Char.ofNat (n : Nat) : Box := Box.mk True'.intro
++
++-- motive: `M nil = Unit''`, `M (cons ..) = Char`, so `head` needs no `Char` for the nil case
++noncomputable def M (l : List Char) : Type :=
++  @List.rec Char (fun _ => Type) Unit'' (fun _ _ _ => Char) l
++
++noncomputable def head (l : List Char) : M l :=
++  @List.rec Char M Unit''.intro (fun hd _ _ => hd) l
++
++-- `String.data "\x02"` projects the literal.  reduceProj expands it to
++--   String.ofList (List.cons (Char.ofNat 2) List.nil)
++-- and returns the list, which `inferProj` types as `List Char`.
++-- Its head is really a `Box`, but the kernel types it as `Char`.
++noncomputable def confused : Char := head (String.data "\x02")
++
++-- `Char.n` is `proj Char 0`, so it hands back Box's field -- typed as `False`.
++theorem boom : False := Char.n confused
+diff --git a/tests/projects/char_ofnat_issue/config.json b/tests/projects/char_ofnat_issue/config.json
+new file mode 100644
+index 0000000..73db8bc
+--- /dev/null
++++ b/tests/projects/char_ofnat_issue/config.json
+@@ -0,0 +1,13 @@
++{
++    "challenge_module": "Challenge",
++    "solution_module": "Solution",
++    "theorem_names": [
++        "boom"
++    ],
++    "permitted_axioms": [
++        "propext",
++        "Quot.sound",
++        "Classical.choice"
++    ],
++    "enable_nanoda": false
++}
+diff --git a/tests/projects/char_ofnat_issue/test.json b/tests/projects/char_ofnat_issue/test.json
+new file mode 100644
+index 0000000..fe08d6a
+--- /dev/null
++++ b/tests/projects/char_ofnat_issue/test.json
+@@ -0,0 +1,3 @@
++{
++        "exit_code": 1
++}
+diff --git a/tests/projects/proj_trick/Challenge.lean b/tests/projects/proj_trick/Challenge.lean
+new file mode 100644
+index 0000000..079e30a
+--- /dev/null
++++ b/tests/projects/proj_trick/Challenge.lean
+@@ -0,0 +1,15 @@
++import Lean
++open Lean Elab Term
++
++/-- The structure the statement is really about. -/
++structure S : Type where
++  a : Nat
++
++/-- The definition hole: the solver supplies the carrier. -/
++def T : Type := S
++
++/-- Elaborates to a raw `Expr.proj`. Ordinary elaborator, nothing unchecked. -/
++elab "pr% " s:term : term => do
++  return Expr.proj `S 0 (← elabTerm s none)
++
++theorem tgt : ∀ (s : T), (pr% s) = (0 : Nat) := sorry
+diff --git a/tests/projects/proj_trick/Solution.lean b/tests/projects/proj_trick/Solution.lean
+new file mode 100644
+index 0000000..858fb52
+--- /dev/null
++++ b/tests/projects/proj_trick/Solution.lean
+@@ -0,0 +1,16 @@
++import Lean
++open Lean Elab Term
++
++/-- Same name, never compared: now uninhabited. -/
++structure S : Type where
++  a : Nat
++  h : False
++
++def T : Type := S
++
++elab "pr% " s:term : term => do
++  return Expr.proj `S 0 (← elabTerm s none)
++
++theorem tgt : ∀ (s : T), (pr% s) = (0 : Nat) := by
++  intro s
++  exact (S.h s).elim
+diff --git a/tests/projects/proj_trick/config.json b/tests/projects/proj_trick/config.json
+new file mode 100644
+index 0000000..3b51d4f
+--- /dev/null
++++ b/tests/projects/proj_trick/config.json
+@@ -0,0 +1,12 @@
++{
++    "challenge_module": "Challenge",
++    "solution_module": "Solution",
++    "theorem_names": [
++        "tgt"
++    ],
++    "definition_names": [
++        "T"
++    ],
++    "permitted_axioms": [],
++    "enable_nanoda": false
++}
+diff --git a/tests/projects/proj_trick/test.json b/tests/projects/proj_trick/test.json
+new file mode 100644
+index 0000000..fe08d6a
+--- /dev/null
++++ b/tests/projects/proj_trick/test.json
+@@ -0,0 +1,3 @@
++{
++        "exit_code": 1
++}
+diff --git a/tests/projects/quot_mismatch/Challenge.lean b/tests/projects/quot_mismatch/Challenge.lean
+new file mode 100644
+index 0000000..56c9a5d
+--- /dev/null
++++ b/tests/projects/quot_mismatch/Challenge.lean
+@@ -0,0 +1,27 @@
++prelude
++
++inductive True : Prop where
++  | intro : True
++
++-- comparator's `primitiveTargets` must exist in both modules or lean4export aborts.
++def Nat.add        (_ _ : True) : True := True.intro
++def Nat.sub        (_ _ : True) : True := True.intro
++def Nat.mul        (_ _ : True) : True := True.intro
++def Nat.pow        (_ _ : True) : True := True.intro
++def Nat.gcd        (_ _ : True) : True := True.intro
++def Nat.div        (_ _ : True) : True := True.intro
++def Nat.mod        (_ _ : True) : True := True.intro
++def Nat.beq        (_ _ : True) : True := True.intro
++def Nat.ble        (_ _ : True) : True := True.intro
++def Nat.land       (_ _ : True) : True := True.intro
++def Nat.lor        (_ _ : True) : True := True.intro
++def Nat.xor        (_ _ : True) : True := True.intro
++def Nat.shiftLeft  (_ _ : True) : True := True.intro
++def Nat.shiftRight (_ _ : True) : True := True.intro
++def String.ofList  (_   : True) : True := True.intro
++def Char.ofNat     (_   : True) : True := True.intro
++def List           (_   : True) : True := True.intro
++def eagerReduce    (_   : True) : True := True.intro
++
++-- The target. Honest, true, kernel-valid.
++theorem Quot.lift : True := True.intro
+diff --git a/tests/projects/quot_mismatch/Solution.lean b/tests/projects/quot_mismatch/Solution.lean
+new file mode 100644
+index 0000000..56c9a5d
+--- /dev/null
++++ b/tests/projects/quot_mismatch/Solution.lean
+@@ -0,0 +1,27 @@
++prelude
++
++inductive True : Prop where
++  | intro : True
++
++-- comparator's `primitiveTargets` must exist in both modules or lean4export aborts.
++def Nat.add        (_ _ : True) : True := True.intro
++def Nat.sub        (_ _ : True) : True := True.intro
++def Nat.mul        (_ _ : True) : True := True.intro
++def Nat.pow        (_ _ : True) : True := True.intro
++def Nat.gcd        (_ _ : True) : True := True.intro
++def Nat.div        (_ _ : True) : True := True.intro
++def Nat.mod        (_ _ : True) : True := True.intro
++def Nat.beq        (_ _ : True) : True := True.intro
++def Nat.ble        (_ _ : True) : True := True.intro
++def Nat.land       (_ _ : True) : True := True.intro
++def Nat.lor        (_ _ : True) : True := True.intro
++def Nat.xor        (_ _ : True) : True := True.intro
++def Nat.shiftLeft  (_ _ : True) : True := True.intro
++def Nat.shiftRight (_ _ : True) : True := True.intro
++def String.ofList  (_   : True) : True := True.intro
++def Char.ofNat     (_   : True) : True := True.intro
++def List           (_   : True) : True := True.intro
++def eagerReduce    (_   : True) : True := True.intro
++
++-- The target. Honest, true, kernel-valid.
++theorem Quot.lift : True := True.intro
+diff --git a/tests/projects/quot_mismatch/config.json b/tests/projects/quot_mismatch/config.json
+new file mode 100644
+index 0000000..6d2324f
+--- /dev/null
++++ b/tests/projects/quot_mismatch/config.json
+@@ -0,0 +1,9 @@
++{
++    "challenge_module": "Challenge",
++    "solution_module": "Solution",
++    "theorem_names": [
++        "Quot.lift"
++    ],
++    "permitted_axioms": [],
++    "enable_nanoda": false
++}
+diff --git a/tests/projects/quot_mismatch/test.json b/tests/projects/quot_mismatch/test.json
+new file mode 100644
+index 0000000..fe08d6a
+--- /dev/null
++++ b/tests/projects/quot_mismatch/test.json
+@@ -0,0 +1,3 @@
++{
++        "exit_code": 1
++}
+diff --git a/tests/projects/theorem_hole_issue/Challenge.lean b/tests/projects/theorem_hole_issue/Challenge.lean
+new file mode 100644
+index 0000000..8f13a56
+--- /dev/null
++++ b/tests/projects/theorem_hole_issue/Challenge.lean
+@@ -0,0 +1,7 @@
++theorem hex : ∃ x : Nat, x = 0 := sorry
++
++-- Not a hole itself, but its *value* mentions the theorem hole `hex`, so the transitive
++-- walk in `Compare.loop` reaches `hex` a second time.
++noncomputable def w : Nat := Classical.choose hex
++
++theorem hw : w = 0 := sorry
+diff --git a/tests/projects/theorem_hole_issue/Solution.lean b/tests/projects/theorem_hole_issue/Solution.lean
+new file mode 100644
+index 0000000..1f5ffde
+--- /dev/null
++++ b/tests/projects/theorem_hole_issue/Solution.lean
+@@ -0,0 +1,5 @@
++theorem hex : ∃ x : Nat, x = 0 := ⟨0, rfl⟩
++
++noncomputable def w : Nat := Classical.choose hex
++
++theorem hw : w = 0 := Classical.choose_spec hex
+diff --git a/tests/projects/theorem_hole_issue/config.json b/tests/projects/theorem_hole_issue/config.json
+new file mode 100644
+index 0000000..40be51a
+--- /dev/null
++++ b/tests/projects/theorem_hole_issue/config.json
+@@ -0,0 +1,14 @@
++{
++    "challenge_module": "Challenge",
++    "solution_module": "Solution",
++    "theorem_names": [
++        "hex",
++        "hw"
++    ],
++    "permitted_axioms": [
++        "propext",
++        "Quot.sound",
++        "Classical.choice"
++    ],
++    "enable_nanoda": false
++}
+diff --git a/tests/projects/theorem_hole_issue/test.json b/tests/projects/theorem_hole_issue/test.json
+new file mode 100644
+index 0000000..5d4bf27
+--- /dev/null
++++ b/tests/projects/theorem_hole_issue/test.json
+@@ -0,0 +1,3 @@
++{
++        "exit_code": 0
++}
+-- 
+2.50.1 (Apple Git-155)
+
+
+From a95d099122a2bec944ab36cfcc87d6cd7aa781a5 Mon Sep 17 00:00:00 2001
+From: dhruvgupta-zetesis <dhruv@zetesislabs.com>
+Date: Fri, 25 Sep 2026 04:57:48 +0530
+Subject: [PATCH 2/2] Fix the kernel-environment lookup, complete the v4.31
+ primitive list, and pin each test's reason
+
+The quotient post-check looked constants up with Lean.Environment.find?, which on an
+environment rebuilt from a kernel environment sees only imported constants; it now asks the
+kernel environment. eagerReduce, Lean.reduceBool, Lean.reduceNat and Bool join the primitives
+(the v4.31 kernel names them). The test runner now also checks that the output names the
+expected reason, and the three prelude tests that exited early because their exports were
+incomplete now reach the check they exercise.
+---
+ Main.lean                                     | 24 ++++---
+ runtests.lean                                 | 27 +++++---
+ .../projects/char_ofnat_issue/Challenge.lean  | 62 ++++++++++++++++++-
+ tests/projects/char_ofnat_issue/Solution.lean | 26 ++++++++
+ tests/projects/char_ofnat_issue/config.json   |  6 +-
+ tests/projects/char_ofnat_issue/test.json     |  3 +-
+ tests/projects/def_hole/test.json             |  3 +-
+ tests/projects/def_hole_axiom_issue/test.json |  3 +-
+ .../projects/def_hole_kind_mismatch/test.json |  3 +-
+ .../projects/def_hole_type_mismatch/test.json |  3 +-
+ tests/projects/numeric_namespace/test.json    |  3 +-
+ tests/projects/olean_issue/test.json          |  3 +-
+ tests/projects/opaque_value/test.json         |  3 +-
+ tests/projects/primitive_issue/Solution.lean  | 12 ++--
+ tests/projects/primitive_issue/test.json      |  3 +-
+ tests/projects/proj_trick/test.json           |  3 +-
+ tests/projects/quot_mismatch/Challenge.lean   | 11 ++++
+ tests/projects/quot_mismatch/Solution.lean    | 11 ++++
+ tests/projects/quot_mismatch/test.json        |  3 +-
+ tests/projects/simple_axiom_issue/test.json   |  3 +-
+ tests/projects/simple_kind_mismatch/test.json |  3 +-
+ tests/projects/simple_match/test.json         |  3 +-
+ tests/projects/simple_mismatch/test.json      |  3 +-
+ tests/projects/theorem_hole_issue/test.json   |  3 +-
+ 24 files changed, 180 insertions(+), 47 deletions(-)
+
+diff --git a/Main.lean b/Main.lean
+index 9298f40..af677b3 100644
+--- a/Main.lean
++++ b/Main.lean
+@@ -208,7 +208,9 @@ def runKernel (solution : Export.ExportedEnv) : M Unit := do
+   -- different one past the replay (leanprover/comparator#71, backported).
+   for quotTarget in `Quot :: quotTargets do
+     if let some info := origConstMap[quotTarget]? then
+-      let some info' := env'.find? quotTarget
++      -- Look up in the kernel environment: `Lean.Environment.find?` sees only imported
++      -- constants, so it misses everything the replay added.
++      let some info' := env'.toKernelEnv.find? quotTarget
+         | throw <| .userError s!"Could not find quotient constant in final kernel env: {quotTarget}"
+       if info != info' then
+         throw <| .userError s!"Quotient constant mismatch on: {quotTarget}"
+@@ -239,6 +241,7 @@ def primitiveTargets : M (Array Lean.Name) := do
+     -- them (upstream 8c0e44e73c, 2312244ac7).
+     ``Char.ofNat,
+     ``List,
++    ``eagerReduce,
+     ``Nat,
+     ``String,
+     ``String.mk,
+@@ -247,17 +250,20 @@ def primitiveTargets : M (Array Lean.Name) := do
+     ``autoParam,
+     ``semiOutParam,
+     ``outParam,
++    -- Also named by the v4.31 kernel (`g_lean_reduce_bool`, `g_lean_reduce_nat`, `g_bool_true`
++    -- in `type_checker.cpp`), though absent from upstream's list.
++    ``Lean.reduceBool,
++    ``Lean.reduceNat,
++    ``Bool,
+   ]
+ 
+ def builtinTargets : M (Array Lean.Name) := do
+-  if ← getNanodaEnabled then
+-    -- TODO: fix when nanoda fixes its string handling
+-    let mut additional : Array Lean.Name := #[]
+-    if (← getLegalAxioms).contains ``Quot.sound then
+-      additional := additional ++ #[``Quot, ``Quot.mk, ``Quot.lift, ``Quot.ind]
+-    return additional
+-  else
+-    return #[]
++  -- Export the whole quotient family whenever `Quot.sound` is permitted, so the post-check in
++  -- `runKernel` sees every one the solution carries (upstream's form).
++  let mut additional : Array Lean.Name := #[]
++  if (← getLegalAxioms).contains ``Quot.sound then
++    additional := additional ++ #[``Quot, ``Quot.mk, ``Quot.lift, ``Quot.ind]
++  return additional
+ 
+ def stringStream (s : String) : BaseIO IO.FS.Stream := do
+   let ref ← IO.mkRef {
+diff --git a/runtests.lean b/runtests.lean
+index 0d722fc..650800f 100644
+--- a/runtests.lean
++++ b/runtests.lean
+@@ -7,7 +7,9 @@ Runs integration tests for the comparator from `tests/projects/`.
+ Each test project is a directory containing:
+ - `Challenge.lean` / `Solution.lean`: the Lean source files
+ - `config.json`: the comparator configuration
+-- `test.json`: expected exit code, e.g. `{"exit_code": 0}` for a passing test
++- `test.json`: expected exit code, e.g. `{"exit_code": 0}` for a passing test, and optionally
++  `"output_contains"`: text the comparator's output must include. An exit code alone cannot tell
++  a rejection by the intended check from a crash earlier in the pipeline.
+ - (optional) `lakefile.toml`: custom lake configuration; a default is generated if absent
+ 
+ ## Usage
+@@ -25,11 +27,13 @@ open Lean System.FilePath IO.FS IO.Process System
+ 
+ structure TestConfig where
+   exit_code : Nat
++  output_contains : Option String := none
+   deriving FromJson, ToJson
+ 
+ inductive TestResult
+   | success (projectName : String)
+   | failure (projectName : String) (expected : Nat) (actual : Nat)
++  | wrongReason (projectName : String) (expected : String)
+   | error (projectName : String) (message : String)
+ 
+ def copyFile (src : FilePath) (dst : FilePath) : IO Unit := do
+@@ -65,14 +69,15 @@ name = \"Challenge\"
+ "
+     IO.FS.writeFile (dir / "lakefile.toml") lakefileContent
+ 
+-def runCommandInDir (dir : FilePath) (cmd : String) (args : Array String) : IO Nat := do
+-  let output ← IO.Process.spawn {
++def runCommandInDir (dir : FilePath) (cmd : String) (args : Array String) : IO (Nat × String) := do
++  let out ← IO.Process.output {
+     cmd := cmd
+     args := args
+     cwd := some dir
+   }
+-  let exitCode ← output.wait
+-  pure exitCode.toNat
++  IO.print out.stdout
++  IO.eprint out.stderr
++  pure (out.exitCode.toNat, out.stdout ++ out.stderr)
+ 
+ def readTestConfig (configPath : FilePath) : IO TestConfig := do
+   let content ← IO.FS.readFile configPath
+@@ -101,14 +106,16 @@ def runTestProject (projectPath : FilePath) (projectName : String) (testsDir : F
+ 
+     createAdditionalFiles tempDir
+ 
+-    let exitCode ← runCommandInDir tempDir "lake" #["env", comparatorPath.toString, "config.json"]
++    let (exitCode, output) ← runCommandInDir tempDir "lake" #["env", comparatorPath.toString, "config.json"]
+ 
+     IO.FS.removeDirAll tempDir
+ 
+-    if exitCode == config.exit_code then
+-      return TestResult.success projectName
+-    else
++    if exitCode != config.exit_code then
+       return TestResult.failure projectName config.exit_code exitCode
++    if let some expected := config.output_contains then
++      if (output.splitOn expected).length < 2 then
++        return TestResult.wrongReason projectName expected
++    return TestResult.success projectName
+ 
+   catch e =>
+     try
+@@ -137,6 +144,8 @@ def printTestResult (result : TestResult) : IO Unit := do
+     IO.println s!"✓ {name}: PASSED"
+   | .failure name expected actual =>
+     IO.println s!"✗ {name}: FAILED (expected exit code {expected}, got {actual})"
++  | .wrongReason name expected =>
++    IO.println s!"✗ {name}: FAILED (exit code as expected, but the output lacks \"{expected}\")"
+   | .error name msg =>
+     IO.println s!"✗ {name}: ERROR - {msg}"
+ 
+diff --git a/tests/projects/char_ofnat_issue/Challenge.lean b/tests/projects/char_ofnat_issue/Challenge.lean
+index a5626c9..3342d78 100644
+--- a/tests/projects/char_ofnat_issue/Challenge.lean
++++ b/tests/projects/char_ofnat_issue/Challenge.lean
+@@ -1 +1,61 @@
+-theorem boom : False := sorry
++prelude
++set_option genCtorIdx false
++set_option linter.all false
++
++-- The honest counterpart of the solution: the same kernel primitives, with `Char.ofNat`
++-- of its true type `Nat → Char`. `Char` is uninhabited here, so it can only be an axiom.
++
++universe u
++
++inductive False : Prop
++
++inductive True' : Prop where
++  | intro : True'
++
++inductive Nat where
++  | zero : Nat
++  | succ (n : Nat) : Nat
++
++structure Char : Type where
++  mk ::
++  n : False
++
++inductive List (α : Type u) where
++  | nil : List α
++  | cons (hd : α) (tl : List α) : List α
++
++structure String where
++  ofList ::
++  data : List Char
++
++axiom Char.ofNat (n : Nat) : Char
++
++axiom hole : False
++
++theorem boom : False := hole
++
++-- The rest only completes the export: every other kernel primitive the comparator compares,
++-- declared exactly as in the challenge, so that `Char.ofNat` is the one that differs.
++def Nat.add        (_ _ : True') : True' := True'.intro
++def Nat.sub        (_ _ : True') : True' := True'.intro
++def Nat.mul        (_ _ : True') : True' := True'.intro
++def Nat.pow        (_ _ : True') : True' := True'.intro
++def Nat.gcd        (_ _ : True') : True' := True'.intro
++def Nat.div        (_ _ : True') : True' := True'.intro
++def Nat.mod        (_ _ : True') : True' := True'.intro
++def Nat.beq        (_ _ : True') : True' := True'.intro
++def Nat.ble        (_ _ : True') : True' := True'.intro
++def Nat.land       (_ _ : True') : True' := True'.intro
++def Nat.lor        (_ _ : True') : True' := True'.intro
++def Nat.xor        (_ _ : True') : True' := True'.intro
++def Nat.shiftLeft  (_ _ : True') : True' := True'.intro
++def Nat.shiftRight (_ _ : True') : True' := True'.intro
++def eagerReduce    (_   : True') : True' := True'.intro
++def String.mk      (_   : True') : True' := True'.intro
++def optParam       (_   : True') : True' := True'.intro
++def autoParam      (_   : True') : True' := True'.intro
++def semiOutParam   (_   : True') : True' := True'.intro
++def outParam       (_   : True') : True' := True'.intro
++def Lean.reduceBool (_  : True') : True' := True'.intro
++def Lean.reduceNat  (_  : True') : True' := True'.intro
++def Bool           (_   : True') : True' := True'.intro
+diff --git a/tests/projects/char_ofnat_issue/Solution.lean b/tests/projects/char_ofnat_issue/Solution.lean
+index 363caef..7efbf7f 100644
+--- a/tests/projects/char_ofnat_issue/Solution.lean
++++ b/tests/projects/char_ofnat_issue/Solution.lean
+@@ -58,3 +58,29 @@ noncomputable def confused : Char := head (String.data "\x02")
+ 
+ -- `Char.n` is `proj Char 0`, so it hands back Box's field -- typed as `False`.
+ theorem boom : False := Char.n confused
++
++-- The rest only completes the export: every other kernel primitive the comparator compares,
++-- declared exactly as in the challenge, so that `Char.ofNat` is the one that differs.
++def Nat.add        (_ _ : True') : True' := True'.intro
++def Nat.sub        (_ _ : True') : True' := True'.intro
++def Nat.mul        (_ _ : True') : True' := True'.intro
++def Nat.pow        (_ _ : True') : True' := True'.intro
++def Nat.gcd        (_ _ : True') : True' := True'.intro
++def Nat.div        (_ _ : True') : True' := True'.intro
++def Nat.mod        (_ _ : True') : True' := True'.intro
++def Nat.beq        (_ _ : True') : True' := True'.intro
++def Nat.ble        (_ _ : True') : True' := True'.intro
++def Nat.land       (_ _ : True') : True' := True'.intro
++def Nat.lor        (_ _ : True') : True' := True'.intro
++def Nat.xor        (_ _ : True') : True' := True'.intro
++def Nat.shiftLeft  (_ _ : True') : True' := True'.intro
++def Nat.shiftRight (_ _ : True') : True' := True'.intro
++def eagerReduce    (_   : True') : True' := True'.intro
++def String.mk      (_   : True') : True' := True'.intro
++def optParam       (_   : True') : True' := True'.intro
++def autoParam      (_   : True') : True' := True'.intro
++def semiOutParam   (_   : True') : True' := True'.intro
++def outParam       (_   : True') : True' := True'.intro
++def Lean.reduceBool (_  : True') : True' := True'.intro
++def Lean.reduceNat  (_  : True') : True' := True'.intro
++def Bool           (_   : True') : True' := True'.intro
+diff --git a/tests/projects/char_ofnat_issue/config.json b/tests/projects/char_ofnat_issue/config.json
+index 73db8bc..680e331 100644
+--- a/tests/projects/char_ofnat_issue/config.json
++++ b/tests/projects/char_ofnat_issue/config.json
+@@ -4,10 +4,6 @@
+     "theorem_names": [
+         "boom"
+     ],
+-    "permitted_axioms": [
+-        "propext",
+-        "Quot.sound",
+-        "Classical.choice"
+-    ],
++    "permitted_axioms": [],
+     "enable_nanoda": false
+ }
+diff --git a/tests/projects/char_ofnat_issue/test.json b/tests/projects/char_ofnat_issue/test.json
+index fe08d6a..2d8f812 100644
+--- a/tests/projects/char_ofnat_issue/test.json
++++ b/tests/projects/char_ofnat_issue/test.json
+@@ -1,3 +1,4 @@
+ {
+-        "exit_code": 1
++    "exit_code": 1,
++    "output_contains": "Const does not match between challenge and target 'Char.ofNat'"
+ }
+diff --git a/tests/projects/def_hole/test.json b/tests/projects/def_hole/test.json
+index 5d4bf27..5ba1194 100644
+--- a/tests/projects/def_hole/test.json
++++ b/tests/projects/def_hole/test.json
+@@ -1,3 +1,4 @@
+ {
+-        "exit_code": 0
++    "exit_code": 0,
++    "output_contains": "Your solution is okay!"
+ }
+diff --git a/tests/projects/def_hole_axiom_issue/test.json b/tests/projects/def_hole_axiom_issue/test.json
+index fe08d6a..a9abd50 100644
+--- a/tests/projects/def_hole_axiom_issue/test.json
++++ b/tests/projects/def_hole_axiom_issue/test.json
+@@ -1,3 +1,4 @@
+ {
+-        "exit_code": 1
++    "exit_code": 1,
++    "output_contains": "Illegal axiom detected: 'sorryAx'"
+ }
+diff --git a/tests/projects/def_hole_kind_mismatch/test.json b/tests/projects/def_hole_kind_mismatch/test.json
+index fe08d6a..70aa565 100644
+--- a/tests/projects/def_hole_kind_mismatch/test.json
++++ b/tests/projects/def_hole_kind_mismatch/test.json
+@@ -1,3 +1,4 @@
+ {
+-        "exit_code": 1
++    "exit_code": 1,
++    "output_contains": "Solution constant is not a definition: 'n'"
+ }
+diff --git a/tests/projects/def_hole_type_mismatch/test.json b/tests/projects/def_hole_type_mismatch/test.json
+index fe08d6a..56cda27 100644
+--- a/tests/projects/def_hole_type_mismatch/test.json
++++ b/tests/projects/def_hole_type_mismatch/test.json
+@@ -1,3 +1,4 @@
+ {
+-        "exit_code": 1
++    "exit_code": 1,
++    "output_contains": "Const does not match between challenge and target 'n'"
+ }
+diff --git a/tests/projects/numeric_namespace/test.json b/tests/projects/numeric_namespace/test.json
+index 13c89f2..5ba1194 100644
+--- a/tests/projects/numeric_namespace/test.json
++++ b/tests/projects/numeric_namespace/test.json
+@@ -1,3 +1,4 @@
+ {
+-	"exit_code": 0
++    "exit_code": 0,
++    "output_contains": "Your solution is okay!"
+ }
+diff --git a/tests/projects/olean_issue/test.json b/tests/projects/olean_issue/test.json
+index fe08d6a..194b1b8 100644
+--- a/tests/projects/olean_issue/test.json
++++ b/tests/projects/olean_issue/test.json
+@@ -1,3 +1,4 @@
+ {
+-        "exit_code": 1
++    "exit_code": 1,
++    "output_contains": "(kernel) application type mismatch"
+ }
+diff --git a/tests/projects/opaque_value/test.json b/tests/projects/opaque_value/test.json
+index fe08d6a..912e524 100644
+--- a/tests/projects/opaque_value/test.json
++++ b/tests/projects/opaque_value/test.json
+@@ -1,3 +1,4 @@
+ {
+-        "exit_code": 1
++    "exit_code": 1,
++    "output_contains": "Illegal axiom detected: 'f'"
+ }
+diff --git a/tests/projects/primitive_issue/Solution.lean b/tests/projects/primitive_issue/Solution.lean
+index 675caa0..ce6de0b 100644
+--- a/tests/projects/primitive_issue/Solution.lean
++++ b/tests/projects/primitive_issue/Solution.lean
+@@ -1,6 +1,11 @@
+ prelude
+ import Init.Prelude
+ import Init.Core
++-- Init's own definitions of the other kernel primitives, none of which imports `Nat.gcd`:
++-- only the redefined `Nat.gcd` below may differ from the challenge.
++import Init.Tactics
++import Init.Data.Nat.Bitwise.Basic
++import Init.Data.String.Bootstrap
+ 
+ def Nat.gcd (_ _ : Nat) : Nat := 0
+ 
+@@ -12,10 +17,3 @@ theorem thm2 : Nat.gcd 1 1 = 1 := rfl
+ 
+ theorem boom : False :=
+   Nat.noConfusion <| Eq.trans (thm1 1 1).symm thm2
+-
+--- The following are just to make the export “primitive-complete”
+-def Nat.land (_ _ : Nat) : Nat := 0
+-def Nat.lor (_ _ : Nat) : Nat := 0
+-def Nat.xor (_ _ : Nat) : Nat := 0
+-def Nat.shiftRight (_ _ : Nat) : Nat := 0
+-def Nat.shiftLeft (_ _ : Nat) : Nat := 0
+diff --git a/tests/projects/primitive_issue/test.json b/tests/projects/primitive_issue/test.json
+index fe08d6a..29f21d5 100644
+--- a/tests/projects/primitive_issue/test.json
++++ b/tests/projects/primitive_issue/test.json
+@@ -1,3 +1,4 @@
+ {
+-        "exit_code": 1
++    "exit_code": 1,
++    "output_contains": "Const does not match between challenge and target 'Nat.gcd'"
+ }
+diff --git a/tests/projects/proj_trick/test.json b/tests/projects/proj_trick/test.json
+index fe08d6a..8d0d39c 100644
+--- a/tests/projects/proj_trick/test.json
++++ b/tests/projects/proj_trick/test.json
+@@ -1,3 +1,4 @@
+ {
+-        "exit_code": 1
++    "exit_code": 1,
++    "output_contains": "Const does not match between challenge and target 'S.mk'"
+ }
+diff --git a/tests/projects/quot_mismatch/Challenge.lean b/tests/projects/quot_mismatch/Challenge.lean
+index 56c9a5d..17beefd 100644
+--- a/tests/projects/quot_mismatch/Challenge.lean
++++ b/tests/projects/quot_mismatch/Challenge.lean
+@@ -22,6 +22,17 @@ def String.ofList  (_   : True) : True := True.intro
+ def Char.ofNat     (_   : True) : True := True.intro
+ def List           (_   : True) : True := True.intro
+ def eagerReduce    (_   : True) : True := True.intro
++def Nat          (_   : True) : True := True.intro
++def String       (_   : True) : True := True.intro
++def String.mk    (_   : True) : True := True.intro
++def Char         (_   : True) : True := True.intro
++def optParam     (_   : True) : True := True.intro
++def autoParam    (_   : True) : True := True.intro
++def semiOutParam (_   : True) : True := True.intro
++def outParam     (_   : True) : True := True.intro
++def Lean.reduceBool (_ : True) : True := True.intro
++def Lean.reduceNat  (_ : True) : True := True.intro
++def Bool         (_   : True) : True := True.intro
+ 
+ -- The target. Honest, true, kernel-valid.
+ theorem Quot.lift : True := True.intro
+diff --git a/tests/projects/quot_mismatch/Solution.lean b/tests/projects/quot_mismatch/Solution.lean
+index 56c9a5d..17beefd 100644
+--- a/tests/projects/quot_mismatch/Solution.lean
++++ b/tests/projects/quot_mismatch/Solution.lean
+@@ -22,6 +22,17 @@ def String.ofList  (_   : True) : True := True.intro
+ def Char.ofNat     (_   : True) : True := True.intro
+ def List           (_   : True) : True := True.intro
+ def eagerReduce    (_   : True) : True := True.intro
++def Nat          (_   : True) : True := True.intro
++def String       (_   : True) : True := True.intro
++def String.mk    (_   : True) : True := True.intro
++def Char         (_   : True) : True := True.intro
++def optParam     (_   : True) : True := True.intro
++def autoParam    (_   : True) : True := True.intro
++def semiOutParam (_   : True) : True := True.intro
++def outParam     (_   : True) : True := True.intro
++def Lean.reduceBool (_ : True) : True := True.intro
++def Lean.reduceNat  (_ : True) : True := True.intro
++def Bool         (_   : True) : True := True.intro
+ 
+ -- The target. Honest, true, kernel-valid.
+ theorem Quot.lift : True := True.intro
+diff --git a/tests/projects/quot_mismatch/test.json b/tests/projects/quot_mismatch/test.json
+index fe08d6a..883031f 100644
+--- a/tests/projects/quot_mismatch/test.json
++++ b/tests/projects/quot_mismatch/test.json
+@@ -1,3 +1,4 @@
+ {
+-        "exit_code": 1
++    "exit_code": 1,
++    "output_contains": "Could not find quotient constant in final kernel env: Quot.lift"
+ }
+diff --git a/tests/projects/simple_axiom_issue/test.json b/tests/projects/simple_axiom_issue/test.json
+index fe08d6a..0ddead8 100644
+--- a/tests/projects/simple_axiom_issue/test.json
++++ b/tests/projects/simple_axiom_issue/test.json
+@@ -1,3 +1,4 @@
+ {
+-        "exit_code": 1
++    "exit_code": 1,
++    "output_contains": "Illegal axiom detected: 'helper'"
+ }
+diff --git a/tests/projects/simple_kind_mismatch/test.json b/tests/projects/simple_kind_mismatch/test.json
+index fe08d6a..0ddead8 100644
+--- a/tests/projects/simple_kind_mismatch/test.json
++++ b/tests/projects/simple_kind_mismatch/test.json
+@@ -1,3 +1,4 @@
+ {
+-        "exit_code": 1
++    "exit_code": 1,
++    "output_contains": "Illegal axiom detected: 'helper'"
+ }
+diff --git a/tests/projects/simple_match/test.json b/tests/projects/simple_match/test.json
+index 5d4bf27..5ba1194 100644
+--- a/tests/projects/simple_match/test.json
++++ b/tests/projects/simple_match/test.json
+@@ -1,3 +1,4 @@
+ {
+-        "exit_code": 0
++    "exit_code": 0,
++    "output_contains": "Your solution is okay!"
+ }
+diff --git a/tests/projects/simple_mismatch/test.json b/tests/projects/simple_mismatch/test.json
+index fe08d6a..13d619c 100644
+--- a/tests/projects/simple_mismatch/test.json
++++ b/tests/projects/simple_mismatch/test.json
+@@ -1,3 +1,4 @@
+ {
+-        "exit_code": 1
++    "exit_code": 1,
++    "output_contains": "Challenge and solution constant kind don't match: 'comm'"
+ }
+diff --git a/tests/projects/theorem_hole_issue/test.json b/tests/projects/theorem_hole_issue/test.json
+index 5d4bf27..5ba1194 100644
+--- a/tests/projects/theorem_hole_issue/test.json
++++ b/tests/projects/theorem_hole_issue/test.json
+@@ -1,3 +1,4 @@
+ {
+-        "exit_code": 0
++    "exit_code": 0,
++    "output_contains": "Your solution is okay!"
+ }
+-- 
+2.50.1 (Apple Git-155)
+
