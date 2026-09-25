@@ -531,7 +531,33 @@ export_part() {
   md "- exported \`$(wc -c <"$out" | tr -d ' ')\` bytes."
 }
 
-# require_live_reference: refuse before adjudicating if MATHESIS_INIT_EXPORT is set but empty.
+# TRUSTED_REFS: MATHESIS_INIT_EXPORT may name SEVERAL trusted references, separated by `:`. Each
+# is a separate adjudication (see run_adjudicate), and every one must admit.
+#
+# A Mathlib deposit needs two. `init.export` holds the logical core and the kernel built-ins
+# (`Nat.gcd`, `Lean.reduceBool`, ...), which the kernel computes with by name whatever a
+# candidate's declaration of them says. `mathlib.export` holds the curated Mathlib vocabulary a
+# claim is stated in (`Real`, `Set`, `mul_one`, ...). Neither covers the other. Measured on the
+# pinned pair, init.export's constants that the Mathlib reference lacks:
+#
+#     Lean.reduceBool  Lean.reduceNat  Lean.trustCompiler  Nat.lor  Nat.shiftLeft
+#     Nat.shiftLeft._f  Nat.xor  (and the anchor Mathesis.trustAnchor)
+#
+# so `mathlib.export` alone rejects every honest deposit whose built-in closure reaches `Nat.xor`
+# ("... which the trusted init.export does not hold"), and `init.export` alone admits a deposit
+# that ships its own `Real`. Merging them into one file is not an option either: lean4export
+# numbers its name and expression tables per file, so two exports do not concatenate, and a
+# regenerated union would be a new pinned artifact rather than the two already recorded.
+#
+# Running the adjudicator once per reference keeps both artifacts exactly as pinned. It costs one
+# extra replay, which is small next to the build. An empty list is the old single, unset case.
+TRUSTED_REFS=()
+if [ -n "${MATHESIS_INIT_EXPORT:-}" ]; then
+  IFS=':' read -r -a TRUSTED_REFS <<<"$MATHESIS_INIT_EXPORT"
+fi
+
+# require_live_reference: refuse before adjudicating if MATHESIS_INIT_EXPORT is set but empty,
+# or names an entry that is.
 #
 # A CONFIGURED reference that loads to nothing silently disables the redefinition check, and
 # the deposit is then ADMITTED. Measured against the real adjudicator with the same spoofing
@@ -546,11 +572,25 @@ export_part() {
 # middle one: a zero-byte or truncated file looks configured, announces "0 constants", and
 # admits the spoof — reachable from an interrupted download, a half-written upload, or a fetch
 # that left an empty file behind. `ci/run_deposit_job.sh` already refuses an empty or
-# hash-mismatched reference, but the gate must not depend on its caller for that.
+# hash-mismatched reference, but the gate must not depend on its caller for that. With a list,
+# an empty ENTRY (`a::b`, a leading or trailing `:`) is the same hazard and is refused the same
+# way. `read -a` drops a trailing empty field, so the list's shape is checked as well as its
+# entries.
 require_live_reference() {
-  if [ -n "${MATHESIS_INIT_EXPORT:-}" ] && [ ! -s "$MATHESIS_INIT_EXPORT" ]; then
+  [ -n "${MATHESIS_INIT_EXPORT:-}" ] || return 0
+  local ref bad=""
+  case "$MATHESIS_INIT_EXPORT" in
+    :*|*:|*::*) bad="<empty entry>" ;;
+  esac
+  if [ -z "$bad" ]; then
+    for ref in "${TRUSTED_REFS[@]}"; do
+      if [ -z "$ref" ]; then bad="<empty entry>"; break; fi
+      if [ ! -s "$ref" ]; then bad="$ref"; break; fi
+    done
+  fi
+  if [ -n "$bad" ]; then
     md "- **reject** — \`MATHESIS_INIT_EXPORT\` is set but empty or missing:"
-    md "  \`$MATHESIS_INIT_EXPORT\`"
+    md "  \`$bad\`"
     md "  An empty reference loads as 0 constants and silently disables the"
     md "  trusted-redefinition check, so refusing is the only safe reading."
     emit_and_exit 2
@@ -560,43 +600,73 @@ require_live_reference() {
 # run_adjudicate <out.json> <err> [--reference <R>] <export> -- <decl> ...
 #
 # EVERY call to the trusted exe goes through here, so there is one place that decides how it is
-# bounded and which trusted references it runs against. Sets ADJ_RC to the exe's exit code.
+# bounded and which trusted references it runs against. It runs the exe once per entry of
+# TRUSTED_REFS (once with MATHESIS_INIT_EXPORT unset when there are none), each run with
+# MATHESIS_INIT_EXPORT set to that one entry. It then sets:
+#
+#   ADJ_RC       the deciding run's exit code: the first nonzero one, else the first run's (0);
+#   <out>/<err>  copies of the deciding run's report and stderr, which is what gets rendered;
+#   ADJ_RUNS     every run's report, in reference order (<out> minus .json, then .<i>.json);
+#   ADJ_RCS      every run's exit code, in the same order.
 #
 # Callers differ in what they key on, and a change here must keep both working: step 4 keys on
-# ADJ_RC (0 iff ADMITTED); the statement audit of a two-part deposit expects ADJ_RC=1 — every
-# statement theorem reaches sorryAx by construction — and keys on the per-target JSON instead
-# (see `statement_form.py --audit`). So a version of this that ran several references would
-# need to hand the statement audit a report per reference, not just a combined exit code.
+# ADJ_RC (0 iff every run ADMITTED); the statement audit of a two-part deposit expects every
+# run to exit 1 — every statement theorem reaches sorryAx by construction — and keys on the
+# per-target JSON instead (see `statement_form.py --audit`), so it audits each of ADJ_RUNS.
 run_adjudicate() {
   local out="$1" err="$2"; shift 2
-  tmo "${MATHESIS_ADJUDICATE_TIMEOUT:-1800}"
-  "${TMO_PREFIX[@]}" "$ADJUDICATE_BIN" "$@" >"$out" 2>"$err"
-  ADJ_RC=$?
+  local refs=("${TRUSTED_REFS[@]}") ref i=0 o e rc sel=0
+  [ "${#refs[@]}" -gt 0 ] || refs=("")
+  ADJ_RUNS=(); ADJ_RCS=(); ADJ_RC=0
+  for ref in "${refs[@]}"; do
+    i=$((i+1))
+    o="${out%.json}.$i.json"; e="$err.$i"
+    tmo "${MATHESIS_ADJUDICATE_TIMEOUT:-1800}"
+    if [ -n "$ref" ]; then
+      MATHESIS_INIT_EXPORT="$ref" "${TMO_PREFIX[@]}" "$ADJUDICATE_BIN" "$@" >"$o" 2>"$e"
+    else
+      env -u MATHESIS_INIT_EXPORT "${TMO_PREFIX[@]}" "$ADJUDICATE_BIN" "$@" >"$o" 2>"$e"
+    fi
+    rc=$?
 
-  # Non-empty is necessary but not sufficient: a well-formed file whose records the loader skips
-  # would also yield an empty trusted environment. The exe reports what it actually loaded
-  # ("trusted init.export loaded: N constants"), so key on that rather than on the file. This is
-  # the check that would have caught the measured ADMIT above regardless of cause.
-  if [ -n "${MATHESIS_INIT_EXPORT:-}" ] && grep -q "loaded: 0 constants" "$err" 2>/dev/null; then
-    md "- **reject** — the trusted reference loaded **0 constants**:"
-    md "  \`$MATHESIS_INIT_EXPORT\`"
-    md "  The redefinition check was therefore inactive, and a deposit redefining a"
-    md "  reference constant would have been admitted. Refusing rather than trusting"
-    md "  this verdict."
-    md ""
-    tail -n 10 "$err" | embed_log >> "$REPORT"
-    emit_and_exit 2
-  fi
+    # Non-empty is necessary but not sufficient: a well-formed file whose records the loader
+    # skips would also yield an empty trusted environment. The exe reports what it actually
+    # loaded ("trusted init.export loaded: N constants"), so key on that rather than on the
+    # file. This is the check that would have caught the measured ADMIT above regardless of
+    # cause.
+    if [ -n "$ref" ] && grep -q "loaded: 0 constants" "$e" 2>/dev/null; then
+      md "- **reject** — the trusted reference loaded **0 constants**:"
+      md "  \`$ref\`"
+      md "  The redefinition check was therefore inactive, and a deposit redefining a"
+      md "  reference constant would have been admitted. Refusing rather than trusting"
+      md "  this verdict."
+      md ""
+      tail -n 10 "$e" | embed_log >> "$REPORT"
+      emit_and_exit 2
+    fi
 
-  # The exe ALWAYS emits a complete JSON report on stdout, even when it exits
-  # nonzero (REJECTED). A nonzero exit with UNPARSEABLE stdout is a real crash.
-  if ! "$PY" -c 'import json,sys;json.load(open(sys.argv[1]))' "$out" 2>/dev/null; then
-    md "- **reject** — adjudicate exited $ADJ_RC with unparseable stdout (crash/panic):"
-    md ""
-    tail -n 30 "$err" | embed_log >> "$REPORT"
-    md ""
-    emit_and_exit 2
-  fi
+    # The exe ALWAYS emits a complete JSON report on stdout, even when it exits
+    # nonzero (REJECTED). A nonzero exit with UNPARSEABLE stdout is a real crash.
+    if ! "$PY" -c 'import json,sys;json.load(open(sys.argv[1]))' "$o" 2>/dev/null; then
+      md "- **reject** — adjudicate exited $rc with unparseable stdout (crash/panic):"
+      [ "${#refs[@]}" -gt 1 ] && md "  (trusted reference \`$(basename "$ref")\`)"
+      md ""
+      tail -n 30 "$e" | embed_log >> "$REPORT"
+      md ""
+      emit_and_exit 2
+    fi
+
+    ADJ_RUNS+=("$o"); ADJ_RCS+=("$rc")
+    # The first run that fails is the one rendered, because it is the one that decides; when
+    # every run admits, the first (primary) run is rendered. Legs other than the redefinition
+    # check do not depend on the reference, so which admitting run is shown does not change
+    # the report.
+    if [ "$sel" -eq 0 ] || { [ "$rc" -ne 0 ] && [ "$ADJ_RC" -eq 0 ]; }; then
+      sel="$i"; ADJ_RC="$rc"
+    fi
+  done
+  cp "${out%.json}.$sel.json" "$out"
+  cp "$err.$sel" "$err"
 }
 
 # ── 2s. a two-part deposit's STATEMENT: build, export as R, check its form ───
@@ -682,18 +752,33 @@ if [ "$MODE" = "two-part" ] || [ "$MODE" = "pose" ]; then
   # One trusted run over R: the targets AND the roots. It replays R through the kernel, audits
   # each root's full closure, and — because every target's proof is sorry — reports each target
   # as failing on sorryAx, which is expected and which `--audit` insists is the ONLY failure.
+  #
+  # With several trusted references there is one run, and so one report, per reference, and
+  # each is audited: a definition that is clean against `init.export` but redefines a Mathlib
+  # constant is caught only by the `mathlib.export` run. The audit rendered is the first one
+  # that is not clean, else the first.
   require_live_reference
   run_adjudicate "$WORK/statement-adj.json" "$WORK/statement-adj.err" \
     "$STMT_EXPORT" -- "${DECLS_ARR[@]}" "${ROOTS_ARR[@]}"
-  if ! "$PY" "$ROOT/ci/statement_form.py" --audit "$WORK/statement-adj.json" \
-       "${#DECLS_ARR[@]}" "${DECLS_ARR[@]}" "${ROOTS_ARR[@]}" \
-       >"$WORK/statement-audit" 2>"$WORK/statement-audit.err"; then
-    md "- **reject** — could not read the adjudicator's report on the statement:"
-    md ""
-    embed_log < "$WORK/statement-audit.err" >> "$REPORT"
-    md ""
-    emit_and_exit 2
-  fi
+  __shown=""
+  __i=0
+  for __run in "${ADJ_RUNS[@]}"; do
+    __i=$((__i+1))
+    if ! "$PY" "$ROOT/ci/statement_form.py" --audit "$__run" \
+         "${#DECLS_ARR[@]}" "${DECLS_ARR[@]}" "${ROOTS_ARR[@]}" \
+         >"$WORK/statement-audit.$__i" 2>"$WORK/statement-audit.err"; then
+      md "- **reject** — could not read the adjudicator's report on the statement:"
+      md ""
+      embed_log < "$WORK/statement-audit.err" >> "$REPORT"
+      md ""
+      emit_and_exit 2
+    fi
+    if [ -z "$__shown" ] || { ! grep -qx 'VERDICT ok' "$WORK/statement-audit.$__i" \
+                              && grep -qx 'VERDICT ok' "$WORK/statement-audit.$__shown"; }; then
+      __shown="$__i"
+    fi
+  done
+  cp "$WORK/statement-audit.$__shown" "$WORK/statement-audit"
   md ""
   md "| statement leg | result |"
   md "|---|---|"
@@ -798,6 +883,13 @@ elif [ -n "$REF_EXPORT" ]; then
 else
   md "- mode: **self-audit** (no \`@discharges\`; replay + axioms + triviality)."
   run_adjudicate "$ADJ_OUT" "$ADJ_ERR" "$CAND_EXPORT" -- "${TARGET_DECLS_ARR[@]}"
+fi
+if [ "${#TRUSTED_REFS[@]}" -gt 1 ]; then
+  md "- trusted references: ${#TRUSTED_REFS[@]}, each adjudicated separately; all must admit."
+  for __i in "${!ADJ_RUNS[@]}"; do
+    __v="$("$PY" -c 'import json,sys;print(json.load(open(sys.argv[1])).get("verdict") or "?")' "${ADJ_RUNS[$__i]}")"
+    md "  - \`$(basename "${TRUSTED_REFS[$__i]}")\`: $__v (exit ${ADJ_RCS[$__i]})"
+  done
 fi
 
 # Per-leg render from the JSON report. Fields (see MathesisAdjudicate.lean
