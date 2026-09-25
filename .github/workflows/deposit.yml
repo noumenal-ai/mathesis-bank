@@ -48,6 +48,13 @@ on:
 permissions:
   contents: read
 
+# The one Mathlib environment deposits may pin, and its trusted reference
+# (environments.mathlib_reference_sha256, on the exports-v1 release). builder-images.yml
+# publishes the image pair for this revision.
+env:
+  MATHLIB_REV: fabf563a7c95a166b8d7b6efca11c8b4dc9d911f
+  MATHLIB_REFERENCE_SHA256: c53c878debde809ec5c83717b3f5a2591197f008d6167141eb1aaa6f11476155
+
 concurrency:
   group: deposit-gate-${{ github.event.pull_request.number }}
   cancel-in-progress: true
@@ -56,8 +63,14 @@ jobs:
   gate:
     runs-on: ubuntu-latest
     # Bound the whole untrusted build+gate job (availability guard on top of the
-    # per-build `timeout` inside gate_deposit.sh).
-    timeout-minutes: 30
+    # per-build `timeout` inside gate_deposit.sh). A Mathlib deposit adds a ~12 GB
+    # image pull and an `import Mathlib` build, hence more than the core path needs.
+    timeout-minutes: 60
+    # packages: read pulls the Mathlib environment from GHCR. It is read-only, like
+    # contents, so the untrusted build still cannot write anything.
+    permissions:
+      contents: read
+      packages: read
     outputs:
       any_failed: ${{ steps.run.outputs.any_failed }}
     steps:
@@ -149,6 +162,73 @@ jobs:
           echo "EOF" >> "$GITHUB_OUTPUT"
           echo "gating deposits:"; echo "$slugs"
 
+      # ── Which environment each deposit pins ──────────────────────────────
+      # `@mathlib` selects the environment. The parser is the gate's own and only checks
+      # grammar; whether the bank HAS that revision is decided here, before anything is pulled
+      # or built. One revision is supported today, the one every banked accession pins, and the
+      # trusted reference for it is the blob recorded as environments.mathlib_reference_sha256.
+      # A header that does not parse is left to the gate, which rejects it with the parser's
+      # own message.
+      - name: Resolve deposit environments
+        id: envs
+        env:
+          SLUGS: ${{ steps.changed.outputs.slugs }}
+          MATHLIB_REV: ${{ env.MATHLIB_REV }}
+        run: |
+          : > deposit-envs.txt
+          need_mathlib=0
+          for slug in $SLUGS; do
+            f="deposits/$slug/submission.lean"
+            [ -f "$f" ] || continue
+            rev="$(python3 ci/parse_deposit.py "$f" 2>/dev/null \
+                   | python3 -c 'import json,sys;print(json.load(sys.stdin).get("mathlib") or "")' 2>/dev/null)"
+            if [ -z "$rev" ]; then env=core
+            elif [ "$rev" = "$MATHLIB_REV" ]; then env=mathlib; need_mathlib=1
+            else env=unsupported
+            fi
+            echo "$slug $env" >> deposit-envs.txt
+          done
+          cat deposit-envs.txt
+          echo "need_mathlib=$need_mathlib" >> "$GITHUB_OUTPUT"
+
+      # The pair is published by builder-images.yml, from main, so a fork PR only ever pulls
+      # what trusted code built. Pull by tag: the tag names the environment
+      # (toolchain + Mathlib revision), and builder-images.yml refuses to push a pair whose
+      # exporter does not regenerate the pinned reference byte for byte.
+      - name: Pull the Mathlib environment
+        if: steps.envs.outputs.need_mathlib == '1'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /usr/local/.ghcup \
+                      /usr/share/swift /usr/local/share/boost
+          df -h /
+          echo "$GH_TOKEN" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+          OWNER="$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')"
+          TAG="v4.31.0-mathlib-${MATHLIB_REV:0:7}"
+          B="ghcr.io/$OWNER/mathesis-lean-builder:$TAG"
+          E="ghcr.io/$OWNER/mathesis-lean-exporter-rt:$TAG"
+          docker pull "$B"
+          docker pull "$E"
+          docker logout ghcr.io
+          echo "MATHLIB_BUILDER_IMAGE=$B" >> "$GITHUB_ENV"
+          echo "MATHLIB_EXPORT_IMAGE=$E" >> "$GITHUB_ENV"
+          df -h /
+
+      # The Mathlib reference, by content address. fetch_exports.sh verifies the sha256 after
+      # download, and gate_deposit.sh refuses an empty reference or one that loads 0 constants.
+      - name: Fetch the Mathlib trusted reference
+        if: steps.envs.outputs.need_mathlib == '1'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          MATHESIS_EXPORT_STORE: gh:${{ github.repository }}@exports-v1
+          MATHESIS_EXPORTS_DIR: ${{ runner.temp }}/mathlib-reference
+        run: |
+          bash ci/fetch_exports.sh "$MATHLIB_REFERENCE_SHA256"
+          f="$MATHESIS_EXPORTS_DIR/$MATHLIB_REFERENCE_SHA256.export"
+          test -s "$f" || { echo "FATAL: reference absent after fetch"; exit 1; }
+          echo "MATHLIB_REFERENCE=$f" >> "$GITHUB_ENV"
+
       # ── Run the gate on each changed deposit ─────────────────────────────
       - name: Gate each changed deposit
         id: run
@@ -183,7 +263,35 @@ jobs:
           for slug in $slugs; do
             [ -d "deposits/$slug" ] || continue
             echo "── gating deposits/$slug ──"
-            if bash ci/gate_deposit.sh "deposits/$slug" >> deposit-report.md 2>&1; then
+            env_name="$(awk -v s="$slug" '$1==s{print $2}' deposit-envs.txt)"
+            # Per-deposit environment. A Mathlib deposit builds and exports in the Mathlib pair
+            # and is adjudicated against BOTH trusted references: init.export guards the logical
+            # core and the kernel built-ins, mathlib.export the Mathlib vocabulary, and neither
+            # covers the other (see gate_deposit.sh, step 4).
+            case "$env_name" in
+              mathlib)
+                dep_builder="$MATHLIB_BUILDER_IMAGE"
+                dep_export="$MATHLIB_EXPORT_IMAGE"
+                dep_refs="$MATHESIS_INIT_EXPORT:$MATHLIB_REFERENCE" ;;
+              unsupported)
+                {
+                  echo "### Deposit \`$slug\`"
+                  echo ""
+                  echo "- **block** — \`@mathlib\` names a revision this bank has no environment for."
+                  echo "  The supported revision is \`$MATHLIB_REV\`."
+                } >> deposit-report.md
+                echo "  → BLOCK (unsupported @mathlib)"
+                any_failed=1
+                echo "" >> deposit-report.md
+                continue ;;
+              *)
+                dep_builder="$MATHESIS_BUILDER_IMAGE"
+                dep_export=""
+                dep_refs="$MATHESIS_INIT_EXPORT" ;;
+            esac
+            if MATHESIS_BUILDER_IMAGE="$dep_builder" MATHESIS_EXPORT_IMAGE="$dep_export" \
+               MATHESIS_INIT_EXPORT="$dep_refs" \
+               bash ci/gate_deposit.sh "deposits/$slug" >> deposit-report.md 2>&1; then
               echo "  → pass (admit/needs-review)"
             else
               rc=$?

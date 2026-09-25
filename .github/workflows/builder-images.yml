@@ -1,0 +1,101 @@
+# Mathesis — build and publish the Mathlib deposit environment to GHCR.
+#
+# deposit.yml runs UNTRUSTED code and gets a read-only token on fork PRs, so it cannot build and
+# push these images itself, and it should not rebuild them per run either: the builder alone is
+# ~12 GB, which is past the 10 GB Actions cache, and producing it downloads Mathlib's olean cache.
+# So this TRUSTED workflow builds the image pair once, from main, and deposit.yml only pulls it.
+#
+#   ghcr.io/<owner>/mathesis-lean-builder:v4.31.0-mathlib-fabf563      runs the untrusted build
+#   ghcr.io/<owner>/mathesis-lean-exporter-rt:v4.31.0-mathlib-fabf563  runs the gate's export step
+#
+# It builds through deploy/builder/make-mathlib-export.sh, the same script that produced the
+# pinned reference, so the checks that script makes are made here too: the builder carries no
+# lean4export, adjudicator, curl or git; the export runtime extends the builder layer for layer;
+# lean4export resolves Mathlib inside it. On top of those, the reference the exporter stage
+# regenerates must be byte-identical to the pinned one, or nothing is pushed. That ties the
+# published images to the environment `mathlib.export` describes, rather than to whatever the
+# network served at build time.
+#
+# Only the two runtime images are pushed. The exporter stage (~23 GB: Mathlib source, its build
+# tree and lean4export) exists to produce the reference and is deleted before the push.
+name: builder-images
+
+on:
+  workflow_dispatch: {}
+  push:
+    branches: [main]
+    paths:
+      - 'deploy/builder/**'
+      - '.github/workflows/builder-images.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: builder-images
+  cancel-in-progress: false
+
+jobs:
+  mathlib:
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    permissions:
+      contents: read
+      packages: write
+    env:
+      LEAN_VERSION: v4.31.0
+      MATHLIB_REV: fabf563a7c95a166b8d7b6efca11c8b4dc9d911f
+      # environments.mathlib_reference_sha256; the blob is on the exports-v1 release.
+      REFERENCE_SHA256: c53c878debde809ec5c83717b3f5a2591197f008d6167141eb1aaa6f11476155
+    steps:
+      - uses: actions/checkout@v4
+
+      # The exporter, the builder and the build cache between them are past what a default runner
+      # has free. The preinstalled SDKs below are the usual ~30 GB to reclaim; none is used here.
+      - name: Free runner disk
+        run: |
+          df -h /
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /usr/local/.ghcup \
+                      /opt/hostedtoolcache /usr/share/swift /usr/local/share/boost
+          docker system prune -af >/dev/null
+          df -h /
+
+      - name: Build the image pair and regenerate the reference
+        env:
+          OUT_DIR: ${{ runner.temp }}/reference
+          PLATFORM: linux/amd64
+        run: bash deploy/builder/make-mathlib-export.sh
+
+      - name: Require the pinned reference, byte for byte
+        run: |
+          got="$(sha256sum "$RUNNER_TEMP/reference/mathlib.export" | cut -d' ' -f1)"
+          echo "regenerated $got"
+          echo "pinned      $REFERENCE_SHA256"
+          [ "$got" = "$REFERENCE_SHA256" ] || {
+            echo "::error::the regenerated Mathlib reference differs from the pinned one; not publishing"
+            exit 1
+          }
+
+      - name: Drop the exporter before pushing
+        run: |
+          SHORT="${MATHLIB_REV:0:7}"
+          docker rmi -f "mathesis/lean-exporter:${LEAN_VERSION}-mathlib-${SHORT}" || true
+          docker builder prune -af >/dev/null || true
+          df -h /
+
+      - name: Log in to GHCR
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+
+      - name: Push the builder and the export runtime
+        run: |
+          SHORT="${MATHLIB_REV:0:7}"
+          TAG="${LEAN_VERSION}-mathlib-${SHORT}"
+          OWNER="$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')"
+          for pair in "lean-builder:mathesis-lean-builder" "lean-exporter-rt:mathesis-lean-exporter-rt"; do
+            local_name="mathesis/${pair%%:*}:$TAG"
+            remote="ghcr.io/$OWNER/${pair##*:}:$TAG"
+            docker tag "$local_name" "$remote"
+            docker push "$remote"
+            echo "$remote@$(docker image inspect "$remote" --format '{{index .RepoDigests 0}}' | cut -d@ -f2)" \
+              | tee -a "$GITHUB_STEP_SUMMARY"
+          done
