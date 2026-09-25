@@ -1,3 +1,4 @@
+import table from "@leanprover/unicode-input/dist/abbreviations.json";
 import { describe, expect, it } from "vitest";
 import { expandOnType, replacementText } from "./abbrev";
 
@@ -67,5 +68,11 @@ describe("Lean's unicode abbreviations", () => {
 
   it("does nothing without a backslash", () => {
     expect(expandOnType("to", " ")).toBeNull();
+  });
+
+  it("carries no star glyph, which verify.yml's INV-2 lint refuses in docs/", () => {
+    // Lean's table maps \bigstar to U+2605; vite.config.ts drops the entry before bundling.
+    expect(Object.entries(table).filter(([, v]) => /[★⭐]/u.test(v))).toEqual([]);
+    expect(replacementText("bigstar")).not.toContain("★");
   });
 });

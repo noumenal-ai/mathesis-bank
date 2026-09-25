@@ -1,5 +1,23 @@
 import { defineConfig } from "vitest/config";
+import type { Plugin } from "vite";
 import tailwindcss from "@tailwindcss/vite";
+
+// verify.yml's INV-2 lint refuses a star glyph (U+2605, U+2B50) anywhere in docs/, the client's
+// bundles included, and Lean's abbreviation table maps `\bigstar` to one. That entry is an editor
+// shortcut, not a ranking mark, but the lint cannot tell them apart and Lean has no use for it,
+// so the IDE's copy of the table leaves it out. `enforce: "pre"` sees the raw JSON, before Vite
+// turns it into a module.
+const RANKING_GLYPH = /[★⭐]/u;
+const abbreviationsWithoutRankingGlyphs: Plugin = {
+  name: "abbreviations-without-ranking-glyphs",
+  enforce: "pre",
+  transform(code, id) {
+    if (!id.replace(/\?.*$/, "").endsWith("/@leanprover/unicode-input/dist/abbreviations.json")) return null;
+    const table = JSON.parse(code) as Record<string, string>;
+    for (const [k, v] of Object.entries(table)) if (RANKING_GLYPH.test(v)) delete table[k];
+    return { code: JSON.stringify(table), map: null };
+  },
+};
 
 // DESIGN.md §1: one stylesheet, one SPA entry, both unhashed, written to
 // web/dist-assets and COPYed into the webd image (SPEC.md §11.3). recordgen
@@ -9,7 +27,7 @@ import tailwindcss from "@tailwindcss/vite";
 // The editor's workers are ES modules: `@codingame/monaco-vscode-api` is
 // code-split, and a UMD/IIFE worker format cannot carry a code-splitting build.
 export default defineConfig({
-  plugins: [tailwindcss()],
+  plugins: [abbreviationsWithoutRankingGlyphs, tailwindcss()],
   build: {
     outDir: "dist-assets",
     emptyOutDir: true,
