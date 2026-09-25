@@ -989,10 +989,13 @@ Shared chrome on **every** page, generated and SPA alike, byte-identical, no con
 ```
 <nav class="mth-nav">
   «Mathesis»                                → /posts       (wordmark + 16px decorative mark)
-  «Posts» «Profile» «Collection» «About»    → / /u/{owner.login}/ /collection/claims /about
-                                             Posts is the landing page. Until sign-in exists, «Profile»
-                                             opens the profile the record is published under (the owner);
-                                             with sign-in it opens the signed-in user's own.
+  «Posts» «Collection» «About»              → / /collection/claims /about
+                                             Posts is the landing page.
+  «Profile»                                 → /u/{owner.login}/   (at the right, apart from the row)
+                                             Until sign-in exists, «Profile» opens the profile the record
+                                             is published under (the owner); with sign-in it opens the
+                                             signed-in user's own. «Write» (→ /ide/) is not in the nav: it
+                                             is a button on that profile, and the IDE counts as Profile.
 </nav>                                        aria-current="page" on the active item
 <main class="mth-main" tabindex="-1"> … </main>
 ```
