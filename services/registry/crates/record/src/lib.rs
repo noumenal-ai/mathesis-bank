@@ -386,10 +386,12 @@ fn render(
     w.page("about/index.html", "about", &pages::about_page(s))?;
     w.page("ide/index.html", "ide", &pages::ide_page(s))?;
     for p in &s.profiles {
+        let href = format!("/u/{}/", p.login);
+        let home = w.profile_href.as_deref() == Some(href.as_str());
         w.page(
             &format!("u/{}/index.html", p.login),
             "profile",
-            &pages::profile_page(s, p),
+            &pages::profile_page(s, p, home),
         )?;
     }
 

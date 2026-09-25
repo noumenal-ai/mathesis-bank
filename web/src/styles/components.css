@@ -30,6 +30,7 @@
   .mth-nav__links {
     display: flex;
     gap: var(--spacing-3);
+    min-width: 0;
     overflow-x: auto;
     scrollbar-width: none;
     -webkit-overflow-scrolling: touch;
@@ -42,6 +43,8 @@
   }
   .mth-nav__link:hover { color: var(--color-text); text-decoration: none; }
   .mth-nav__link[aria-current="page"] { color: var(--color-text); font-weight: 600; box-shadow: inset 0 -2px 0 var(--color-accent-500); }
+  /* Profile stands apart at the right, outside the row that scrolls on a narrow screen. */
+  .mth-nav__profile { margin-inline-start: auto; flex-shrink: 0; }
 
   /* ------------------------------------------------------------- buttons */
   .mth-btn {
@@ -372,6 +375,8 @@
     border-radius: var(--radius-lg); background: var(--color-surface);
   }
   .mth-profile__who { display: grid; gap: var(--spacing-1); min-width: 0; }
+  .mth-profile__write { margin-inline-start: auto; }
+  .mth-profile__write:hover { text-decoration: none; }
   .mth-profile__name { margin: 0; font-size: var(--text-2xl); line-height: var(--text-2xl--line-height); font-weight: 600; }
   .mth-profile__login { font-family: var(--font-mono); font-size: var(--text-code); }
   .mth-avatar {

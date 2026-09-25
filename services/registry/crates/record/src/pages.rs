@@ -26,7 +26,9 @@ pub fn shell(page: &str, body: &str, profile_href: Option<&str>) -> String {
 }
 
 /// The nav is unconditional: the same items, labels and targets on every
-/// generated page, so its bytes never vary.
+/// generated page, so its bytes never vary. Profile stands apart at the right.
+/// Write is not in the nav: it lives on the profile page, so the IDE counts as
+/// part of Profile.
 pub fn nav(profile_href: Option<&str>, page: &str) -> String {
     let mut b = B::new();
     b.open("header", "class=\"mth-nav\"");
@@ -34,20 +36,16 @@ pub fn nav(profile_href: Option<&str>, page: &str) -> String {
     b.text(label("mathesis"));
     b.close("a");
     b.open("nav", "class=\"mth-nav__links\" aria-label=\"Mathesis\"");
-    let mut items: Vec<(&str, &str)> = vec![("posts", "/")];
-    if let Some(href) = profile_href {
-        items.push(("profile", href));
-    }
-    items.push(("collection", "/collection/claims"));
-    items.push(("write", "/ide/"));
-    items.push(("about", "/about"));
+    let items = [
+        ("posts", "/"),
+        ("collection", "/collection/claims"),
+        ("about", "/about"),
+    ];
     for (key, href) in items {
         let current = match (key, page) {
-            ("posts", "posts")
-            | ("profile", "profile")
-            | ("collection", "collection")
-            | ("write", "ide")
-            | ("about", "about") => " aria-current=\"page\"",
+            ("posts", "posts") | ("collection", "collection") | ("about", "about") => {
+                " aria-current=\"page\""
+            }
             _ => "",
         };
         b.open(
@@ -58,6 +56,18 @@ pub fn nav(profile_href: Option<&str>, page: &str) -> String {
         b.close("a");
     }
     b.close("nav");
+    if let Some(href) = profile_href {
+        let current = match page {
+            "profile" | "ide" => " aria-current=\"page\"",
+            _ => "",
+        };
+        b.open(
+            "a",
+            &format!("class=\"mth-nav__link mth-nav__profile\" href=\"{href}\"{current}"),
+        );
+        b.text(label("profile"));
+        b.close("a");
+    }
     b.close("header");
     b.s
 }
@@ -1429,7 +1439,9 @@ struct DoiRow {
     date: String,
 }
 
-pub fn profile_page(input: &Snapshot, p: &Profile) -> B {
+/// `home` is the profile the nav's Profile link opens. Write lives there, on the
+/// one profile that stands for the person using the site.
+pub fn profile_page(input: &Snapshot, p: &Profile, home: bool) -> B {
     let mut b = B::new();
     let claims: Vec<&Claim> = input
         .claims
@@ -1477,6 +1489,14 @@ pub fn profile_page(input: &Snapshot, p: &Profile) -> B {
     b.row("joined", "profile.created_at", &ts(&p.created_at));
     b.close("dl");
     b.close("div");
+    if home {
+        b.open(
+            "a",
+            "class=\"mth-btn mth-btn--primary mth-profile__write\" href=\"/ide/\"",
+        );
+        b.text(label("write"));
+        b.close("a");
+    }
     b.close("section");
 
     b.open("section", "class=\"mth-profile__dois\"");
