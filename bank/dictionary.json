@@ -1,23 +1,46 @@
-{
-  "adjudicate_image": "mathesis-adjudicate@5a48a4dbbcb5",
-  "base_names_sha256": "",
-  "blueprint_labels": {},
-  "blueprint_url": "https://zetetic-dhruv.github.io/formal-learning-theory-kernel/",
-  "builder_image": "lean4export v3.1.0",
-  "curation": "initial",
-  "export_bytes": 0,
-  "export_constants": 0,
-  "export_sha256": "",
-  "flt_rev": "5802df4719c971f788d07c500cb3cfef4f7482e9",
-  "id": "962259c4-e734-538d-84a2-0f86495b0f2d",
-  "label": "design-lab@5802df4",
-  "mathlib_rev": "fabf563a7c95a166b8d7b6efca11c8b4dc9d911f",
-  "max_export_bytes": 0,
-  "max_source_bytes": 0,
-  "module_roots": [
-    "FLT_Proofs",
-    "ZPM",
-    "AuditCP"
-  ],
-  "toolchain": "leanprover/lean4:v4.31.0"
-}
+[
+  {
+    "adjudicate_image": "mathesis-adjudicate",
+    "base_names_sha256": "",
+    "blueprint_labels": {},
+    "blueprint_url": "",
+    "builder_image": "",
+    "curation": "deposit",
+    "export_bytes": 0,
+    "export_constants": 0,
+    "export_sha256": "",
+    "flt_rev": "",
+    "id": "45c7a066-9dae-5af4-9ce6-3a2555b95cb3",
+    "label": "deposit@v4.31.0",
+    "mathlib_rev": "",
+    "max_export_bytes": 0,
+    "max_source_bytes": 0,
+    "module_roots": [
+      "Submission"
+    ],
+    "toolchain": "leanprover/lean4:v4.31.0"
+  },
+  {
+    "adjudicate_image": "mathesis-adjudicate@5a48a4dbbcb5",
+    "base_names_sha256": "",
+    "blueprint_labels": {},
+    "blueprint_url": "https://zetetic-dhruv.github.io/formal-learning-theory-kernel/",
+    "builder_image": "lean4export v3.1.0",
+    "curation": "initial",
+    "export_bytes": 0,
+    "export_constants": 0,
+    "export_sha256": "",
+    "flt_rev": "5802df4719c971f788d07c500cb3cfef4f7482e9",
+    "id": "962259c4-e734-538d-84a2-0f86495b0f2d",
+    "label": "design-lab@5802df4",
+    "mathlib_rev": "fabf563a7c95a166b8d7b6efca11c8b4dc9d911f",
+    "max_export_bytes": 0,
+    "max_source_bytes": 0,
+    "module_roots": [
+      "FLT_Proofs",
+      "ZPM",
+      "AuditCP"
+    ],
+    "toolchain": "leanprover/lean4:v4.31.0"
+  }
+]
