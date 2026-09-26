@@ -485,6 +485,251 @@
           "minLength": 1
         }
       }
+    },
+    "profilesFile": {
+      "description": "bank/profiles.json. One entry per depositing identity. Was one element for the whole bank, because one person curated it; a deposited record names its own author, so this grows. Exactly one entry may carry is_owner: the renderer picks the site's identity by that flag, and a second would hand it to whichever login sorts first.",
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/profile"
+      },
+      "contains": {
+        "type": "object",
+        "required": [
+          "is_owner"
+        ],
+        "properties": {
+          "is_owner": {
+            "const": true
+          }
+        }
+      },
+      "minContains": 1,
+      "maxContains": 1
+    },
+    "profile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "citation_name",
+        "created_at",
+        "display_name",
+        "github_type",
+        "github_user_id",
+        "id",
+        "is_owner",
+        "kind",
+        "login"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/uuid",
+          "description": "UUIDv5 over the URL namespace of `mathesis:profile:{login}`. Derived from the login alone, so it is stable and anybody can recompute it."
+        },
+        "login": {
+          "type": "string",
+          "minLength": 1
+        },
+        "display_name": {
+          "type": "string"
+        },
+        "citation_name": {
+          "type": "string",
+          "description": "How this author is named when another record cites them, which is not always how they are named here."
+        },
+        "github_user_id": {
+          "type": "integer"
+        },
+        "github_type": {
+          "type": "string",
+          "enum": [
+            "User",
+            "Organization"
+          ]
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "person",
+            "organisation"
+          ]
+        },
+        "is_owner": {
+          "type": "boolean"
+        },
+        "created_at": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "avatar": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "A path under /avatars, when one was fetched. Null renders a glyph; a missing avatar is not a missing profile."
+        }
+      }
+    },
+    "peopleFile": {
+      "description": "bank/people.json. The authors records CITE who have no profile here \u2014 they never deposited anything, and the bank names them because their work is used. No id: an identifier would imply an account that does not exist.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "github": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      }
+    },
+    "postsFile": {
+      "description": "bank/posts.json. The reading order, newest first. post_number is a position in that sequence and not an identifier: it renumbers when the sequence changes, which is why nothing else references it.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "argument_accession",
+          "claim_accession",
+          "post_number",
+          "profile_id",
+          "published_at"
+        ],
+        "properties": {
+          "claim_accession": {
+            "$ref": "#/$defs/accession"
+          },
+          "argument_accession": {
+            "$ref": "#/$defs/accession"
+          },
+          "post_number": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "profile_id": {
+            "$ref": "#/$defs/uuid"
+          },
+          "published_at": {
+            "$ref": "#/$defs/timestamp"
+          }
+        }
+      }
+    },
+    "dictionaryFile": {
+      "description": "bank/dictionary.json. The environment a record was built in. ONE OBJECT OR A LIST OF THEM: the file holds a single object today, and the renderer learned to read either before the file changes, so the two repositories need not land in lockstep. A bank whose records come from more than one environment must use the list form \u2014 a record's dictionary_id has to resolve to the environment that actually built it, and a deposit is built somewhere the curated corpus was not.",
+      "anyOf": [
+        {
+          "$ref": "#/$defs/dictionary"
+        },
+        {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/dictionary"
+          }
+        }
+      ]
+    },
+    "dictionary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "adjudicate_image",
+        "base_names_sha256",
+        "blueprint_url",
+        "builder_image",
+        "curation",
+        "export_bytes",
+        "export_constants",
+        "export_sha256",
+        "flt_rev",
+        "id",
+        "label",
+        "mathlib_rev",
+        "max_export_bytes",
+        "max_source_bytes",
+        "module_roots",
+        "toolchain"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/uuid",
+          "description": "UUIDv5 over the URL namespace of `mathesis:dictionary:{label}`, so the label fixes the id."
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1
+        },
+        "toolchain": {
+          "type": "string",
+          "minLength": 1
+        },
+        "mathlib_rev": {
+          "type": "string",
+          "description": "A 40-character git sha, or empty for a Lean-core environment. Empty is a fact, not a gap."
+        },
+        "flt_rev": {
+          "type": "string"
+        },
+        "module_roots": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "blueprint_url": {
+          "type": "string",
+          "description": "Empty where the environment has no blueprint, which is every deposited one. A record's definitions link into ITS blueprint or into none \u2014 never another project's."
+        },
+        "curation": {
+          "type": "string"
+        },
+        "export_sha256": {
+          "type": "string"
+        },
+        "export_bytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "export_constants": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "base_names_sha256": {
+          "type": "string"
+        },
+        "max_source_bytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "max_export_bytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "adjudicate_image": {
+          "type": "string"
+        },
+        "builder_image": {
+          "type": "string"
+        },
+        "blueprint_labels": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Declaration name to blueprint anchor, for this environment's blueprint."
+        }
+      }
     }
   },
   "anyOf": [

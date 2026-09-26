@@ -59,7 +59,7 @@ cannot run is an error, not a pass.
 
 | | |
 |---|---|
-| **schema** | every file matches `schema/bank-manifest.v2.schema.json` |
+| **schema** | every file matches `schema/bank-manifest.v2.schema.json` — the claims and arguments, and the six sidecars that say who wrote a record, what built it, and where it sits in the reading order |
 | **crosslinks** | every argument names a claim that exists, every relation names two that do and a profile that does, and every topic a claim is filed under is one that exists |
 | **dependencies** | a declaration name the record publishes means **one** statement: an argument's root carries the statement digest of the claim it discharges, and any step naming another claim's declaration carries that claim's digest too |
 | **coverage** | the number re-derived equals the number present — "31 of 32 clean" must not print as "clean" |

@@ -90,6 +90,9 @@ SCHEMA = ROOT / "schema" / "bank-manifest.v2.schema.json"
 RELATIONS = ROOT / "bank" / "relations.json"
 TOPICS = ROOT / "bank" / "topics.json"
 PROFILES = ROOT / "bank" / "profiles.json"
+DICTIONARY = ROOT / "bank" / "dictionary.json"
+POSTS = ROOT / "bank" / "posts.json"
+PEOPLE = ROOT / "bank" / "people.json"
 
 
 def load(path: Path) -> dict:
@@ -323,6 +326,15 @@ def leg_schema() -> None:
     files = {
         RELATIONS: {"$defs": schema["$defs"], "$ref": "#/$defs/relationsFile"},
         TOPICS: {"$defs": schema["$defs"], "$ref": "#/$defs/topicsFile"},
+        # The other four sidecars, which nothing validated either. They carry what a record
+        # SAYS about itself that is not in the record's own file: who wrote it, what built it,
+        # and where it sits in the reading order. A deposited record adds a profile and an
+        # environment to two of them, written by a machine, which is precisely when a published
+        # schema stops being decoration.
+        DICTIONARY: {"$defs": schema["$defs"], "$ref": "#/$defs/dictionaryFile"},
+        PROFILES: {"$defs": schema["$defs"], "$ref": "#/$defs/profilesFile"},
+        POSTS: {"$defs": schema["$defs"], "$ref": "#/$defs/postsFile"},
+        PEOPLE: {"$defs": schema["$defs"], "$ref": "#/$defs/peopleFile"},
     }
     bad = 0
     checked = 0
@@ -339,7 +351,25 @@ def leg_schema() -> None:
         if not path.is_file():
             continue
         checked += 1
-        errors = sorted(Draft202012Validator(sub).iter_errors(load(path)), key=lambda e: list(e.path))
+        doc = load(path)
+        # Same reason the claim/argument branches are chosen by directory rather than left to
+        # the top-level oneOf: when nothing matches an `anyOf`, jsonschema reports the failure
+        # at the root and prints the whole document instead of naming the field. Measured, on a
+        # dictionary missing its toolchain: "dictionary.json at (root): {'adjudicate_image':
+        # 'mathesis-adjudicate@5a48…" — every key it HAS, and not the one it lacks.
+        #
+        # dictionary.json is the only file here with two shapes, so it is the only one that
+        # needs this. The shape is decided by what the file actually is.
+        if path is DICTIONARY:
+            sub = {"$defs": schema["$defs"], "$ref": "#/$defs/dictionary"}
+            if isinstance(doc, list):
+                sub = {
+                    "$defs": schema["$defs"],
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {"$ref": "#/$defs/dictionary"},
+                }
+        errors = sorted(Draft202012Validator(sub).iter_errors(doc), key=lambda e: list(e.path))
         if errors:
             bad += 1
             where = "/".join(str(x) for x in errors[0].path) or "(root)"
