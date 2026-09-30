@@ -1,0 +1,48 @@
+{
+  "argument": {
+    "accession": "MTH.R-2026-6503",
+    "axiom_free": false,
+    "axioms_reached": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "citation_name": "Adhishraya Sharma",
+    "cites": [],
+    "claim_accession": "MTH.C-2026-6503",
+    "created_at": "2026-09-30T10:38:45Z",
+    "dictionary_id": "4268d15e-cbcf-5b66-bf1c-82203706a8a4",
+    "edge_count": 0,
+    "export_bytes": 48710377,
+    "export_constants": 12760,
+    "export_sha256": "92e733d7662d08af79846a9c3b926fa5b0f74558ff49930a150699a8dcc2263a",
+    "libraries_used": [],
+    "login": "adhishrayas",
+    "node_count": 1,
+    "private_helpers": [],
+    "profile_id": "2e77dfdc-8378-5819-a257-ea806f7461de",
+    "replay_detail": "lean kernel accepts",
+    "root_decl_name": "eight_probe",
+    "root_module": "Submission",
+    "root_pretty": "(a b : Real) →\n  @LE.le Real Real.instLE 0\n    (@HPow.hPow Real Nat Real (@instHPow Real Nat (@Monoid.toPow Real Real.instMonoid))\n      (@HSub.hSub Real Real Real (@instHSub Real Real.instSub) a b) 2)",
+    "source_url": "https://mathesis.noumenal.world/deposits/9",
+    "statement_identity": "not-applicable",
+    "submission_id": "0cec565a-958d-5f09-a607-aabc2719e374",
+    "substrate": "Lean 4 kernel v4.31.0"
+  },
+  "edges": [],
+  "leaves": [],
+  "nodes": [
+    {
+      "citable": true,
+      "decl_name": "eight_probe",
+      "depth": 0,
+      "dictionary_leaves": [],
+      "is_root": true,
+      "kind": "theorem",
+      "pretty": "(a b : Real) →\n  @LE.le Real Real.instLE 0\n    (@HPow.hPow Real Nat Real (@instHPow Real Nat (@Monoid.toPow Real Real.instMonoid))\n      (@HSub.hSub Real Real Real (@instHSub Real Real.instSub) a b) 2)",
+      "topo": 0,
+      "type_sha256": "7e177144afd5590918652028a67c201e7d14cb44764ad03d8b02c6a4538dabce"
+    }
+  ]
+}
