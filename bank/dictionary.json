@@ -4,6 +4,27 @@
     "base_names_sha256": "",
     "blueprint_labels": {},
     "blueprint_url": "",
+    "builder_image": "us-central1-docker.pkg.dev/noumenalai/mathesis-environments/lean-builder:v4.31.0-mathlib-fabf563",
+    "curation": "deposit",
+    "export_bytes": 0,
+    "export_constants": 0,
+    "export_sha256": "",
+    "flt_rev": "",
+    "id": "4268d15e-cbcf-5b66-bf1c-82203706a8a4",
+    "label": "deposit@v4.31.0+fabf563",
+    "mathlib_rev": "fabf563a7c95a166b8d7b6efca11c8b4dc9d911f",
+    "max_export_bytes": 0,
+    "max_source_bytes": 0,
+    "module_roots": [
+      "Submission"
+    ],
+    "toolchain": "leanprover/lean4:v4.31.0"
+  },
+  {
+    "adjudicate_image": "mathesis-adjudicate",
+    "base_names_sha256": "",
+    "blueprint_labels": {},
+    "blueprint_url": "",
     "builder_image": "",
     "curation": "deposit",
     "export_bytes": 0,
