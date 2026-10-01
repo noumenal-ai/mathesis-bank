@@ -132,7 +132,17 @@ try:
 
     schema = json.loads((ROOT / "schema" / "bank-manifest.v2.schema.json").read_text())
     shape = schema["$defs"]["claimFile"]
-    real = json.loads(sorted((ROOT / "bank" / "claims").glob("*.json"))[0].read_text())
+    # A committed claim when there is one, and a synthetic one when the record is empty: the
+    # question is whether the schema accepts the field, which needs a claim of the right shape,
+    # not a particular record.
+    committed = sorted((ROOT / "bank" / "claims").glob("*.json"))
+    real = json.loads(committed[0].read_text()) if committed else {
+        "accession": "MTH.C-2026-6999", "arguments_count": 1, "citation_name": "A. Author",
+        "created_at": "2026-01-01T00:00:00Z", "decl_name": "sample", "login": "author",
+        "dictionary_id": "00000000-0000-4000-8000-000000000000", "module": "Submission",
+        "origin": "deposited", "pretty": "True", "profile_id": "00000000-0000-4000-8000-000000000001",
+        "reference_sha256": "0" * 64, "statement_digest": "0" * 64,
+    }
     real = real.get("claim", real)
 
     v = Draft202012Validator({**shape, "$defs": schema["$defs"]})
