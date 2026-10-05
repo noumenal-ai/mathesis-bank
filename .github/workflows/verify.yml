@@ -129,6 +129,16 @@ jobs:
       - name: A withdrawn record is marked, not deleted
         run: python3 ci/test_retraction.py
 
+      # A depositor who signed in with Google has no GitHub account, and the profile says so
+      # with two nulls. A record of deposits alone has no owner. Both used to fail the schema.
+      - name: A profile can be someone without a GitHub account
+        run: python3 ci/test_profiles.py
+
+      # Who the merge comment mentions: the GitHub account the depositor has, never a Stet
+      # handle, which on GitHub may belong to a stranger.
+      - name: The merge comment mentions only a GitHub account
+        run: python3 ci/test_merged_comment.py
+
       # ── the record ───────────────────────────────────────────────────────────────────────
       - name: Re-derive every record
         env:

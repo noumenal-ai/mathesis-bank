@@ -513,29 +513,24 @@
       }
     },
     "profilesFile": {
-      "description": "bank/profiles.json. One entry per depositing identity. Was one element for the whole bank, because one person curated it; a deposited record names its own author, so this grows. Exactly one entry may carry is_owner: the renderer picks the site's identity by that flag, and a second would hand it to whichever login sorts first. Empty is allowed, for a record with nothing in it yet; once there is any profile, exactly one is the owner.",
+      "description": "bank/profiles.json. One entry per depositing identity. Was one element for the whole bank, because one person curated it; a deposited record names its own author, so this grows. At most one entry carries is_owner, the bank's curator, and a second would make the flag mean nothing. There may be none: a deposited profile is never the owner, and a record holding only deposits has no curator to name.",
       "type": "array",
       "items": {
         "$ref": "#/$defs/profile"
       },
-      "if": {
-        "minItems": 1
-      },
-      "then": {
-        "contains": {
-          "type": "object",
-          "required": [
-            "is_owner"
-          ],
-          "properties": {
-            "is_owner": {
-              "const": true
-            }
+      "contains": {
+        "type": "object",
+        "required": [
+          "is_owner"
+        ],
+        "properties": {
+          "is_owner": {
+            "const": true
           }
-        },
-        "minContains": 1,
-        "maxContains": 1
-      }
+        }
+      },
+      "minContains": 0,
+      "maxContains": 1
     },
     "profile": {
       "type": "object",
@@ -554,11 +549,12 @@
       "properties": {
         "id": {
           "$ref": "#/$defs/uuid",
-          "description": "UUIDv5 over the URL namespace of `mathesis:profile:{login}`. Derived from the login alone, so it is stable and anybody can recompute it."
+          "description": "UUIDv5 over the URL namespace of `mathesis:profile:{login}`, where login is the Stet handle. Derived from the handle alone, so it is stable and anybody can recompute it."
         },
         "login": {
           "type": "string",
-          "minLength": 1
+          "minLength": 1,
+          "description": "The depositor's Stet handle, and the path of their author page. Unique on Stet, ignoring case. For someone who signed in with GitHub it starts as their GitHub login; someone who signed in with Google chose it. It is not a GitHub account name, and nothing should mention it as one."
         },
         "display_name": {
           "type": "string"
@@ -568,14 +564,23 @@
           "description": "How this author is named when another record cites them, which is not always how they are named here."
         },
         "github_user_id": {
-          "type": "integer"
+          "type": [
+            "integer",
+            "null"
+          ],
+          "description": "The GitHub account the depositor signed in with or connected, by its numeric id. Null for someone with no GitHub account on Stet: they signed in with Google and never connected one. Required either way, so a profile says which it is rather than leaving it out."
         },
         "github_type": {
-          "type": "string",
+          "type": [
+            "string",
+            "null"
+          ],
           "enum": [
             "User",
-            "Organization"
-          ]
+            "Organization",
+            null
+          ],
+          "description": "GitHub's account type for github_user_id, and null exactly when that is null."
         },
         "kind": {
           "type": "string",
@@ -596,6 +601,27 @@
             "null"
           ],
           "description": "A path under /avatars, when one was fetched. Null renders a glyph; a missing avatar is not a missing profile."
+        }
+      },
+      "if": {
+        "properties": {
+          "github_user_id": {
+            "type": "null"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "github_type": {
+            "type": "null"
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "github_type": {
+            "type": "string"
+          }
         }
       }
     },

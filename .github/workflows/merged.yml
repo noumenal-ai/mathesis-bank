@@ -6,16 +6,28 @@
 #
 # WHY A COMMENT AND NOT AN EMAIL
 #
-# Stet holds no email address for anybody and cannot obtain one: sign-in requests `read:user`,
-# for which GitHub returns no address. Keeping addresses would mean a table of them, a consent
-# screen change for everyone who only wants to read, and one more thing to leak. GitHub already
-# mails people about mentions, through notification settings they control. What this chooses is
-# the content, not the envelope.
+# Stet holds no email address for anybody and cannot obtain one: GitHub sign-in requests
+# `read:user`, for which GitHub returns no address, and Google sign-in requests `openid profile`,
+# which carries none either. Keeping addresses would mean a table of them, a consent screen
+# change for everyone who only wants to read, and one more thing to leak. GitHub already mails
+# people about mentions, through notification settings they control. What this chooses is the
+# content, not the envelope.
+#
+# WHO IS MENTIONED
+#
+# The GitHub account the depositor signed in with or connected, and nobody else. The marker's
+# `login` is a Stet handle, which for someone who signed in with Google is a name they chose on
+# Stet; mentioning it would notify whichever stranger owns that name on GitHub. So the marker
+# carries `github=` separately, empty when there is no account, and an empty one gets the same
+# note with no mention. A marker without the key at all was written before handles and GitHub
+# accounts could differ, when `login` WAS the GitHub login, so it is still mentioned as one.
 #
 # `pull_request_target`, not `pull_request`: a record may be proposed from a fork, and a
 # fork-triggered `pull_request` gets a read-only token that cannot comment. Nothing here checks
 # out or runs any code from the pull request — it reads the body and posts a comment — so the
 # usual hazard of that trigger does not arise.
+#
+# ci/test_merged_comment.py runs the script below against every form of marker.
 # ---------------------------------------------------------------------------------------------
 name: merged
 
@@ -44,30 +56,45 @@ jobs:
           python3 - <<'PY'
           import os, re, subprocess, sys
 
-          # The marker `publish.py` writes into every body it opens. Read as a marker rather than
-          # parsed out of the prose, so rewording the pull request cannot silently stop this —
-          # and absent on anything a person opened by hand, which is exactly when to say nothing.
-          m = re.search(r"<!-- stet-record (.*?) -->", os.environ.get("PR_BODY") or "")
-          if not m:
-              print("no stet-record marker; this was not opened by the publisher")
-              sys.exit(0)
-          f = dict(p.split("=", 1) for p in m.group(1).split() if "=" in p)
-          login, claim = f.get("login", ""), f.get("claim", "")
-          if not login or not claim:
-              print(f"marker is incomplete: {f}")
-              sys.exit(0)
 
-          body = (
-              f"@{login} — this is published.\n\n"
-              f"Your record is **`{claim}`**, and it is live now:\n\n"
-              f"https://stet.world/a/{claim}/\n\n"
-              "The statement, its argument graph, the axioms it reaches and the frozen export "
-              "are all on that page. The accession is permanent: it is what to cite, and it "
-              "will not change.\n"
-          )
-          subprocess.run(
-              ["gh", "pr", "comment", os.environ["NUMBER"],
-               "--repo", os.environ["REPO"], "--body", body],
-              check=True,
-          )
+          def comment_for(body):
+              """The comment to post on a merged pull request with this body, or None."""
+              # The marker `publish.py` writes into every body it opens. Read as a marker rather
+              # than parsed out of the prose, so rewording the pull request cannot silently stop
+              # this — and absent on anything a person opened by hand, which is exactly when to
+              # say nothing.
+              m = re.search(r"<!-- stet-record (.*?) -->", body or "")
+              if not m:
+                  print("no stet-record marker; this was not opened by the publisher")
+                  return None
+              f = dict(p.split("=", 1) for p in m.group(1).split() if "=" in p)
+              claim = f.get("claim", "")
+              who = f["github"] if "github" in f else f.get("login", "")
+              if not claim or ("github" not in f and not who):
+                  print(f"marker is incomplete: {f}")
+                  return None
+              link = f"https://stet.world/a/{claim}/"
+              rest = (
+                  "The statement, its argument graph, the axioms it reaches and the frozen export "
+                  "are all on that page. The accession is permanent: it is what to cite, and it "
+                  "will not change.\n"
+              )
+              if who:
+                  return (
+                      f"@{who} — this is published.\n\n"
+                      f"Your record is **`{claim}`**, and it is live now:\n\n{link}\n\n{rest}"
+                  )
+              # No GitHub account to tell. The note is still the record of what was published.
+              return f"Published: **`{claim}`** is live now:\n\n{link}\n\n{rest}"
+
+
+          if __name__ == "__main__":
+              body = comment_for(os.environ.get("PR_BODY"))
+              if body is None:
+                  sys.exit(0)
+              subprocess.run(
+                  ["gh", "pr", "comment", os.environ["NUMBER"],
+                   "--repo", os.environ["REPO"], "--body", body],
+                  check=True,
+              )
           PY
