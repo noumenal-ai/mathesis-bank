@@ -79,6 +79,18 @@
           "type": "string",
           "description": "The statement's docstring. Absent on 2 of 32 \u2014 a record may carry no prose."
         },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200,
+          "description": "The depositor's title for the result: what the Collection and search show it as. One line. Absent on records deposited before titles were carried into the record, and on curated records; a reader is then shown the declaration name."
+        },
+        "words": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000,
+          "description": "The depositor's statement of the result in words, as written on the deposit form: what a feed card shows under the Lean. An assertion by the author, like a relation, and not checked by any kernel; `bin/mathesis verify` re-derives the statement, not this."
+        },
         "login": {
           "type": "string",
           "minLength": 1

@@ -129,6 +129,11 @@ jobs:
       - name: A withdrawn record is marked, not deleted
         run: python3 ci/test_retraction.py
 
+      # The depositor's title and words reach the record. They are assertions, re-derived by
+      # nothing, so all this holds is their shape: optional, one bounded string each.
+      - name: A claim can carry its title and words
+        run: python3 ci/test_claim_words.py
+
       # ── the record ───────────────────────────────────────────────────────────────────────
       - name: Re-derive every record
         env:
