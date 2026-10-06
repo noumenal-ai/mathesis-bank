@@ -1,6 +1,7 @@
 /* tests/diff/oracle.c: the independent half of the differential test.
  *
- * For each input word w (hex, one per line on stdin), or for every 32-bit word with --all:
+ * For each input word w (hex, one per line on stdin), for every 32-bit word with --all, or for
+ * every w with LO <= w < HI with --range LO HI:
  *   reinterpret w as a float f (memcpy); if !isfinite(f) print "none";
  *   else fr = frexpf(f, &ex);              f = fr * 2^ex, 0.5 <= |fr| < 1, exact
  *        m  = (int64_t) ldexpf(fr, 24);    exact: fr has at most 24 significant bits
@@ -17,6 +18,7 @@
 #include <math.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 static void emit(uint32_t w) {
@@ -42,11 +44,21 @@ static void emit(uint32_t w) {
 }
 
 int main(int argc, char **argv) {
-  if (argc > 1 && strcmp(argv[1], "--all") == 0) {
+  if (argc == 2 && strcmp(argv[1], "--all") == 0) {
     uint32_t w = 0;
     do {
       emit(w);
     } while (++w != 0);
+    return 0;
+  }
+  /* --range LO HI: every word w with LO <= w < HI, so a sweep can run in slices. */
+  if (argc == 4 && strcmp(argv[1], "--range") == 0) {
+    uint64_t lo = strtoull(argv[2], NULL, 0), hi = strtoull(argv[3], NULL, 0);
+    if (lo > hi || hi > 0x100000000ull) {
+      fprintf(stderr, "oracle: bad range %s %s\n", argv[2], argv[3]);
+      return 2;
+    }
+    for (uint64_t w = lo; w < hi; w++) emit((uint32_t) w);
     return 0;
   }
   char line[64];

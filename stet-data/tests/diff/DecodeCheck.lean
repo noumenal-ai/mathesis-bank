@@ -3,8 +3,9 @@ import StetData.Float32
 /-!
 # The Lean half of the differential test
 
-For each hex word on stdin, or for every 32-bit word with `--all`, print `decode32` of it in the
-oracle's format: `none`, or `m e` for the value `m · 2^e` in normal form (`m` odd, or `0 0`).
+For each hex word on stdin, for every 32-bit word with `--all`, or for every `w` with `LO ≤ w < HI`
+with `--range LO HI`, print `decode32` of it in the oracle's format: `none`, or `m e` for the value
+`m · 2^e` in normal form (`m` odd, or `0 0`).
 
 This runs `decode32` as compiled code. The checks in `StetData/Examples.lean` run it in the kernel.
 Both evaluate the same definition.
@@ -24,12 +25,25 @@ def parseHex (s : String) : Option Nat :=
     else if 'A' ≤ c ∧ c ≤ 'F' then some (16 * n + (c.toNat - 'A'.toNat + 10))
     else none
 
-def main (args : List String) : IO UInt32 := do
+/-- Print `decode32 w` for every `w` with `lo ≤ w < hi`. -/
+def sweep (lo hi : Nat) : IO Unit := do
   let stdout ← IO.getStdout
-  if args == ["--all"] then
-    for w in [0:2 ^ 32] do
-      stdout.putStrLn (render (decode32 w))
-    return 0
+  for w in [lo:hi] do
+    stdout.putStrLn (render (decode32 w))
+
+def main (args : List String) : IO UInt32 := do
+  match args with
+  | ["--all"] => sweep 0 (2 ^ 32); return 0
+  -- `--range LO HI` (decimal): every `w` with `LO ≤ w < HI`, so a sweep can run in slices.
+  | ["--range", lo, hi] =>
+    match lo.toNat?, hi.toNat? with
+    | some lo, some hi =>
+      if lo ≤ hi ∧ hi ≤ 2 ^ 32 then sweep lo hi; return 0
+      IO.eprintln s!"decodecheck: bad range {lo} {hi}"; return 2
+    | _, _ => IO.eprintln "decodecheck: --range takes two decimal numbers"; return 2
+  | [] => pure ()
+  | _ => IO.eprintln "usage: decodecheck [--all | --range LO HI]  (hex words on stdin)"; return 2
+  let stdout ← IO.getStdout
   let stdin ← IO.getStdin
   repeat
     let line ← stdin.getLine
