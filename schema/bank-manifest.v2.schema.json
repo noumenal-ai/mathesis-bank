@@ -525,29 +525,24 @@
       }
     },
     "profilesFile": {
-      "description": "bank/profiles.json. One entry per depositing identity. Was one element for the whole bank, because one person curated it; a deposited record names its own author, so this grows. Exactly one entry may carry is_owner: the renderer picks the site's identity by that flag, and a second would hand it to whichever login sorts first. Empty is allowed, for a record with nothing in it yet; once there is any profile, exactly one is the owner.",
+      "description": "bank/profiles.json. One entry per depositing identity. Was one element for the whole bank, because one person curated it; a deposited record names its own author, so this grows. At most one entry carries is_owner, the bank's curator, and a second would make the flag mean nothing. There may be none: a deposited profile is never the owner, and a record holding only deposits has no curator to name.",
       "type": "array",
       "items": {
         "$ref": "#/$defs/profile"
       },
-      "if": {
-        "minItems": 1
-      },
-      "then": {
-        "contains": {
-          "type": "object",
-          "required": [
-            "is_owner"
-          ],
-          "properties": {
-            "is_owner": {
-              "const": true
-            }
+      "contains": {
+        "type": "object",
+        "required": [
+          "is_owner"
+        ],
+        "properties": {
+          "is_owner": {
+            "const": true
           }
-        },
-        "minContains": 1,
-        "maxContains": 1
-      }
+        }
+      },
+      "minContains": 0,
+      "maxContains": 1
     },
     "profile": {
       "type": "object",

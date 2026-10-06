@@ -134,6 +134,11 @@ jobs:
       - name: A claim can carry its title and words
         run: python3 ci/test_claim_words.py
 
+      # A deposited profile is never the owner, so a record of deposits alone has none. The
+      # schema demanded exactly one once there was any profile, which failed the first deposit.
+      - name: A record of deposits alone has no owner
+        run: python3 ci/test_owner.py
+
       # ── the record ───────────────────────────────────────────────────────────────────────
       - name: Re-derive every record
         env:
