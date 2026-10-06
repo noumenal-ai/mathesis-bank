@@ -1,0 +1,57 @@
+{
+  "argument": {
+    "accession": "MTH.R-2026-6504",
+    "axiom_free": false,
+    "axioms_reached": [
+      "Quot.sound",
+      "propext"
+    ],
+    "citation_name": "Adhishraya Sharma",
+    "cites": [],
+    "claim_accession": "MTH.C-2026-6504",
+    "created_at": "2026-10-06T11:58:36Z",
+    "dictionary_id": "45c7a066-9dae-5af4-9ce6-3a2555b95cb3",
+    "edge_count": 0,
+    "export_bytes": 4405085,
+    "export_constants": 1549,
+    "export_sha256": "c1106b204e87a87732134bb1f4525a2a30f02910b97f40d42ed76c02ef1ff4cb",
+    "libraries_used": [],
+    "login": "adhishrayas",
+    "node_count": 1,
+    "private_helpers": [],
+    "profile_id": "2e77dfdc-8378-5819-a257-ea806f7461de",
+    "replay_detail": "lean kernel accepts",
+    "root_decl_name": "sum_of_two_odds_is_even",
+    "root_module": "Submission",
+    "root_pretty": "(a b : Nat) →\n  @Eq Nat (@HMod.hMod Nat Nat Nat (@instHMod Nat Nat.instMod) a 2) 1 →\n    @Eq Nat (@HMod.hMod Nat Nat Nat (@instHMod Nat Nat.instMod) b 2) 1 →\n      @Eq Nat\n        (@HMod.hMod Nat Nat Nat (@instHMod Nat Nat.instMod) (@HAdd.hAdd Nat Nat Nat (@instHAdd Nat instAddNat) a b) 2) 0",
+    "source_url": "https://stet.world/deposits/12",
+    "statement_identity": "not-applicable",
+    "submission_id": "304869d1-a87c-520a-9523-c09d074c8042",
+    "substrate": "Lean 4 kernel v4.31.0"
+  },
+  "edges": [],
+  "leaves": [],
+  "nodes": [
+    {
+      "citable": true,
+      "decl_name": "sum_of_two_odds_is_even",
+      "depth": 0,
+      "dictionary_leaves": [],
+      "hypotheses": [
+        {
+          "name": "ha",
+          "pretty": "Eq (HMod.hMod a 2) 1"
+        },
+        {
+          "name": "hb",
+          "pretty": "Eq (HMod.hMod b 2) 1"
+        }
+      ],
+      "is_root": true,
+      "kind": "theorem",
+      "pretty": "(a b : Nat) →\n  @Eq Nat (@HMod.hMod Nat Nat Nat (@instHMod Nat Nat.instMod) a 2) 1 →\n    @Eq Nat (@HMod.hMod Nat Nat Nat (@instHMod Nat Nat.instMod) b 2) 1 →\n      @Eq Nat\n        (@HMod.hMod Nat Nat Nat (@instHMod Nat Nat.instMod) (@HAdd.hAdd Nat Nat Nat (@instHAdd Nat instAddNat) a b) 2) 0",
+      "topo": 0,
+      "type_sha256": "1b4e983394aecb210dfd2d8d82f32941206c7da845e01035738e13c155a2bb07"
+    }
+  ]
+}
