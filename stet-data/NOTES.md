@@ -46,7 +46,42 @@ UU: Whether "data as a kernel term" is the right primitive at ML scale at all,
 γ / Γ / η: update at each STOP.
 ```
 
-## Open decisions (asked 2026-10-07)
+## Decisions (Dhruv, 2026-10-07)
 
-- Build on core's `Dyadic`, or keep our own under a namespace with fuel taken from the mantissa?
-- Decode the data as `(f32bits% "…").toList.map decode32`, so `S` is a `List`?
+- Build on core's `Dyadic`. D3, D4, D5 and D7 come from core; `StetData/Dyadic.lean` documents them.
+- Decode the data as `(f32bits% "…").toList.map decode32`, so `S` is a `List` and plain `decide`
+  reduces it with no axioms.
+
+## STOP 1 (2026-10-07): steps 1a–1c
+
+Times:
+- `lake build` of the skeleton: 3.6 s.
+- `lake env lean StetData/Examples.lean` (19 checks, all `decide`): 0.46 s wall, 632 MB peak resident
+  memory, most of it loading Init.
+
+```
+— object axis (γ) —
+KK+ core's `Dyadic.ofIntWithPrec` normalises with fuel `i.natAbs` (Int.trailingZeros.aux), by
+    structural recursion, so D4 holds for every input, and plain `decide` reduces it.
+KK+ core proves `Dyadic.blt_iff_toRat` and `Dyadic.ble_iff_toRat`: `<` and `≤` agree with the order
+    of ℚ. D5's "agreement is future work" is already done for ℚ; for ℝ it still needs Mathlib.
+KK+ `List.sum` over `Dyadic` reduces under plain `decide` (D7's sum).
+KK+ every check depends on exactly [propext, Quot.sound]; a wrong expected value makes `decide`
+    fail ("proved that the proposition … is false").
+KK+ Lean core v4.31.0 has no binary `include` (no include_bytes or include_bin; `readBinFile` is
+    used only by bv_decide's LRAT reader) and no kernel-side IEEE decoder (`Float32` is opaque).
+KU  decode32 is IEEE-correct beyond the 13 table-A rows → 1f (differential test).
+KU-1/2/3 now concern core's Dyadic at scale: `ofIntWithPrec` and `+` on mantissas of ~280 bits,
+    and `decide` vs `decide +kernel` vs `rfl` → 1g.
+UK  prior art outside core (Batteries, Mathlib, TorchLean's IEEE32Exec, Zulip "include_bytes")
+    → check before 1d, where the elaborator would claim novelty.
+— agent axis (Γ) —
+R-move (learning route): the dyadic representation is imported from core, not built.
+M-move: the data shape is a List, because `Array.map` does not reduce under `decide`.
+γ  decode32 agrees with all 13 hardware-checked table-A rows and the out-of-range case; the three
+   KK+ facts about core above.
+Γ  "does ≤ agree with the real order?" split into ℚ (answered by core) and ℝ (open; Mathlib).
+η  low on the object so far: decode32 is a textbook decoder and the checks are computations on
+   concrete values. Step 1's novelty is the elaborator and kernel path (1d) and the scaling
+   measurements (1g), not reached yet.
+```
