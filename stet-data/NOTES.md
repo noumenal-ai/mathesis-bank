@@ -77,6 +77,48 @@ axioms.
 - Decode the data as `(f32bits% "…").toList.map decode32`, so `S` is a `List` and plain `decide`
   reduces it with no axioms.
 
+## STOP 2 (2026-10-07): steps 1d–1f
+
+The differential test: `decode32`, compiled (`lake exe decodecheck`), against `tests/diff/oracle.c`
+(Apple clang 17, macOS 15.6.1, Apple M4 Pro).
+
+| case class | words | mismatches |
+|---|---|---|
+| (a) every exponent field × 6 fraction fields × both signs | 3,072 | 0 |
+| (b) every NaN boundary (exponent field 255, fraction 1 / 0x400000 / 0x7FFFFF, both signs) | 6 | 0 |
+| (c) uniformly random words, seed 20261007 | 1,000,000 | 0 |
+| exhaustive: every 32-bit word, in 8 slices of 2^29 | 4,294,967,296 | 0 |
+
+Times: classes (a)–(c), including both builds, 7.5 s. Exhaustive sweep, 8 slices in parallel,
+5 min 56 s wall.
+
+The harness was itself tested: with the subnormal exponent planted off by one in `decode32`, it
+reported 10 mismatches in class (a) and 3,926 in class (c). An empty-output pass was found and
+closed: `cmp` calls two empty streams equal, so a swept range now passes only if the oracle
+produced one line per word.
+
+```
+— object axis (γ) —
+KK+ decode32, as compiled code, agrees on every 32-bit word with an oracle that goes through the
+    C library's float semantics and shares no logic with it. This is a test, not a proof, and its
+    reference semantics is this platform's C library.
+KK+ f32bits% transcribes edge.f32 to table A's words (checked by `decide`), refuses a missing file
+    and a 5-byte file with clear messages, and table B's three claims close by `decide`.
+KK+ prior art (UK resolved): Verso's include_bin, TorchLean's toDyadic?; see "Prior art".
+KU  the checks evaluate `decode32` in the kernel; the sweep evaluated it as compiled code. Both run
+    the same definition, but only the table-A/B words have been seen to agree on both paths. A
+    kernel run of classes (a) and (b) (3,078 words) would close that for the structured cases, and
+    measures kernel cost for 1g.
+KU-1/2/3 → 1g.
+— agent axis (Γ) —
+Γ  the open trust question moved from "is the decoder right" to "do compiled and kernel evaluation
+   agree" and "is the transcribed term the file's content" (step 2, provenance).
+γ  exhaustive agreement with an independent oracle; the end-to-end path file → numerals →
+   kernel decode → `decide` on table B.
+η  higher than at STOP 1: exhaustive equivalence for about 6 minutes of compute. The novelty is
+   still modest: the decoder is textbook, and the kernel path is shown but not yet measured (1g).
+```
+
 ## STOP 1 (2026-10-07): steps 1a–1c
 
 Times:
