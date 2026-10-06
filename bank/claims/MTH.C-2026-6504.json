@@ -1,0 +1,19 @@
+{
+  "accession": "MTH.C-2026-6504",
+  "arguments_count": 1,
+  "citation_name": "Adhishraya Sharma",
+  "created_at": "2026-10-06T11:58:36Z",
+  "decl_name": "sum_of_two_odds_is_even",
+  "dictionary_id": "45c7a066-9dae-5af4-9ce6-3a2555b95cb3",
+  "login": "adhishrayas",
+  "module": "Submission",
+  "origin": "deposited",
+  "pretty": "(a b : Nat) →\n  @Eq Nat (@HMod.hMod Nat Nat Nat (@instHMod Nat Nat.instMod) a 2) 1 →\n    @Eq Nat (@HMod.hMod Nat Nat Nat (@instHMod Nat Nat.instMod) b 2) 1 →\n      @Eq Nat\n        (@HMod.hMod Nat Nat Nat (@instHMod Nat Nat.instMod) (@HAdd.hAdd Nat Nat Nat (@instHAdd Nat instAddNat) a b) 2) 0",
+  "profile_id": "2e77dfdc-8378-5819-a257-ea806f7461de",
+  "reference_sha256": "c1106b204e87a87732134bb1f4525a2a30f02910b97f40d42ed76c02ef1ff4cb",
+  "statement_digest": "1b4e983394aecb210dfd2d8d82f32941206c7da845e01035738e13c155a2bb07",
+  "statement_source": "kernel",
+  "title": "The sum of two odd natural numbers is even",
+  "topic": "analytic-sets",
+  "words": "The sum of two odd natural numbers is even."
+}
