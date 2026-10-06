@@ -77,6 +77,37 @@ axioms.
 - Decode the data as `(f32bits% "…").toList.map decode32`, so `S` is a `List` and plain `decide`
   reduces it with no axioms.
 
+## STOP 3 (2026-10-07): step 1g
+
+The measurements and how to read them are in `bench/results.md`.
+
+```
+— object axis (γ) —
+KK+ plain `decide` stops at 76 values and `rfl` at 77. The elaborator evaluates first, recursing
+    once per list cell, and that recursion is capped by maxRecDepth (512). (KU-2 and KU-3 resolved
+    for these forms.)
+KK+ `decide +kernel` evaluates in the kernel only and adds no axioms ([propext, Quot.sound]). It
+    carries the claim to 30,000 values in 25 s, but not to 100,000 within 500 s. (KU-2 resolved
+    for the kernel route.)
+KK+ kernel cost per value is about 0.5–0.8 ms from 10^3 to 3×10^4 values, and over 5 ms at 10^5.
+    (KU-1 resolved.)
+KK+ a compiled `def` of the data stops at 2,046 values, in code generation, and makes the .olean
+    6.5× larger. A `noncomputable def` avoids both, at no cost to kernel time.
+KK+ kernel evaluation of decode32 agrees with the C oracle on all 3,078 words of classes (a) and (b)
+    (tests/diff/KernelCheck.lean: 257 theorems by `decide`). This closes STOP 2's compiled-vs-kernel
+    KU for the structured cases.
+KU  the cause of the cliff between 3×10^4 and 10^5 values (kernel caches? allocation?).
+UU → answered: data as a kernel term is the right primitive up to about 10^4 values, not at ML scale.
+— agent axis (Γ) —
+Γ  scale becomes a design question for step 2 onward: what smaller object can the kernel check in
+   place of the data? A certificate, or a random sample of committed data.
+γ  the measured envelope of the kernel route, and agreement on the kernel path for the structured
+   cases.
+η  high for the effort: two rules that change how data is written (close with `decide +kernel`,
+   declare data `noncomputable`), and a quantitative answer to the plan's UU, from about an hour of
+   runs.
+```
+
 ## STOP 2 (2026-10-07): steps 1d–1f
 
 The differential test: `decode32`, compiled (`lake exe decodecheck`), against `tests/diff/oracle.c`
