@@ -46,6 +46,31 @@ UU: Whether "data as a kernel term" is the right primitive at ML scale at all,
 γ / Γ / η: update at each STOP.
 ```
 
+## Prior art (UK resolved, 2026-10-07)
+
+Neither half of step 1 is new on its own; what is new is the kernel path between them.
+
+- **Binary include:** Verso's `include_bin` (leanprover/verso, `src/verso-util/VersoUtil/BinFiles.lean`)
+  resolves its path exactly as `include_str` does and returns a `ByteArray`. That `ByteArray` is
+  produced by `Z85.decode` on a string literal in compiled code, not as a term the kernel evaluates.
+  Lean core v4.31.0 has no binary include, and the v4.32.0 release notes add none.
+- **IEEE-754 to dyadic:** TorchLean's `toDyadic?` (lean-dojo/TorchLean,
+  `NN/Floats/IEEEExec/Exec32/Dyadic.lean`; vendored in noumenal-ai/design-lab) decodes
+  binary32 bits to a dyadic. It works on `UInt32` bits. Its dyadic type `{sign, mant, exp}` is not
+  normalised: it keeps the sign of zero and does not strip trailing zeros, so its structural `=` is
+  not value equality. Its decoding lemmas (`toDyadic?_ofBits_mkBits_fin`) and its bridge to a
+  round-on-ℝ float32 model use Mathlib.
+- **Other elaborators that read binary files** (Lean-zh/protobuf descriptors, strata-org/Strata-DDM,
+  bv_decide's LRAT reader) read inputs to the metaprogram. None of them makes the data a term for the
+  kernel to evaluate.
+- **Zulip:** a web search found no thread on `include_bytes` or `include_bin`. The archive is poorly
+  indexed, so this is not conclusive.
+
+Step 1 cites Verso and TorchLean. Its contribution is the path in between: an elaborator that only
+transcribes words into numerals, a decoder the kernel evaluates on `Nat`, and a target type with one
+form per value (core's `Dyadic`), so that claims about the data close by `decide` under the gate's
+axioms.
+
 ## Decisions (Dhruv, 2026-10-07)
 
 - Build on core's `Dyadic`. D3, D4, D5 and D7 come from core; `StetData/Dyadic.lean` documents them.
